@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+@import '@atom-forge/ui/theme.css';
+@plugin '@tailwindcss/typography';
+@source '../node_modules/@atom-forge/ui/dist';
+@source '.';

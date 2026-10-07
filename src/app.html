@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth scroll-pt-[254px] scroll-pb-[110px] font-sans motion-reduce:scroll-auto min-[761px]:scroll-pt-[266px]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      try {
+        const saved = localStorage.getItem('dark');
+        if (saved === null ? matchMedia('(prefers-color-scheme: dark)').matches : JSON.parse(saved)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch {}
+    </script>
+    %sveltekit.head%
+  </head>
+  <body class="m-0" data-sveltekit-preload-data="hover"><div class="contents">%sveltekit.body%</div></body>
+</html>
