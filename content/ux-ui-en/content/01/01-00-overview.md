@@ -1,5 +1,5 @@
 ---
-chapter: "01"
+type: chapter
 children:
   - "[[01-01-ux-ui-and-service-experience.md]]"
   - "[[01-02-goals-and-constraints.md]]"

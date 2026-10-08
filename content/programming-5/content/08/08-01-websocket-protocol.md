@@ -1,5 +1,5 @@
 ---
-chapter: "08.01"
+type: content
 tags: []
 ---
 # WebSocket: kapcsolatfelépítés és kétirányú üzenetek

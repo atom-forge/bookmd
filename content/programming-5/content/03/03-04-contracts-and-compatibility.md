@@ -1,5 +1,5 @@
 ---
-chapter: "03.04"
+type: content
 tags: []
 ---
 # Kommunikációs szerződés és verziók együttélése

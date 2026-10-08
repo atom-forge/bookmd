@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Házi feladat – Kattintható prototípus és első visszajelzés
 
 Kapcsold össze a wireframe-eket kattintható Figma-prototípussá, amelyen végigvihető a kiválasztott fő feladat. Ezután próbáltasd ki legalább egy másik hallgatóval: ne vezesd végig szóban, inkább figyeld meg, hol bizonytalanodik el.

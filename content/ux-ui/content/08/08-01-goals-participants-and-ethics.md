@@ -1,5 +1,5 @@
 ---
-chapter: "08.01"
+type: content
 tags:
   - usability-testing
   - participant-recruitment

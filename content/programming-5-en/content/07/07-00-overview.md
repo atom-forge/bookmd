@@ -1,5 +1,5 @@
 ---
-chapter: "07"
+type: chapter
 children:
   - "[[07-01-data-ownership-and-consistency.md]]"
   - "[[07-02-sagas.md]]"

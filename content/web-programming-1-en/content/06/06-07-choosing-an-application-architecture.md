@@ -1,5 +1,5 @@
 ---
-chapter: "06.07"
+type: content
 tags: []
 ---
 # Choosing an application model and rendering strategy

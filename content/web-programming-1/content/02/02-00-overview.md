@@ -1,5 +1,5 @@
 ---
-chapter: "02"
+type: chapter
 children:
   - "[[02-01-web-addresses-and-resources.md]]"
   - "[[02-02-http-request-and-response.md]]"

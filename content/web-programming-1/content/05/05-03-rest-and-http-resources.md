@@ -1,5 +1,5 @@
 ---
-chapter: "05.03"
+type: content
 tags: []
 ---
 # REST: erőforrások és HTTP-műveletek

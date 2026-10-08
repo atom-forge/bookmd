@@ -6,9 +6,15 @@ A kollégák saját GitHub-repositoryba pusholják a tananyagaikat. A BookMD kö
 
 A szerzői repókban nem szükséges külön deployfolyamat vagy a portál fejlesztői környezetének telepítése. A tartalomletöltés, validáció, build és publikálás a központi `atom-forge/bookmd` repo felelőssége.
 
+## Függőségek és tulajdonos
+
+A [workflow](task-workflow.md) sorrendje: metaadat-előfeltétel → [motor/példány szétválasztás](task-bookmd-engine.md) → közös pipeline → [helyi előnézet](task-local-course-preview.md) → kézzel validált Git-import → automatizálás. Az első két szakasz tervezési kapui koordináltak; nem indítunk külön példányoldali feldolgozást.
+
+A regiszterparser, Git-adapter, összeállítás, validáció és generálás újrahasználható implementációja a motoré. A példányé a config, kurzusregiszter/helyi tartalom, lockfile, CI/build/deploy, machine-user SSH secret, hozzáférési nyilvántartás és sikeres publikálási baseline. A pontos CLI-integrációt a motor task tényleges terve rögzíti, nem feltételezett script/API. A registry-hitelesítés külön a Git SSH-kulcstól és a deploy-jogosultságtól.
+
 ## Hatókör — első verzió
 
-- Publikus GitHub-kurzusrepók támogatása, helyi kurzusokkal együtt.
+- Publikus és a központi machine userrel megosztott privát GitHub-kurzusrepók támogatása, helyi kurzusokkal együtt.
 - Egysoros Git-forráshivatkozások a `content/courses.md` regiszterben.
 - Stabil kurzusazonosítók.
 - Generált, elkülönített build input összeállítása.
@@ -16,7 +22,7 @@ A szerzői repókban nem szükséges külön deployfolyamat vagy a portál fejle
 - Csak változáskor build és atomikus publikálás.
 - Forrásverzió-jegyzék, diagnosztika és kézi workflow-indítás.
 
-Nem része: privát forrásrepók hitelesítése, kurzusonkénti utolsó jó tartalom visszatöltése, külső push által indított webhookok, szerzői repo-template és külön szerzői CI.
+Nem része: további hitelesítési modellek (GitHub App, repónkénti deploy key), kurzusonkénti utolsó jó tartalom visszatöltése, külső push által indított webhookok, szerzői repo-template és külön szerzői CI.
 
 A központi portálrepo jelenleg privát. Ez nem akadálya publikus tananyagforrások olvasásának, de a hosting jogosultságait, Actions-keretet és a publikált oldal láthatóságát külön ellenőrizni kell.
 
@@ -46,7 +52,15 @@ A Git-hivatkozás alkalmazásszintű szintaxis, nem közvetlen letöltési URL:
 - Az owner és repo utáni útvonal a belépő Markdown-fájl repohoz relatív útvonala.
 - A belépőfájl könyvtára a kurzus tartalomgyökere.
 - A parser adjon konkrét hibát hiányzó ref, hibás owner/repo, érvénytelen vagy gyökéren kívülre mutató útvonal esetén.
-- Ne adjuk át a regiszter szövegét shellparancsnak; folyamatargumentumok és ellenőrzött HTTPS repo-URL használata szükséges.
+- Ne adjuk át a regiszter szövegét shellparancsnak; folyamatargumentumok és a validált owner/repo alapján képzett, ellenőrzött GitHub SSH repo-cím használata szükséges. A regiszterszintaxis változatlan, nem tartalmaz credentialt.
+
+### Privát források: machine-user SSH
+
+A választott modell a [workflow hozzáférési szerződése](task-workflow.md#privát-forrásrepók-hozzáférése-központi-machine-user): külön GitHub-fiók (a `bookmd-reader` név még javaslat), elfogadott collaborator-meghívás, szervezeti repóban Read jogosultság. A szerző nem készít tokent, secretet vagy workflow-t. A ref feloldása és az adott SHA letöltése ugyanazzal a machine-user SSH-hozzáféréssel történik; a portál `GITHUB_TOKEN`-ja nem általános privátrepo-credential.
+
+A példány üzemeltetője felel a fiókért, 2FA/helyreállításért, meghívások elfogadásáért, SSO/policy/seat ellenőrzésért, hozzáférési nyilvántartásért és kulcsrotációért. A privát SSH-kulcs kizárólag központi Actions secret; ellenőrzött GitHub hostkulcsokkal, hostellenőrzés kikapcsolása nélkül. Csak forrásolvasáskor legyen elérhető, ne build/deploy vagy külső kódfuttatás közben.
+
+Személyes privát repó collaborator joga írható is lehet; a generátor csak olvas, de ez nem technikai read-only korlát. A kulcs kompromittálása a fiók minden hozzáférését érinti. Visszavonás a jövőbeni olvasást tiltja, nem törli automatikusan a már publikált tartalmat. A szerző külön jóváhagyja a kijelölt privát tananyag publikálását; privát forrás nem garantál privát oldalt.
 
 ## Stabil kurzusazonosító
 
@@ -67,7 +81,7 @@ name: Webprogramozás 1
 
 ## Tartalomszinkronizálás
 
-Új alkalmazásszintű script, például `scripts/sync-courses.ts`:
+A motor forrásszinkronizáló művelete; a konkrét CLI/parancs és buildbekötés a motor task tervezési kapujában dől el, nem új példányoldali implementáció:
 
 1. Beolvassa és validálja a regisztert.
 2. Feloldja a kért refeket tényleges commit SHA-kra.
@@ -136,7 +150,8 @@ A jelenlegi állapotot az **utolsó sikeres publikálás** forrásjegyzékével 
 
 A fingerprint tartalmazza legalább:
 
-- a portál saját commit SHA-ját, ezzel a helyi tartalom/config/buildkód változását is;
+- a példány saját commit SHA-ját, ezzel a helyi tartalom/config/buildintegráció változását is;
+- a tényleges motorcsomag-verziót és lockfile-azonosságot; a verziózott provenance-séma ezt is rögzítse;
 - a normalizált kurzusregisztert, a forrásútvonalakat és kért refeket;
 - a külső források feloldott commit SHA-ját;
 - a fingerprint séma-/pipeline-verzióját, ha a commiton túl szükséges.
@@ -231,16 +246,16 @@ A privát forrásrepo nem jelenti automatikusan, hogy a publikált oldal privát
 
 ## Kapcsolat a helyi előnézettel
 
-Kapcsolódó task: `task-local-course-preview.md`.
+Kapcsolódó taskok: [helyi előnézet](task-local-course-preview.md), [motor/példány](task-bookmd-engine.md), [workflow](task-workflow.md).
 
 - A kurzusmetaadatok, gyökér, linkfeloldás, diagnosztika és HTML-biztonság szerződése legyen közös.
 - A Git adapter és a böngészős mappaadapter külön IO-réteg; ne hozzunk létre két tartalomfeldolgozó implementációt.
 - Az oktató helyben előnéz, pushol, majd a központi automatizmus a következő engedélyezett ellenőrzéskor feldolgozza a változást.
-- A taskok sorrendje nem feltétlen kötött, de a közös pipeline átalakítását össze kell hangolni.
+- A workflow sorrendje kötött: a motor/példány és közös pipeline kapui, majd a helyi előnézet előzik meg a Git-importot; az automatizálás csak kézzel validált import után indul.
 
 ## Megvalósítási lépések
 
-1. Jelenlegi modell/linkfeloldás és hosting/Actions-előfeltételek ellenőrzése.
+1. Motor/példány, közös pipeline és preview kapuinak átvétele; hosting/Actions, machine user és védett SSH-hozzáférés ellenőrzése.
 2. Regiszterparser, ID-szerződés, forrásjegyzék és célzott tesztek.
 3. Git-forrásadapter és generált build input, helyi kompatibilitással.
 4. Fingerprint és sikeres baseline tárolása.
@@ -249,7 +264,9 @@ Kapcsolódó task: `task-local-course-preview.md`.
 
 ## Elfogadási feltételek
 
-- [ ] Helyi és egysoros Git-kurzusforrások együtt működnek.
+- [ ] Helyi és egysoros Git-kurzusforrások együtt működnek, publikus és a machine userrel megosztott privát repóval is.
+- [ ] Elfogadott meghívás, hiányzó SSH secret, hibás/visszavont hozzáférés konkrét diagnosztikával ellenőrizve; hiba esetén nincs részleges publikálás.
+- [ ] SSH-kulcs csak forrásolvasáskor elérhető, ellenőrzött hostkulccsal; nincs credential a logban, cache-ben, artifactban vagy outputban. A privát tartalom publikálási jóváhagyása rögzített.
 - [ ] Branch, tag, commit SHA és `/`-t tartalmazó ref helyesen feloldható.
 - [ ] Az ellenőrzött SHA kerül buildbe, mozgó branch esetén is.
 - [ ] Stabil ID biztosítja az URL-t; hibás vagy ütköző ID blokkolja a buildet.
@@ -272,6 +289,7 @@ Kapcsolódó task: `task-local-course-preview.md`.
 - Időablak tesztek határórákra, téli/nyári időre és kézi/push bypassra.
 - Fingerprint/baseline tesztek első futás, változatlanság, forrásváltozás, portálváltozás, hibás deploy és hiányzó/lejárt baseline esetére.
 - Teljes projekttesztek, típusellenőrzés és statikus build.
-- Valódi publikus mintarepóval CI end-to-end próba, majd változás nélküli és új commit utáni futás.
+- Valódi publikus és machine userrel megosztott privát mintarepóval kézi import/statikus build, majd CI end-to-end próba, változás nélküli és új commit utáni futás.
+- Meghívás elfogadása, hiányzó secret, visszavont hozzáférés és hostkulcshiba: nincs deploy vagy baseline-frissítés; titokszivárgás ellenőrzése.
 - Szándékosan hibás kurzussal ellenőrzés: nincs új deploy, előző oldal megmarad, következő futás újra próbál.
 - Actions runneridő és hostingbeállítások ellenőrzése; a GitHub aktuális korlátait ne korábbi becslésekből feltételezzük.

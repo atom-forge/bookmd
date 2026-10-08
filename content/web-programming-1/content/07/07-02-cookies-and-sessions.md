@@ -1,5 +1,5 @@
 ---
-chapter: "07.02"
+type: content
 tags: []
 ---
 # Cookie-k és szerveroldali munkamenetek

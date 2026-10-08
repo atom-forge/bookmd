@@ -1,5 +1,5 @@
 ---
-chapter: "06.04"
+type: content
 tags: []
 ---
 # Backpressure, feldolgozási kapacitás és mintaválasztás

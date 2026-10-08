@@ -1,5 +1,5 @@
 ---
-chapter: "06.02"
+type: content
 tags: []
 ---
 # Acknowledgments, delivery guarantees, and duplication

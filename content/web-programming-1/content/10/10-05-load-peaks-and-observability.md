@@ -1,5 +1,5 @@
 ---
-chapter: "10.05"
+type: content
 tags: []
 ---
 # Terhelési csúcs és megfigyelhetőség

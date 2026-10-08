@@ -1,5 +1,5 @@
 ---
-chapter: "02.02"
+type: content
 tags:
   - user-interviews
   - observation

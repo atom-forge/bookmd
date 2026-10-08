@@ -1,5 +1,5 @@
 ---
-chapter: "04.02"
+type: content
 tags: []
 ---
 # Connection establishment, TCP and TLS

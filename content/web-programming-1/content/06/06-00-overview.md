@@ -1,5 +1,5 @@
 ---
-chapter: "06"
+type: chapter
 children:
   - "[[06-01-multi-page-and-single-page-apps.md]]"
   - "[[06-02-client-side-rendering.md]]"

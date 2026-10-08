@@ -1,5 +1,5 @@
 ---
-chapter: "10.04"
+type: content
 tags: []
 ---
 # HTTP-gyorsítótár és CDN

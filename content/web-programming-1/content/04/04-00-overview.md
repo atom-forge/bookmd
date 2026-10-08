@@ -1,5 +1,5 @@
 ---
-chapter: "04"
+type: chapter
 children:
   - "[[04-01-dns-and-ip-addresses.md]]"
   - "[[04-02-connection-tcp-and-tls.md]]"

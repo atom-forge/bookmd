@@ -1,5 +1,5 @@
 ---
-chapter: "09.03"
+type: content
 tags: []
 ---
 # Reszponzív és eszközfüggetlen megjelenés

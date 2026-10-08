@@ -1,5 +1,5 @@
 ---
-chapter: "02.03"
+type: content
 tags: []
 ---
 # HTTP Methods and the Intent of the Request

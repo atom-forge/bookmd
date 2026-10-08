@@ -1,5 +1,5 @@
 ---
-chapter: "02.03"
+type: content
 tags: []
 ---
 # Folyamatábrák, döntések és párhuzamos lépések

@@ -1,5 +1,5 @@
 ---
-chapter: "02.04"
+type: content
 tags: []
 ---
 # HTTP Status Codes: What Was the Result of the Request?

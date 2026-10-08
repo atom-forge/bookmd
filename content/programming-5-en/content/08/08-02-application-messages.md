@@ -1,5 +1,5 @@
 ---
-chapter: "08.02"
+type: content
 tags: []
 ---
 # Application protocols over WebSocket

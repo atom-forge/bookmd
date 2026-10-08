@@ -1,5 +1,5 @@
 ---
-chapter: "04.01"
+type: content
 tags:
   - project-brief
   - stakeholders

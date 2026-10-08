@@ -1,5 +1,5 @@
 ---
-chapter: "09.02"
+type: content
 tags: []
 ---
 # Server-Sent Events és HTTP streaming

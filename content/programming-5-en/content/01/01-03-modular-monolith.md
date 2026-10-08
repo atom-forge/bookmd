@@ -1,5 +1,5 @@
 ---
-chapter: "01.03"
+type: content
 tags: []
 ---
 # The modulith: a modular monolith with internal contracts

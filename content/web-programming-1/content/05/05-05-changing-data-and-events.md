@@ -1,5 +1,5 @@
 ---
-chapter: "05.05"
+type: content
 tags: []
 ---
 # Változó adatok: polling, SSE, WebSocket és webhook

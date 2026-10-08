@@ -1,5 +1,5 @@
 ---
-chapter: "04"
+type: chapter
 children:
   - "[[04-01-rest-model.md]]"
   - "[[04-02-rest-contracts.md]]"

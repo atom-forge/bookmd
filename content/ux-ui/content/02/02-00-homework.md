@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Házi feladat – Felhasználói kutatás és user journey
 
 Értsd meg jobban az első mérföldkőben kijelölt célcsoport helyzetét. Készíts legalább egy rövid interjút vagy kérdőívet; ha interjút vezetsz, a múltbeli viselkedésről és konkrét tapasztalatokról kérdezz, ne az ötleted tetszéséről.

@@ -1,5 +1,5 @@
 ---
-chapter: "04.02"
+type: content
 tags: []
 ---
 # HTTP API: hibák, cache, konkurencia és hosszú műveletek

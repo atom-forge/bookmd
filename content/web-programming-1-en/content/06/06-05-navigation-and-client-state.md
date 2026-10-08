@@ -1,5 +1,5 @@
 ---
-chapter: "06.05"
+type: content
 tags: []
 ---
 # Navigation, interactivity, and client-side state

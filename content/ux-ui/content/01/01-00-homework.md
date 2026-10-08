@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Házi feladat – Ötletkeresés és problémafeltárás
 
 Készíts egy FigJam boardot egy saját ötletből, hobbidhoz vagy szakmai érdeklődésedhez kapcsolódó digitális termékről, szolgáltatásról, nonprofit vagy edukációs szoftverről. A cél még nem a kész megoldás, hanem egy világos, valós problémahelyzet első feltérképezése.

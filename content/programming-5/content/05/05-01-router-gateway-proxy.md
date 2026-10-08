@@ -1,5 +1,5 @@
 ---
-chapter: "05.01"
+type: content
 tags: []
 ---
 # Service router, reverse proxy, load balancer és gateway

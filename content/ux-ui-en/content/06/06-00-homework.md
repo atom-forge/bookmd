@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Low-fidelity wireframes
 
 Create low-fidelity wireframes in a Figma file to demonstrate the main task and navigation. At this stage, structure, layout, and content hierarchy matter more than visual style.

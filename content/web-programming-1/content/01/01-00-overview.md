@@ -1,5 +1,5 @@
 ---
-chapter: "01"
+type: chapter
 children:
   - "[[01-01-web-as-a-platform.md]]"
   - "[[01-02-web-evolution.md]]"

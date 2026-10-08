@@ -1,5 +1,5 @@
 ---
-chapter: "06.05"
+type: content
 tags: []
 ---
 # Navigáció, interaktivitás és kliensoldali állapot

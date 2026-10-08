@@ -1,5 +1,5 @@
 ---
-chapter: "01.02"
+type: content
 tags: []
 ---
 # The monolith: a simple boundary with an intricate internal structure

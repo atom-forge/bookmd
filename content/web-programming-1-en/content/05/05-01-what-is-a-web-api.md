@@ -1,5 +1,5 @@
 ---
-chapter: "05.01"
+type: content
 tags: []
 ---
 # What is a web API?

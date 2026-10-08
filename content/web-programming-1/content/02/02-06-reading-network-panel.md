@@ -1,5 +1,5 @@
 ---
-chapter: "02.06"
+type: content
 tags: []
 ---
 # Egy webes kérés megfigyelése a Network panelen

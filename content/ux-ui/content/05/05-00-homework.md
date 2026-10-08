@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Házi feladat – Információs architektúra
 
 Tervezd meg, milyen képernyőkből és funkciókból áll a kiválasztott megoldás. A struktúra a persona fő feladatát támogassa; ne a teljes elképzelt terméket próbáld lefedni.

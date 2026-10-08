@@ -1,4 +1,5 @@
 ---
+type: resource
 ---
 # Course Repository
 

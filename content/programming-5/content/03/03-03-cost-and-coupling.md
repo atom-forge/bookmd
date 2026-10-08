@@ -1,5 +1,5 @@
 ---
-chapter: "03.03"
+type: content
 tags: []
 ---
 # Késleltetés, fan-out és kommunikációs csatolás

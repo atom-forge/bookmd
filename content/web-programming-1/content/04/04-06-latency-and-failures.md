@@ -1,5 +1,5 @@
 ---
-chapter: "04.06"
+type: content
 tags: []
 ---
 # Késleltetés és hibák a kérés útján

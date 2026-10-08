@@ -1,5 +1,5 @@
 ---
-chapter: "10"
+type: chapter
 children:
   - "[[10-01-service-quality-and-availability.md]]"
   - "[[10-02-errors-and-user-communication.md]]"

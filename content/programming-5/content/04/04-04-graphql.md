@@ -1,5 +1,5 @@
 ---
-chapter: "04.04"
+type: content
 tags: []
 ---
 # GraphQL: séma, resolver és adatösszeállítás

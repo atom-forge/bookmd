@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Information architecture
 
 Plan the screens and functions that make up your selected solution. The structure should support the persona's main task; do not try to cover the entire imagined product.

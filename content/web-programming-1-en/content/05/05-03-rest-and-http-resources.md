@@ -1,5 +1,5 @@
 ---
-chapter: "05.03"
+type: content
 tags: []
 ---
 # REST: resources and HTTP operations

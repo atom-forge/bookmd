@@ -1,5 +1,5 @@
 ---
-chapter: "02.06"
+type: content
 tags: []
 ---
 # Diagramkészítés Mermaid-del: forrás, jelölés és ellenőrzés

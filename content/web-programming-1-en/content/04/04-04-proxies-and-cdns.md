@@ -1,5 +1,5 @@
 ---
-chapter: "04.04"
+type: content
 tags: []
 ---
 # Proxies, reverse proxies and CDNs

@@ -1,5 +1,5 @@
 ---
-chapter: "07.05"
+type: content
 tags: []
 ---
 # Distributed transactions, isolation, and business boundaries

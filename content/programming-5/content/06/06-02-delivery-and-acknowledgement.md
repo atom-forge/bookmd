@@ -1,5 +1,5 @@
 ---
-chapter: "06.02"
+type: content
 tags: []
 ---
 # Nyugtázás, kézbesítési garanciák és duplikáció

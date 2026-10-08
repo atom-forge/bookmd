@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Exploring ideas and problems
 
 Create a FigJam board about a digital product, service, nonprofit application, or educational software based on your own idea and connected to your hobbies or professional interests. The goal is an initial map of a clear, real problem situation, rather than a finished solution.

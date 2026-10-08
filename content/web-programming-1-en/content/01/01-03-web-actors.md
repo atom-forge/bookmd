@@ -1,5 +1,5 @@
 ---
-chapter: "01.03"
+type: content
 tags: []
 ---
 # The main actors of the web: browser, server, search engine, and content provider

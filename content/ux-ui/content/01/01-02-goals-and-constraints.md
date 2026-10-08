@@ -1,5 +1,5 @@
 ---
-chapter: "01.02"
+type: content
 tags:
   - user-goals
   - business-goals

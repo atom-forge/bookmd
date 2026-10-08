@@ -1,5 +1,5 @@
 ---
-chapter: "07.05"
+type: content
 tags: []
 ---
 # OAuth 2.0 és OpenID Connect

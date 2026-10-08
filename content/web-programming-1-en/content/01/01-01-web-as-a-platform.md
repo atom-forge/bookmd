@@ -1,5 +1,5 @@
 ---
-chapter: "01.01"
+type: content
 author: Laborci Gergely
 tags:
   - "#web"

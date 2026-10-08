@@ -1,5 +1,5 @@
 ---
-chapter: "08"
+type: chapter
 children:
   - "[[08-01-websocket-protocol.md]]"
   - "[[08-02-application-messages.md]]"

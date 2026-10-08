@@ -1,5 +1,5 @@
 ---
-chapter: "03.06"
+type: content
 tags: []
 ---
 # Browser capabilities and limits

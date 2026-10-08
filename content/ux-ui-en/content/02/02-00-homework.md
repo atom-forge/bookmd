@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – User research and user journey
 
 Develop a better understanding of the target group identified in the first milestone. Conduct at least one brief interview or survey; if you conduct an interview, ask about past behavior and specific experiences rather than whether participants like your idea.

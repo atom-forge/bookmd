@@ -1,5 +1,5 @@
 ---
-chapter: "10.03"
+type: content
 tags: []
 ---
 # Response time, load, and resource requirements

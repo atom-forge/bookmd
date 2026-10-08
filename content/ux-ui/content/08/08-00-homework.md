@@ -1,6 +1,7 @@
 ---
+type: resource
 ---
-# 8. házi feladat – Finomítás, UI-irányelv és használhatósági teszt
+# házi feladat – Finomítás, UI-irányelv és használhatósági teszt
 
 Finomítsd a prototípust a visszajelzések alapján, és kezdd el tudatosan kialakítani a vizuális nyelvét. A változtatásokat rövid, feladatközpontú használhatósági tesztekkel ellenőrizd.
 

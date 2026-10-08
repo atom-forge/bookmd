@@ -1,5 +1,5 @@
 ---
-chapter: "02.01"
+type: content
 tags: []
 ---
 # Követelményektől a szolgáltatáshatárokig

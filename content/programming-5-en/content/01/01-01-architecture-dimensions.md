@@ -1,5 +1,5 @@
 ---
-chapter: "01.01"
+type: content
 tags: []
 ---
 # Architecture: code, processes, and deployment

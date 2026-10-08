@@ -1,4 +1,5 @@
 ---
+type: resource
 ---
 # Kurzus Repository
 
@@ -38,7 +39,6 @@ Hozz létre egy GitHub repót a tárgynak, és az alábbiak szerint használd a 
     ├── README.md
     └── docs/
 ```
-
 ---
 
 ## 1. Gyökér (Root) mappa

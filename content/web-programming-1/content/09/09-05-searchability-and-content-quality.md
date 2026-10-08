@@ -1,5 +1,5 @@
 ---
-chapter: "09.05"
+type: content
 tags: []
 ---
 # Kereshetőség és a tartalom minősége

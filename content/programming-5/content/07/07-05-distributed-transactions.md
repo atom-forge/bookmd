@@ -1,5 +1,5 @@
 ---
-chapter: "07.05"
+type: content
 tags: []
 ---
 # Elosztott tranzakció, izoláció és üzleti határok

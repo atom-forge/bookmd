@@ -1,5 +1,5 @@
 ---
-chapter: "09.05"
+type: content
 tags: []
 ---
 # Searchability and content quality

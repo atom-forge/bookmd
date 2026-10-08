@@ -1,5 +1,5 @@
 ---
-chapter: "02"
+type: chapter
 children:
   - "[[02-01-boundaries-and-requirements.md]]"
   - "[[02-02-c4-and-structure.md]]"

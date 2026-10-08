@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Defining the problem and exploring opportunities
 
 Formulate the project's central problem based on research and the persona, then examine several possible solution directions. The goal is to choose a justified focus rather than defend the first idea.

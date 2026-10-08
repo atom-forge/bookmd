@@ -1,5 +1,5 @@
 ---
-chapter: "08"
+type: chapter
 children:
   - "[[08-01-goals-participants-and-ethics.md]]"
   - "[[08-02-tasks-moderation-and-observation.md]]"

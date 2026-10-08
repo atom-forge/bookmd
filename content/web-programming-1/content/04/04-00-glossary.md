@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Fogalomtár
 
 ## Domainnév

@@ -1,5 +1,5 @@
 ---
-chapter: "02.06"
+type: content
 tags: []
 ---
 # Creating diagrams with Mermaid: source, notation, and verification

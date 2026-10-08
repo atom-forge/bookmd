@@ -1,5 +1,5 @@
 ---
-chapter: "10.04"
+type: content
 tags: []
 ---
 # Valós idejű kapcsolatok védelme és hibakeresése

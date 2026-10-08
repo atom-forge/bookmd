@@ -1,5 +1,5 @@
 ---
-chapter: "02.05"
+type: content
 tags: []
 ---
 # Comparing designs and evolving a system incrementally

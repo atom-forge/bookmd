@@ -1,5 +1,5 @@
 ---
-chapter: "08.05"
+type: content
 tags: []
 ---
 # A HTTPS szerepe és korlátai a webbiztonságban

@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # UX/UI tervezés
 
 Ismerd meg a felhasználói szükségleteket, és alakítsd a kutatási eredményeket érthető feladatfolyamatokká, hozzáférhető felületekké és tesztelt prototípusokká. A kurzus a kutatástól az információs architektúrán és drótvázakon át a használhatósági tesztelésig és iterációig vezet. Tervezési döntéseidet bizonyítékokkal támasztod alá.

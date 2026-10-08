@@ -1,5 +1,5 @@
 ---
-chapter: "08.06"
+type: content
 tags: []
 ---
 # OWASP approach and security review of a web application

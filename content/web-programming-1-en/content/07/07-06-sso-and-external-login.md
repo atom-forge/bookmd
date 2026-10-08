@@ -1,5 +1,5 @@
 ---
-chapter: "07.06"
+type: content
 tags: []
 ---
 # Single and external provider login

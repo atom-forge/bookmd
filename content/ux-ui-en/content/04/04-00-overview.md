@@ -1,5 +1,5 @@
 ---
-chapter: "04"
+type: chapter
 children:
   - "[[04-01-brief-and-stakeholders.md]]"
   - "[[04-02-target-user-and-needs.md]]"

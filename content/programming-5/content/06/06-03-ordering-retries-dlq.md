@@ -1,5 +1,5 @@
 ---
-chapter: "06.03"
+type: content
 tags: []
 ---
 # Sorrend, retry és dead-letter feldolgozás

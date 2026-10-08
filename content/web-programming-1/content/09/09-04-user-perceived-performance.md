@@ -1,5 +1,5 @@
 ---
-chapter: "09.04"
+type: content
 tags: []
 ---
 # Felhasználói szempontú teljesítmény

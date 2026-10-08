@@ -1,5 +1,5 @@
 ---
-chapter: "03"
+type: chapter
 children:
   - "[[03-01-html-css-and-javascript.md]]"
   - "[[03-02-document-structure-and-dom.md]]"

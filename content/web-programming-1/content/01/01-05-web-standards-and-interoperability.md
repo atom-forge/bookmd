@@ -1,5 +1,5 @@
 ---
-chapter: "01.05"
+type: content
 tags: []
 ---
 # Webszabványok és interoperabilitás

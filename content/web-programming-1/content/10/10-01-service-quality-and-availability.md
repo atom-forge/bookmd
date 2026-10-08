@@ -1,5 +1,5 @@
 ---
-chapter: "10.01"
+type: content
 tags: []
 ---
 # Szolgáltatásminőség és rendelkezésre állás

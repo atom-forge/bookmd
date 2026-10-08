@@ -1,5 +1,5 @@
 ---
-chapter: "01"
+type: chapter
 children:
   - "[[01-01-architecture-dimensions.md]]"
   - "[[01-02-monolith.md]]"

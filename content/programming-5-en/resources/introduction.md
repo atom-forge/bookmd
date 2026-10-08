@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Programming 5 — Microservice architecture and communication
 
 This course examines how to organize an application into modules or independent services, how these parts communicate, and what network boundaries imply. Its central topics are monoliths, modular monoliths, and microservices; REST, RPC, GraphQL, and custom APIs; routing and messaging; and WebSocket and its alternatives.

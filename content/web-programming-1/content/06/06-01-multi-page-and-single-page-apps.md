@@ -1,5 +1,5 @@
 ---
-chapter: "06.01"
+type: content
 tags: []
 ---
 # Többoldalas és egyoldalas webalkalmazások

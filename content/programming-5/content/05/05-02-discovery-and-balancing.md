@@ -1,5 +1,5 @@
 ---
-chapter: "05.02"
+type: content
 tags: []
 ---
 # Service discovery és terheléselosztás

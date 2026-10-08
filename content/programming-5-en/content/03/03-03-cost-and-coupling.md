@@ -1,5 +1,5 @@
 ---
-chapter: "03.03"
+type: content
 tags: []
 ---
 # Latency, fan-out, and communication coupling

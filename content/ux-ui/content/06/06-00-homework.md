@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Házi feladat – Low-fidelity wireframe
 
 Készíts Figma-fájlban low-fidelity drótvázakat a fő feladat és navigáció bemutatására. Ebben a szakaszban a szerkezet, az elrendezés és a tartalmi hierarchia a fontos, nem a vizuális stílus.

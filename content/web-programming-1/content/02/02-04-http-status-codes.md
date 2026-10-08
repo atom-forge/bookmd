@@ -1,5 +1,5 @@
 ---
-chapter: "02.04"
+type: content
 tags: []
 ---
 # HTTP-státuszkódok: mi lett a kérés eredménye?

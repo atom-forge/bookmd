@@ -1,5 +1,5 @@
 ---
-chapter: "05.05"
+type: content
 tags: []
 ---
 # Changing data: polling, SSE, WebSocket and webhook

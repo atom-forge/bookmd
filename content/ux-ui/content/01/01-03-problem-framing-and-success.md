@@ -1,5 +1,5 @@
 ---
-chapter: "01.03"
+type: content
 tags:
   - problem-framing
   - success-criteria

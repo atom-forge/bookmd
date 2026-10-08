@@ -1,5 +1,5 @@
 ---
-chapter: "10.06"
+type: content
 tags: []
 ---
 # Teljesítmény, biztonság és költség

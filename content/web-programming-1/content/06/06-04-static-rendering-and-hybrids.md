@@ -1,5 +1,5 @@
 ---
-chapter: "06.04"
+type: content
 tags: []
 ---
 # Statikus előállítás és hibrid renderelés

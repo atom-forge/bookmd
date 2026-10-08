@@ -1,5 +1,5 @@
 ---
-chapter: "03.01"
+type: content
 tags:
   - usability
   - heuristics

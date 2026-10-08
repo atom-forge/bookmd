@@ -1,5 +1,5 @@
 ---
-chapter: "02.02"
+type: content
 tags: []
 ---
 # The HTTP request and response

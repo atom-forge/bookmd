@@ -1,5 +1,5 @@
 ---
-chapter: "01.04"
+type: content
 tags: []
 ---
 # Mikroszervizek és az elosztott monolit csapdája

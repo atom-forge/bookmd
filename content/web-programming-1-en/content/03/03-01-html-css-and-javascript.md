@@ -1,5 +1,5 @@
 ---
-chapter: "03.01"
+type: content
 tags: []
 ---
 # HTML, CSS, and JavaScript: The Three Roles of the Web Interface

@@ -1,5 +1,5 @@
 ---
-chapter: "03.03"
+type: content
 tags: []
 ---
 # Hogyan jeleníti meg a böngésző az oldalt?

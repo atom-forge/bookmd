@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Submission guidelines
 
 After each session, submit the relevant material for your own project: research notes, a diagram, a Figma link, or a brief decision log. Name files clearly and make sure external links can be opened without requesting access.

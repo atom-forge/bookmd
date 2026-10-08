@@ -1,5 +1,5 @@
 ---
-chapter: "07.03"
+type: content
 tags:
   - microinteractions
   - transitions

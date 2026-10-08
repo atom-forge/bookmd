@@ -1,5 +1,5 @@
 ---
-chapter: "01.03"
+type: content
 tags: []
 ---
 # A web fő szereplői: böngésző, szerver, keresőmotor és tartalomszolgáltató

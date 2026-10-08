@@ -1,5 +1,5 @@
 ---
-chapter: "08.05"
+type: content
 tags: []
 ---
 # The role and limits of HTTPS in web security

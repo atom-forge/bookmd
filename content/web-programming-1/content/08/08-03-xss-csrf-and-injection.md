@@ -1,5 +1,5 @@
 ---
-chapter: "08.03"
+type: content
 tags: []
 ---
 # XSS, CSRF és injekció

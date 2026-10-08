@@ -1,5 +1,5 @@
 ---
-chapter: "03.01"
+type: content
 tags: []
 ---
 # A távoli hívás nem helyi függvényhívás

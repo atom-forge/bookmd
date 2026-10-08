@@ -1,5 +1,5 @@
 ---
-chapter: "05.04"
+type: content
 tags: []
 ---
 # Service meshes and the limits of intermediaries

@@ -1,5 +1,5 @@
 ---
-chapter: "09.06"
+type: content
 tags: []
 ---
 # Adatvédelem, követés és digitális etika

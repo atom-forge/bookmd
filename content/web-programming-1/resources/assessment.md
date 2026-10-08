@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Számonkérési és értékelési rendszer
 
 A félév végi érdemjegy megszerzésének alapvető feltétele az órai jelenlét, valamint a félév végi zárthelyi dolgozat (ZH) megírása.

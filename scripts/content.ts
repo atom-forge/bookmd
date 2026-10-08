@@ -20,7 +20,7 @@ import { remarkCallouts, rehypeCalloutIcons } from './callouts';
 
 export type NavItem = { slug: string; title: string; parent: string | null; chapter?: string | number };
 export type ContentPage = NavItem & {
-  course: string | null; html: string; text: string; inTree: boolean;
+  type?: string; course: string | null; html: string; text: string; inTree: boolean;
   previous: string | null; next: string | null;
   author: string | null; tags: string[];
   headings: { id: string; title: string; depth: number }[];
@@ -33,7 +33,7 @@ export function normalizeTag(tag: string): string {
   return tag.trim().toLocaleLowerCase('hu').normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/gu, ' ');
 }
 
-export type ContentGraph = { branding?: string; pages: ContentPage[]; navigation: NavItem[]; courses: Course[] };
+export type ContentGraph = { branding?: string; exportManifest?: { course: string; source: string; number: number[]; filename: string }[]; pages: ContentPage[]; navigation: NavItem[]; courses: Course[] };
 const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 const external = /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i;
 
@@ -337,13 +337,15 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       const usedIds = new Set<string>();
       let html = '';
       let author: string | null = null;
-      let chapter: NavItem['chapter'];
+      let type: string | undefined;
       let tags: string[] = [];
       async function append(file: string, ancestors: string[]) {
         if (ancestors.includes(file)) throw new Error(`Circular sources: ${[...ancestors, file].join(' -> ')}`);
         const { tree, sources, children, metadata } = await document(file);
         if (!ancestors.length) {
-          chapter = typeof metadata.chapter === 'string' || typeof metadata.chapter === 'number' ? metadata.chapter : undefined;
+          if (metadata.type !== undefined && typeof metadata.type !== 'string') throw new Error(`Invalid type in ${file}`);
+          type = typeof metadata.type === 'string' ? metadata.type : undefined;
+          if (relative(root, file).split(sep).includes('resources') && 'tags' in metadata) throw new Error(`Resources cannot have tags: ${file}`);
           if (metadata.author !== undefined && typeof metadata.author !== 'string') throw new Error(`Invalid author in ${file}`);
           author = typeof metadata.author === 'string' ? metadata.author.trim() || null : null;
           const pageTags = metadata.tags ?? [];
@@ -389,8 +391,8 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       title ||= slug.split('/').at(-1) || config.title;
       const parent = parents.get(slug) ?? null;
       const inTree = parents.has(slug);
-      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(chapter !== undefined ? { chapter } : {}), inTree, author, tags, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
-      if (inTree) graph.navigation.push({ slug, title, parent, ...(chapter !== undefined ? { chapter } : {}) });
+      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, author, tags, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
+      if (inTree) graph.navigation.push({ slug, title, parent });
     }
 
   // Reject hierarchy cycles even when a branch is reached through an ordinary link.
@@ -440,7 +442,34 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       }
     }
   }
+  // Number only explicit chapter/content pages, in declared children order.
+  // Unnumbered wrappers keep the nearest chapter context and consume no number.
+  graph.exportManifest = [];
   const pagesBySlug = new Map(graph.pages.map(page => [page.slug, page]));
+  for (const course of graph.courses) {
+    const counters = new Map<string, number>();
+    function numberBranch(slug: string, prefix: number[]) {
+      const page = pagesBySlug.get(slug)!;
+      let nextPrefix = prefix;
+      if (slug !== course.slug && (page.type === 'chapter' || page.type === 'content')) {
+        const key = prefix.join('.');
+        const index = (counters.get(key) || 0) + 1;
+        counters.set(key, index);
+        const number = [...prefix, index];
+        page.chapter = number.join('.');
+        if (page.type === 'chapter') nextPrefix = number;
+        else {
+          const source = relative(root, files.get(slug)!).split(sep).join('/');
+          const name = basename(source, '.md').replace(/^(?:\d+-)+/, '');
+          graph.exportManifest!.push({ course: course.slug, source, number,
+            filename: `${number.map(part => String(part).padStart(2, '0')).join('-')}-${name}.md` });
+        }
+      }
+      for (const [child, parent] of membership) if (parent === slug) numberBranch(child, nextPrefix);
+    }
+    numberBranch(course.slug, []);
+  }
+
   graph.navigation = [];
   function navigationBranch(slug: string) {
     const page = pagesBySlug.get(slug)!;

@@ -1,3 +1,15 @@
+## Task plans and workflow documentation
+
+Keep plans and checklists focused on concrete, necessary work. Do not add generic
+QA reminders, speculative follow-ups, or non-blocking caveats as standalone tasks
+merely because an optional check was not performed. Include validation work only
+when it addresses a specific requirement or identified risk of the planned change.
+
+Record completed work as completed; do not reopen it as an artificial prerequisite.
+Remove stale or redundant checklist items instead of carrying them forward. Report
+actual validation limits honestly in the implementation summary, without turning
+every unperformed check into a new workflow task.
+
 ## AtomForge UI
 
 Before implementing UI with `@atom-forge/ui`, read:

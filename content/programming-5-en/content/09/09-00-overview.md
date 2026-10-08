@@ -1,5 +1,5 @@
 ---
-chapter: "09"
+type: chapter
 children:
   - "[[09-01-polling-long-polling.md]]"
   - "[[09-02-sse-and-http-streaming.md]]"

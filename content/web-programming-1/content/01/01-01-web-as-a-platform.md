@@ -1,5 +1,5 @@
 ---
-chapter: "01.01"
+type: content
 tags: []
 ---
 # A web mint általános platform

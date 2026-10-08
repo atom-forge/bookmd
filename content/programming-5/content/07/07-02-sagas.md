@@ -1,5 +1,5 @@
 ---
-chapter: "07.02"
+type: content
 tags: []
 ---
 # Saga: orchestration, choreography és kompenzáció

@@ -1,5 +1,5 @@
 ---
-chapter: "01.04"
+type: content
 tags: []
 ---
 # Client-server model and multi-tier systems

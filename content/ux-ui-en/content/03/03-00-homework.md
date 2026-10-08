@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Persona, target group, and inclusion
 
 Synthesize your research findings into a fictional, research-based persona. The persona should help explain the goals, digital habits, and obstacles users bring to the earlier user journey.

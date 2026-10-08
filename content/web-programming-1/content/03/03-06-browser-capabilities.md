@@ -1,5 +1,5 @@
 ---
-chapter: "03.06"
+type: content
 tags: []
 ---
 # A böngésző képességei és határai

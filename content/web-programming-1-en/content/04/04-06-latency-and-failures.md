@@ -1,5 +1,5 @@
 ---
-chapter: "04.06"
+type: content
 tags: []
 ---
 # Latency and failures in the path of the request

@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Házi feladat – Projektprezentáció
 
 Készíts 5–10 perces, FigJam- vagy Figma-alapú projektprezentációt. Ne a képernyők listáját mutasd be, hanem a problémától a kutatáson és döntéseken át a végső prototípusig vezető, bizonyítékokra épülő történetet.

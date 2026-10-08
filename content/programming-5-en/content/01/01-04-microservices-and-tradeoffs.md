@@ -1,5 +1,5 @@
 ---
-chapter: "01.04"
+type: content
 tags: []
 ---
 # Microservices and the distributed monolith trap

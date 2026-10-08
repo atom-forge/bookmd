@@ -1,5 +1,5 @@
 ---
-chapter: "09.01"
+type: content
 tags:
   - hypotheses
   - decision-log

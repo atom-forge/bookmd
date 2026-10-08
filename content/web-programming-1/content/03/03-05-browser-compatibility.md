@@ -1,5 +1,5 @@
 ---
-chapter: "03.05"
+type: content
 tags: []
 ---
 # Böngészőkompatibilitás

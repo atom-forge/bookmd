@@ -1,5 +1,5 @@
 ---
-chapter: "05.01"
+type: content
 tags:
   - information-architecture
   - labeling

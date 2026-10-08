@@ -1,5 +1,5 @@
 ---
-chapter: "06.03"
+type: content
 tags: []
 ---
 # Ordering, retries, and dead-letter processing

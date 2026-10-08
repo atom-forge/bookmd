@@ -1,5 +1,5 @@
 ---
-chapter: "02.05"
+type: content
 tags: []
 ---
 # Headers, Body, and Content Types

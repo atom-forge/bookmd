@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Glossary
 
 **Accessibility:** ensuring that a service can be used by people with different abilities, devices, and circumstances.  

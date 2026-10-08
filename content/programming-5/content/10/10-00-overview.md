@@ -1,5 +1,5 @@
 ---
-chapter: "10"
+type: chapter
 children:
   - "[[10-01-timeouts-retries-idempotency.md]]"
   - "[[10-02-circuit-breakers-bulkheads.md]]"

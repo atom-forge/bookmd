@@ -1,5 +1,5 @@
 ---
-chapter: "08"
+type: chapter
 children:
   - "[[08-01-threat-models-and-trust-boundaries.md]]"
   - "[[08-02-same-origin-policy-and-cors.md]]"

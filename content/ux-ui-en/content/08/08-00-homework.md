@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Refinement, UI guidelines, and usability testing
 
 Refine the prototype based on feedback and begin deliberately developing its visual language. Check changes through brief, task-focused usability tests.

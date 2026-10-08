@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Házi feladat – Komponensek, rendszerezés és iteráció
 
 Rendszerezd a véglegesedő felület visszatérő elemeit Figma-komponensekké, és építs belőlük kicsi, használható design systemet. A rendszer tükrözze az előző mérföldkő tesztjei alapján elvégzett lényeges javításokat.

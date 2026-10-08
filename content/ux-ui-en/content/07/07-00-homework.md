@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Clickable prototype and initial feedback
 
 Connect your wireframes into a clickable Figma prototype in which the selected main task can be completed. Then have at least one fellow student try it: observe where they become uncertain rather than verbally guiding them through it.

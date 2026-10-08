@@ -1,5 +1,5 @@
 ---
-chapter: "10.02"
+type: content
 tags: []
 ---
 # Circuit breakers, bulkheads, and overload protection

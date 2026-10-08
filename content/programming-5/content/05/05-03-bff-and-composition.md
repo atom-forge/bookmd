@@ -1,5 +1,5 @@
 ---
-chapter: "05.03"
+type: content
 tags: []
 ---
 # BFF, aggregáció és API composition

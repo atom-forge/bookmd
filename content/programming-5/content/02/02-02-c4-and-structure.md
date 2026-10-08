@@ -1,5 +1,5 @@
 ---
-chapter: "02.02"
+type: content
 tags: []
 ---
 # C4, komponensdiagram és deploymentnézet

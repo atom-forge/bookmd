@@ -1,5 +1,5 @@
 ---
-chapter: "07.06"
+type: content
 tags: []
 ---
 # Egyszeri és külső szolgáltatós bejelentkezés

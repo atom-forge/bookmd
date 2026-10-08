@@ -1,5 +1,5 @@
 ---
-chapter: "09.04"
+type: content
 tags: []
 ---
 # Socket.IO and a comparison of real-time solutions

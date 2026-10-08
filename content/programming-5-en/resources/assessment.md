@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assessment and Grading System
 
 The basic requirements for obtaining a final grade are class attendance, successful completion of a mandatory assignment, and taking the final written exam (ZH).

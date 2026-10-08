@@ -6,6 +6,12 @@ Az oktató a publikált portálról, saját fejlesztői környezet és feltölt�
 
 Ez szerzői előnézeti funkció, nem a portál fejlesztői buildmódja. A felületen „Helyi kurzuselőnézet” néven jelenjen meg.
 
+## Függőségek és tulajdonos
+
+A [workflow](task-workflow.md) sorrendje kötelező: metaadat-előfeltétel → [motor/példány szétválasztás](task-bookmd-engine.md) → közös pipeline → ez az előnézet → Git-források → automatizálás. A motor- és pipeline-terv koordinált kapui előzik meg az implementációt.
+
+A `/@dev`, a renderer, a közös feldolgozó és a böngészős adapter a verziózott motor része. A példány csak saját konfigurációt, kurzusokat és üzemeltetést birtokol; nem másol preview alkalmazásforrást. A csomag route-/asset-/függőségintegrációját a motor task spike-ja dönti el. A [publikálási taskkal](task-automatic-publishing.md) közös a modell és a biztonsági szerződés, nem külön pipeline.
+
 ## Hatókör — első verzió
 
 - Valódi, statikusan előállított `/@dev` route.
@@ -58,7 +64,7 @@ Megőrzendő képességek a meglévő támogatásnak megfelelően:
 
 A meglévő kurzuskompozíciókat használjuk újra. Ha a jelenlegi komponensek publikált URL-ekhez vagy szerveroldali adatokhoz kötöttek, a szükséges minimális határon válasszuk külön a navigációs célok képzését és az adatbetöltést. Ne legyen második, eltérően működő kurzusfelület.
 
-A közös tartalomfeldolgozó helye hordozható infrastruktúraként `$lib` lehet. A kizárólag előnézethez tartozó állapot, adapter és UI a leaf `/@dev` route mellett legyen, az `AGENTS.md` szerint. Csak tényleges újrahasználat esetén kerüljön kód a közös `(+lib)` alá.
+A közös tartalomfeldolgozó a motor hordozható infrastruktúrája; annak alkalmazásán belül `$lib` lehet. A kizárólag előnézethez tartozó állapot, adapter és UI a leaf `/@dev` route mellett legyen, az `AGENTS.md` szerint. Csak tényleges újrahasználat esetén kerüljön kód a közös `(+lib)` alá.
 
 ## Böngésző és fájlhozzáférés
 
@@ -111,8 +117,8 @@ A közös tartalomfeldolgozó helye hordozható infrastruktúraként `$lib` lehe
 
 ## Megvalósítási lépések
 
-1. A meglévő content pipeline, kurzusmodell, linkfeloldás és renderer böngészőkompatibilitásának feltérképezése.
-2. A közös feldolgozómag és a build adapter szétválasztása, a publikált kimenet regressziós ellenőrzésével.
+1. A motor/példány és közös pipeline kapuinak lezárása; a motorban lévő kurzusmodell, linkfeloldás és renderer böngészőkompatibilitásának ellenőrzése.
+2. A már közös feldolgozómag és build adapter szerződésének átvétele, a publikált kimenet regressziós ellenőrzésével; nem újabb helyi szétválasztás.
 3. Olvasási célú könyvtáradapter és belépőfájl-választás.
 4. Előnézeti kurzusmodell, asset-életciklus és belső navigáció.
 5. Meglévő kurzuskompozíciók bekötése, újratöltés és diagnosztika.

@@ -1,5 +1,5 @@
 ---
-chapter: "08.04"
+type: content
 tags: []
 ---
 # Passwords, multi-factor authentication and session protection

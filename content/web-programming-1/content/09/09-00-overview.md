@@ -1,5 +1,5 @@
 ---
-chapter: "09"
+type: chapter
 children:
   - "[[09-01-accessibility-and-inclusive-design.md]]"
   - "[[09-02-semantics-keyboard-and-screen-readers.md]]"

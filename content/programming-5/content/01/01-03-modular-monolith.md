@@ -1,5 +1,5 @@
 ---
-chapter: "01.03"
+type: content
 tags: []
 ---
 # Modulit: moduláris monolit és belső szerződések

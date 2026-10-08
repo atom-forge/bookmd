@@ -1,5 +1,5 @@
 ---
-chapter: "07"
+type: chapter
 children:
   - "[[07-01-interaction-patterns-and-affordances.md]]"
   - "[[07-02-fidelity-and-scenarios.md]]"

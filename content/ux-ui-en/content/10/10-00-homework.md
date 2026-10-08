@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Project presentation
 
 Create a 5–10-minute project presentation using FigJam or Figma. Present an evidence-based story leading from the problem through research and decisions to the final prototype, rather than a list of screens.

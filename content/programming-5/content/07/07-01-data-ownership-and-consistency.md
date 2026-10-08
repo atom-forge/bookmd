@@ -1,5 +1,5 @@
 ---
-chapter: "07.01"
+type: content
 tags: []
 ---
 # Adatgazdák, tranzakciók és konzisztencia

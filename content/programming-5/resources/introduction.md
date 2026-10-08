@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Programozás 5. — Mikroszervizes architektúra és kommunikáció
 
 A tárgy azt vizsgálja, hogyan szervezünk egy alkalmazást modulokba vagy önálló szolgáltatásokba, hogyan kommunikálnak ezek a részek, és milyen következménye van a hálózati határoknak. A központi témák a monolit, a moduláris monolit és a mikroszervizek; a REST, RPC, GraphQL és egyedi API-k; a routing és az üzenetküldés; valamint a WebSocket és alternatívái.

@@ -1,5 +1,5 @@
 ---
-chapter: "09.06"
+type: content
 tags: []
 ---
 # Privacy, tracking, and digital ethics

@@ -1,5 +1,5 @@
 ---
-chapter: "10.03"
+type: content
 tags: []
 ---
 # Válaszidő, betöltés és erőforrásigény

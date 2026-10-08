@@ -1,5 +1,5 @@
 ---
-chapter: "06"
+type: chapter
 children:
   - "[[06-01-low-fi-and-screen-sketches.md]]"
   - "[[06-02-hierarchy-layout-and-copy.md]]"

@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assignment – Components, organization, and iteration
 
 Organize recurring elements of the increasingly finalized interface into Figma components and build a small, usable design system. The system should reflect significant improvements made from the previous milestone's tests.

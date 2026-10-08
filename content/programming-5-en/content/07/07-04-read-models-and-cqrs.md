@@ -1,5 +1,5 @@
 ---
-chapter: "07.04"
+type: content
 tags: []
 ---
 # Read models, CQRS, caching, and replay

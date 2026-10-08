@@ -1,5 +1,5 @@
 ---
-chapter: "02.01"
+type: content
 tags:
   - user-research
   - research-methods

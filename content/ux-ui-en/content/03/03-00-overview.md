@@ -1,5 +1,5 @@
 ---
-chapter: "03"
+type: chapter
 children:
   - "[[03-01-usability-principles.md]]"
   - "[[03-02-inclusive-design-and-wcag.md]]"

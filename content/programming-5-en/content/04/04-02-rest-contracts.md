@@ -1,5 +1,5 @@
 ---
-chapter: "04.02"
+type: content
 tags: []
 ---
 # HTTP APIs: errors, caching, concurrency, and long-running operations

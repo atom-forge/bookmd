@@ -1,5 +1,5 @@
 ---
-chapter: "05"
+type: chapter
 children:
   - "[[05-01-content-labels-and-mental-models.md]]"
   - "[[05-02-navigation-and-search.md]]"

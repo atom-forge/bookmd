@@ -1,5 +1,5 @@
 ---
-chapter: "06.04"
+type: content
 tags: []
 ---
 # Static generation and hybrid rendering

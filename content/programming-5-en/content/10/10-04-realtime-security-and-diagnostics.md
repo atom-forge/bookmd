@@ -1,5 +1,5 @@
 ---
-chapter: "10.04"
+type: content
 tags: []
 ---
 # Securing and diagnosing real-time connections

@@ -1,5 +1,5 @@
 ---
-chapter: "08.03"
+type: content
 tags: []
 ---
 # Heartbeats, reconnection, and state resynchronization

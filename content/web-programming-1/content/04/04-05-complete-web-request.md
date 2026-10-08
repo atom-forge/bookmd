@@ -1,5 +1,5 @@
 ---
-chapter: "04.05"
+type: content
 tags: []
 ---
 # Egy webes kérés teljes útja

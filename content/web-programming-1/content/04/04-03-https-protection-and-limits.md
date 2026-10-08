@@ -1,5 +1,5 @@
 ---
-chapter: "04.03"
+type: content
 tags: []
 ---
 # Mit véd a HTTPS, és mit nem?

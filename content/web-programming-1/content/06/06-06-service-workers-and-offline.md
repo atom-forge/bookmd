@@ -1,5 +1,5 @@
 ---
-chapter: "06.06"
+type: content
 tags: []
 ---
 # Service worker és offline működés

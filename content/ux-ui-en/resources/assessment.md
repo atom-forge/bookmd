@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Assessment
 
 Assessment measures design thinking, not just the visual appeal of the final screens.

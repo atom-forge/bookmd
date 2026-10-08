@@ -1,5 +1,5 @@
 ---
-chapter: "03.01"
+type: content
 tags: []
 ---
 # HTML, CSS és JavaScript: a webes felület három szerepe

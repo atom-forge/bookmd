@@ -1,5 +1,5 @@
 ---
-chapter: "06"
+type: chapter
 children:
   - "[[06-01-queues-topics-logs.md]]"
   - "[[06-02-delivery-and-acknowledgement.md]]"

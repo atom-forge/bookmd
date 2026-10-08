@@ -1,5 +1,5 @@
 ---
-chapter: "02"
+type: chapter
 children:
   - "[[02-01-research-questions-and-methods.md]]"
   - "[[02-02-interviews-and-observation.md]]"

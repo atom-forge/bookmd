@@ -1,5 +1,5 @@
 ---
-chapter: "03.03"
+type: content
 tags: []
 ---
 # How Does the Browser Render the Page?

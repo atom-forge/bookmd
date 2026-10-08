@@ -1,5 +1,5 @@
 ---
-chapter: "05"
+type: chapter
 children:
   - "[[05-01-what-is-a-web-api.md]]"
   - "[[05-02-json-xml-and-data.md]]"

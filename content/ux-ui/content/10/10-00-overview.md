@@ -1,5 +1,5 @@
 ---
-chapter: "10"
+type: chapter
 children:
   - "[[10-01-design-story-and-evidence.md]]"
   - "[[10-02-presentation-structure-and-visual-narrative.md]]"

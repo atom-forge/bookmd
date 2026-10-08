@@ -1,5 +1,5 @@
 ---
-chapter: "08.04"
+type: content
 tags: []
 ---
 # Scaling WebSocket and handling slow clients

@@ -1,5 +1,5 @@
 ---
-chapter: "01.02"
+type: content
 tags: []
 ---
 # The evolution of the web: from document web to application-like web

@@ -1,5 +1,5 @@
 ---
-chapter: "10.02"
+type: content
 tags: []
 ---
 # Circuit breaker, bulkhead és túlterhelésvédelem

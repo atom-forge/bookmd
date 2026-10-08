@@ -1,5 +1,5 @@
 ---
-chapter: "04.05"
+type: content
 tags: []
 ---
 # Egyedi API, webhook és alkalmazási protokoll

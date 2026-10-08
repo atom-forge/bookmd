@@ -1,5 +1,5 @@
 ---
-chapter: "04.06"
+type: content
 tags: []
 ---
 # Comparing REST, RPC, GraphQL, and custom APIs

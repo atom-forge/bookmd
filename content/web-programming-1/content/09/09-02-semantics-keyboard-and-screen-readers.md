@@ -1,5 +1,5 @@
 ---
-chapter: "09.02"
+type: content
 tags: []
 ---
 # Szemantika, billentyűzet és képernyőolvasó

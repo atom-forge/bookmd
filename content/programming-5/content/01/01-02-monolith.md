@@ -1,5 +1,5 @@
 ---
-chapter: "01.02"
+type: content
 tags: []
 ---
 # A monolit: egyszerű határ, összetett belső szerkezet

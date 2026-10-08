@@ -21,34 +21,34 @@ async function fixture(files: Record<string, string>, run: (root: string) => Pro
 const md = (metadata: object, body: string) => `---\n${stringify(metadata)}---\n${body}`;
 const build = (root: string) => buildGraph(root, 'courses.md', '', join(root, 'assets'));
 const catalog = md({ courses: ['[[web/course.md]]'] }, '# Courses\nCatalog introduction');
-test('propagates page chapters through serialized navigation and course menu without changing titles or order', async () => {
+test('numbers explicit types by children order through unnumbered wrappers', async () => {
   await fixture({
     'courses.md': catalog,
-    'web/course.md': md({ language: 'en', chapter: 'Course', children: ['[[zero.md]]', '[Alias](numbered.md)', '[[plain.md]]'] }, '# Web'),
-    'web/zero.md': md({ chapter: 0 }, '# Zero'),
-    'web/numbered.md': md({ chapter: '01.02', children: ['[[nested.md]]'] }, '# Numbered'),
-    'web/nested.md': md({ chapter: 2 }, '# Nested'),
-    'web/plain.md': md({ sources: ['[[source.md]]'] }, '# Plain'),
-    'web/source.md': md({ chapter: 'Not inherited' }, 'Source text')
+    'web/course.md': md({ language: 'en', chapter: 'Ignored', children: ['[[wrapper.md]]', '[[second.md]]'] }, '# Web'),
+    'web/wrapper.md': md({ type: 'resource', children: ['[[first.md]]'] }, '# Wrapper'),
+    'web/first.md': md({ type: 'chapter', children: ['[[help.md]]', '[[lesson.md]]', '[[nested.md]]'] }, '# First'),
+    'web/help.md': '# Help',
+    'web/lesson.md': md({ type: 'content', chapter: '99.99' }, '# Lesson'),
+    'web/nested.md': md({ type: 'chapter', children: ['[[nested-lesson.md]]'] }, '# Nested'),
+    'web/nested-lesson.md': md({ type: 'content' }, '# Nested lesson'),
+    'web/second.md': md({ type: 'chapter', children: ['[[second-lesson.md]]'] }, '# Second'),
+    'web/second-lesson.md': md({ type: 'content' }, '# Second lesson')
   }, async root => {
     const graph = await build(root);
-    const navigation = JSON.parse(JSON.stringify(graph.navigation));
-    const menu = courseMenu(navigation, 'web')!;
-    expect(menu.chapter).toBe('Course');
-    expect(menu.children.map(({ slug, title, chapter }) => ({ slug, title, chapter }))).toEqual([
-      { slug: 'web/zero', title: 'Zero', chapter: 0 },
-      { slug: 'web/numbered', title: 'Alias', chapter: '01.02' },
-      { slug: 'web/plain', title: 'Plain', chapter: undefined }
-    ]);
-    expect(menu.children[1].children[0].chapter).toBe(2);
-    expect(menu.children[2]).not.toHaveProperty('chapter');
-    expect(breadcrumbPath(navigation, 'web/zero').map(item => item.chapter)).toEqual([undefined, 'Course', 0]);
-
-    expect(breadcrumbPath(navigation, 'web/nested').map(item => item.chapter)).toEqual([undefined, 'Course', '01.02', 2]);
-    expect(breadcrumbPath(navigation, 'web/plain').at(-1)).not.toHaveProperty('chapter');
-    expect(graph.pages.find(page => page.slug === 'web/zero')?.chapter).toBe(0);
-    expect(graph.pages.find(page => page.slug === 'web/plain')).not.toHaveProperty('chapter');
-    expect(graph.pages.find(page => page.slug === 'web/zero')?.text).toBe('Zero');
+    const page = (slug: string) => graph.pages.find(page => page.slug === `web/${slug}`)!;
+    expect(page('first').chapter).toBe('1');
+    expect(page('lesson').chapter).toBe('1.1');
+    expect(page('nested').chapter).toBe('1.2');
+    expect(page('nested-lesson').chapter).toBe('1.2.1');
+    expect(page('second').chapter).toBe('2');
+    expect(page('second-lesson').chapter).toBe('2.1');
+    expect(page('help')).not.toHaveProperty('chapter');
+    expect(page('wrapper')).not.toHaveProperty('chapter');
+    expect(graph.pages.find(page => page.slug === 'web')).not.toHaveProperty('chapter');
+    expect(graph.exportManifest?.map(item => item.filename)).toEqual(['01-01-lesson.md', '01-02-01-nested-lesson.md', '02-01-second-lesson.md']);
+    const menu = courseMenu(graph.navigation, 'web')!;
+    expect(menu.children[0].children[0].chapter).toBe('1');
+    expect(breadcrumbPath(graph.navigation, 'web/nested-lesson').map(item => item.chapter)).toEqual([undefined, undefined, undefined, '1', '1.2', '1.2.1']);
   });
 });
 

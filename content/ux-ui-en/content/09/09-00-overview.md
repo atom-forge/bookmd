@@ -1,5 +1,5 @@
 ---
-chapter: "09"
+type: chapter
 children:
   - "[[09-01-hypotheses-and-decision-log.md]]"
   - "[[09-02-improvement-cycles-and-tradeoffs.md]]"

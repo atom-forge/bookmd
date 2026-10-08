@@ -1,5 +1,5 @@
 ---
-chapter: "04.05"
+type: content
 tags: []
 ---
 # The complete path of a web request

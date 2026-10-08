@@ -1,5 +1,5 @@
 ---
-chapter: "04.02"
+type: content
 tags:
   - target-users
   - user-needs

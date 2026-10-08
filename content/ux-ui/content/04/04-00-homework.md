@@ -1,3 +1,6 @@
+---
+type: resource
+---
 # Házi feladat – Problémadefiniálás és lehetőségkeresés
 
 Fogalmazd meg a projekt központi problémáját a kutatás és a persona alapján, majd vizsgálj több lehetséges megoldási irányt. A cél nem az, hogy az első ötletet védd, hanem hogy indokoltan válassz fókuszt.

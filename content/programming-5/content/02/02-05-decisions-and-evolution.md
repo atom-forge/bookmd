@@ -1,5 +1,5 @@
 ---
-chapter: "02.05"
+type: content
 tags: []
 ---
 # Tervek összehasonlítása és fokozatos rendszerátalakítás

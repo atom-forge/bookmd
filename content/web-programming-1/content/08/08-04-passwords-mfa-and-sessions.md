@@ -1,5 +1,5 @@
 ---
-chapter: "08.04"
+type: content
 tags: []
 ---
 # Jelszavak, többfaktoros hitelesítés és munkamenetvédelem

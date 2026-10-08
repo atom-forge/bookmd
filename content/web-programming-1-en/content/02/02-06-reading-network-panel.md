@@ -1,5 +1,5 @@
 ---
-chapter: "02.06"
+type: content
 tags: []
 ---
 # Observing a Web Request in the Network Panel

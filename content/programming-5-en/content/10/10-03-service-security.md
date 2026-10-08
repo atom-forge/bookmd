@@ -1,5 +1,5 @@
 ---
-chapter: "10.03"
+type: content
 tags: []
 ---
 # Service identity, TLS/mTLS, and authorization

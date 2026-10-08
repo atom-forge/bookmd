@@ -1,5 +1,5 @@
 ---
-chapter: "06.01"
+type: content
 tags: []
 ---
 # Queues, publish–subscribe, and event logs

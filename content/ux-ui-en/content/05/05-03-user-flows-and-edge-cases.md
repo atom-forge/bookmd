@@ -1,5 +1,5 @@
 ---
-chapter: "05.03"
+type: content
 tags:
   - user-flows
   - decision-points

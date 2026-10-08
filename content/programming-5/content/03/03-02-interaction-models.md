@@ -1,5 +1,5 @@
 ---
-chapter: "03.02"
+type: content
 tags: []
 ---
 # Kérés–válasz, üzenet, esemény és stream

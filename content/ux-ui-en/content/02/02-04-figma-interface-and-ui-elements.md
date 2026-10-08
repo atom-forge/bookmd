@@ -1,5 +1,5 @@
 ---
-chapter: "02.04"
+type: content
 tags:
   - figma
   - ui-elements

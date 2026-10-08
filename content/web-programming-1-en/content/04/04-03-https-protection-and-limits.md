@@ -1,5 +1,5 @@
 ---
-chapter: "04.03"
+type: content
 tags: []
 ---
 # What does HTTPS protect, and what does it not?

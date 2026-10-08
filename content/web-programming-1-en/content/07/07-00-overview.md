@@ -1,5 +1,5 @@
 ---
-chapter: "07"
+type: chapter
 children:
   - "[[07-01-stateless-http-and-application-state.md]]"
   - "[[07-02-cookies-and-sessions.md]]"

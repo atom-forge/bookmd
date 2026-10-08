@@ -1,5 +1,5 @@
 ---
-chapter: "08.06"
+type: content
 tags: []
 ---
 # OWASP-szemlélet és egy webalkalmazás biztonsági áttekintése

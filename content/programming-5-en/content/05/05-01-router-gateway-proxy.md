@@ -1,5 +1,5 @@
 ---
-chapter: "05.01"
+type: content
 tags: []
 ---
 # Service routers, reverse proxies, load balancers, and gateways

@@ -1,5 +1,5 @@
 ---
-chapter: "05.06"
+type: content
 tags: []
 ---
 # API versioning, compatibility and documentation

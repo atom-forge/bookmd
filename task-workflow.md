@@ -6,23 +6,35 @@ Az oktató helyben ellenőrzi a kurzusát, saját GitHub-repójába pusholja, ma
 
 ## Kapcsolódó taskok
 
+- [Verziózott BookMD-motor és vékony példány](task-bookmd-engine.md)
 - [Helyi kurzuselőnézet — /@dev](task-local-course-preview.md)
 - [Git-forrású kurzusok automatikus publikálása](task-automatic-publishing.md)
 - [Projekt megvalósítási szabályai](AGENTS.md)
 
 ## Végrehajtási sorrend
 
-### 0. Metaadat-előfeltétel a közös mag előtt
+### Elkészült alap: kurzusmetaadatok
 
 - Saját kurzusok: `author` az `instructor` helyett; a kurzus `year` mezője megszűnik (a prózában szereplő évszámok maradnak).
 - A parser a régi mezőket elutasítja; a modell külön `tags` és `contentTags` listát ad.
 - Minden kurzushoz tartozó generált oldal címkéinek normalizált, saját címkékkel is deduplikált aggregálása a feldolgozó feladata, nem a UI-é.
-- Katalógus és kurzusnyitó: egyetlen Chip-sor, nyelv → szerző → saját címkék → összesített címkék; keresés és hozzáférhető kibontás. [Működő kompozíció](docs/ui/catalog-card.md#egyetlen-metaadat-címkesor).
+- Katalógus: egyetlen Chip-sor, nyelv → szerző → saját címkék → összesített címkék; keresés és hozzáférhető kibontás. A kurzusoldalon a nyelv és szerző a fejlécben jelenik meg, a bodyban nem ismétlődik. [Működő kompozíció](docs/ui/catalog-card.md#egyetlen-metaadat-címkesor).
 - Nincs Tag API vagy függőségfrissítés; a telepített Chip dokumentált class propját használjuk.
 
-**Továbbhaladási feltétel:** metaadat-parser, aggregálás és keresés tesztjei, check és build sikeresek; a közös mag ezt a szerződést veszi át. A böngészős vizuális, billentyűzetes és képernyőolvasós ellenőrzést külön rögzítsük.
+**Állapot: implementálva és automatizált ellenőrzésekkel validálva.** Nem új fejlesztési előfeltétel; a motor és a közös mag a meglévő szerződést megőrzi.
 
-### 1. Közös tartalomfeldolgozási alap
+### 1. Motor/példány szétválasztás
+
+Specifikáció: [BookMD-motor task](task-bookmd-engine.md).
+
+- A verziózott motor tulajdona az alkalmazás, renderer, generálás és a későbbi `/@dev`; a vékony példány tulajdona a config, kurzusregiszter, helyi tartalom, lockfile, build/deploy és titkok.
+- A motorhatár és a következő szakasz feldolgozási szerződésének tervezése közös A kapu. A SvelteKit route-/asset-/függőségfeloldási spike és a tényleges CLI-terv a B kapu; egyik sem feltételezett package API.
+- A csomag terjesztésének registry/láthatóság- és hitelesítési döntése a kiadás előfeltétele.
+- A jelenlegi portal az első fogyasztó, működése és URL-jei megmaradnak.
+
+**Továbbhaladási feltétel:** a [motor task elfogadási feltételei](task-bookmd-engine.md#elfogadási-feltételek) teljesülnek; második minimális példány dev és statikus build módban működik alkalmazásforrás másolása nélkül. Nem hozzuk előre a preview/Git/automation implementációt.
+
+### 2. Közös tartalomfeldolgozási alap
 
 Kapcsolódó specifikációk:
 
@@ -40,7 +52,7 @@ Feladatok:
 
 **Továbbhaladási feltétel:** a jelenlegi kurzusok és URL-ek regresszió nélkül működnek; a közös mag nem függ Node/Bun fájlkezeléstől. Tesztek, típusellenőrzés és build sikeresek.
 
-Ez mindkét task közös munkája: ne készüljön két feldolgozó implementáció.
+A motor- és feldolgozási terv az első két szakasz koordinált tervezési kapuin halad át; a pipeline implementációja csak a motor/példány migráció kapuja után indul. A közös mag és adapterkód a motor tulajdona, nem példányonkénti implementáció. A preview és publikálási task közös munkája: ne készüljön két feldolgozó.
 
 ### Párhuzamos előfeltétel: hosting ellenőrzése
 
@@ -50,7 +62,7 @@ Már az első szakasz alatt ellenőrizzük a privát `atom-forge/bookmd` repo ho
 
 Tisztázandó a Pages elérhetősége, a publikált oldal láthatósága, a base path, az environment jogosultságai és az Actions-keret. Ha a kívánt Pages-felállás nem támogatott, még a deploy implementálása előtt hostingdöntés szükséges.
 
-### 2. Helyi kurzuselőnézet
+### 3. Helyi kurzuselőnézet
 
 Specifikáció: [Helyi kurzuselőnézet task](task-local-course-preview.md).
 
@@ -91,9 +103,9 @@ Nem kell saját tokent generálnia, Actions secretet beállítania vagy workflow
 - A tulajdonos a collaborator eltávolításával visszavonhatja a jövőbeni hozzáférést. Ez a korábban publikált tartalmat nem törli automatikusan; eltávolítása külön regiszter-/publikálási művelet.
 - A privát forrás nem teszi priváttá a generált oldalt. A kijelölt tananyag publikálását a szerzőnek külön, egyértelműen jóvá kell hagynia.
 
-A modell a Git-import szakasz része. A [publikálási task](task-automatic-publishing.md) jelenlegi, csak publikus forrásokra szűkített hatókörét ennek megfelelően ki kell bővíteni a megvalósítás előtt.
+A modell a Git-import szakasz része; a [publikálási task](task-automatic-publishing.md) hatóköre publikus és a machine userrel megosztott privát forrásokat is tartalmaz. Az SSH-adapter a motoré, a kulcs és hozzáférés üzemeltetése a példányé.
 
-### 3. Git-források bekötése, kézi ellenőrzéssel
+### 4. Git-források bekötése, kézi ellenőrzéssel
 
 Kapcsolódó specifikációk:
 
@@ -113,7 +125,7 @@ Feladatok:
 
 **Továbbhaladási feltétel:** a Git-import, a linkek és assetek működnek, hibás forrás blokkolja a buildet, a verziókezelt helyi tartalom érintetlen marad. Automatikus ütemezést és éles deployt még nem kapcsolunk be.
 
-### 4. Automatikus ellenőrzés és publikálás
+### 5. Automatikus ellenőrzés és publikálás
 
 Kapcsolódó specifikációk:
 
@@ -135,12 +147,15 @@ Feladatok:
 
 ## Követési lista
 
-- [ ] Metaadat-előfeltétel és kézi UI-validáció.
-- [ ] Közös feldolgozómag és szerződések.
+- [x] Metaadatmodell, aggregálás, megjelenítés és keresés implementálva, automatizáltan validálva.
+
+- [ ] Koordinált motor-/pipeline-terv, SvelteKit spike és CLI-terv kapui lezárva.
+- [ ] Motor/példány szétválasztás, portal és második minimális fogyasztó validálva.
+- [ ] Közös feldolgozómag és szerződések a motorban.
 - [ ] Hosting/Actions-előfeltételek ellenőrizve.
 - [ ] Helyi kurzuselőnézet kész és validált.
 - [ ] Machine user, meghíváskezelés és védett központi SSH-hitelesítés beállítva.
 - [ ] Git-import publikus és privát forrással, kézi indítással kész és validált.
 - [ ] Változásalapú, időablakos publikálás kész és validált.
 
-A részletes taskok a funkcionális követelmények forrásai; ez a dokumentum a sorrendet és a szakaszhatárokat rögzíti. A közös szerződések változásakor mindkét kapcsolódó taskot aktualizálni kell.
+A részletes taskok a funkcionális követelmények forrásai; ez a dokumentum a sorrendet és a szakaszhatárokat rögzíti. A közös szerződések változásakor mindhárom kapcsolódó taskot aktualizálni kell.

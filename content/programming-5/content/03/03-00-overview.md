@@ -1,5 +1,5 @@
 ---
-chapter: "03"
+type: chapter
 children:
   - "[[03-01-local-and-remote-calls.md]]"
   - "[[03-02-interaction-models.md]]"

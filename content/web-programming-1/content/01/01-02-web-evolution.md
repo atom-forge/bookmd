@@ -1,5 +1,5 @@
 ---
-chapter: "01.02"
+type: content
 tags: []
 ---
 # A web fejlődése: dokumentumwebtől alkalmazásszerű webig

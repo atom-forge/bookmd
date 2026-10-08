@@ -1,5 +1,5 @@
 ---
-chapter: "04.05"
+type: content
 tags: []
 ---
 # Custom APIs, webhooks, and application protocols

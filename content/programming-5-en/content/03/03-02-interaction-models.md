@@ -1,5 +1,5 @@
 ---
-chapter: "03.02"
+type: content
 tags: []
 ---
 # Request–response, messages, events, and streams

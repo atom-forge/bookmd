@@ -1,5 +1,5 @@
 ---
-chapter: "04.04"
+type: content
 tags:
   - figma
   - visual-hierarchy

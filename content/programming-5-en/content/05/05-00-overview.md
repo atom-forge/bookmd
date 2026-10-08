@@ -1,5 +1,5 @@
 ---
-chapter: "05"
+type: chapter
 children:
   - "[[05-01-router-gateway-proxy.md]]"
   - "[[05-02-discovery-and-balancing.md]]"
