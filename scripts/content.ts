@@ -18,7 +18,7 @@ import config from '../portal.config';
 import { parse as parseYaml } from 'yaml';
 import { remarkCallouts, rehypeCalloutIcons } from './callouts';
 
-export type NavItem = { slug: string; title: string; parent: string | null };
+export type NavItem = { slug: string; title: string; parent: string | null; chapter?: string | number };
 export type ContentPage = NavItem & {
   course: string | null; html: string; text: string; inTree: boolean;
   previous: string | null; next: string | null;
@@ -26,10 +26,14 @@ export type ContentPage = NavItem & {
   headings: { id: string; title: string; depth: number }[];
 };
 export type Course = {
-  slug: string; name: string; instructor: string | null; year: string | number | null;
-  language: string; tags: string[]; intro: string; image: string | null;
+  slug: string; name: string; author: string | null;
+  language: string; tags: string[]; contentTags: string[]; intro: string; image: string | null;
 };
-export type ContentGraph = { pages: ContentPage[]; navigation: NavItem[]; courses: Course[] };
+export function normalizeTag(tag: string): string {
+  return tag.trim().toLocaleLowerCase('hu').normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/gu, ' ');
+}
+
+export type ContentGraph = { branding?: string; pages: ContentPage[]; navigation: NavItem[]; courses: Course[] };
 const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 const external = /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i;
 
@@ -44,6 +48,27 @@ export function youtubeId(url: string): string | null {
     }
     return id && /^[\w-]{11}$/.test(id) ? id : null;
   } catch { return null; }
+}
+
+export function interactiveEmbed(url: string): { src: string; title: string; className: string } | null {
+  const video = youtubeId(url);
+  if (video) return { src: `https://www.youtube-nocookie.com/embed/${video}`, title: 'YouTube video', className: 'youtube' };
+  try {
+    const parsed = new URL(url);
+    if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password) return null;
+    if (['desmos.com', 'www.desmos.com'].includes(parsed.hostname)) {
+      const graph = parsed.pathname.match(/^\/(calculator|3d)\/([a-zA-Z0-9]+)\/?$/);
+      if (graph) return { src: `https://www.desmos.com/${graph[1]}/${graph[2]}?embed`, title: graph[1] === '3d' ? 'Desmos 3D graph' : 'Desmos graph', className: 'math-embed' };
+    }
+    if (['geogebra.org', 'www.geogebra.org'].includes(parsed.hostname)) {
+      const material = parsed.pathname.match(/^\/m\/([a-zA-Z0-9]+)\/?$/);
+      if (material) return {
+        src: `https://www.geogebra.org/material/iframe/id/${material[1]}/width/1000/height/600/border/888888/rc/true/ai/false/sdz/true/smb/false/stb/false/stbh/false/ld/false/sri/true/sfsb/true`,
+        title: 'GeoGebra activity', className: 'math-embed'
+      };
+    }
+  } catch { /* Unsupported URLs remain ordinary links. */ }
+  return null;
 }
 
 async function renderSource(tree: MarkdownRoot, usedIds: Set<string>) {
@@ -83,13 +108,13 @@ async function renderSource(tree: MarkdownRoot, usedIds: Set<string>) {
           }
           if (node.tagName === 'p' && node.children.length === 1 && parentNode && index !== undefined) {
             const link = node.children[0];
-            if (link.type !== 'element' || link.tagName !== 'a') return;
-            const id = youtubeId(String(link.properties.href));
-            if (!id) return;
+            if (link.type !== 'element' || link.tagName !== 'a' || link.properties['data-embed'] !== 'true') return;
+            const embed = interactiveEmbed(String(link.properties.href));
+            if (!embed) return;
             parentNode.children[index] = {
               type: 'element', tagName: 'iframe', properties: {
-                src: `https://www.youtube-nocookie.com/embed/${id}`, title: 'YouTube video',
-                loading: 'lazy', allowFullScreen: true, className: ['youtube'],
+                src: embed.src, title: embed.title,
+                loading: 'lazy', allowFullScreen: true, className: [embed.className],
                 referrerPolicy: 'strict-origin-when-cross-origin'
               }, children: []
             };
@@ -126,7 +151,7 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
   async function document(file: string) {
     let body = await readFile(file, 'utf8');
     let metadata: Record<string, unknown> = {};
-    const frontmatter = body.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+    const frontmatter = body.match(/^\uFEFF?---\r?\n((?:[^\n]*\n)*?)---(?:\r?\n|$)/);
     if (frontmatter) {
       const parsed = parseYaml(frontmatter[1]);
       if (parsed !== null && (typeof parsed !== 'object' || Array.isArray(parsed))) throw new Error(`Invalid frontmatter in ${file}`);
@@ -148,6 +173,22 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       return { path: link.url, title: toString(link).trim() };
     });
     const tree = parser.parse(body) as MarkdownRoot;
+    // GFM autolinks split [[https://...]] into text + link + text.
+    // Rejoin those nodes before processing regular wiki links.
+    visit(tree, 'paragraph', paragraph => {
+      for (let i = 1; i < paragraph.children.length - 1; i++) {
+        const before = paragraph.children[i - 1];
+        const link = paragraph.children[i];
+        const after = paragraph.children[i + 1];
+        if (before.type !== 'text' || link.type !== 'link' || after.type !== 'text'
+          || !before.value.endsWith('[[') || !after.value.startsWith(']]')) continue;
+        before.value = before.value.slice(0, -2);
+        after.value = after.value.slice(2);
+        link.data = { ...link.data, hProperties: { 'data-embed': 'true' } };
+        if (!before.value) { paragraph.children.splice(i - 1, 1); i--; }
+        if (!after.value) paragraph.children.splice(i + 1, 1);
+      }
+    });
     const references = new Map<string, string>();
     visit(tree, 'definition', node => { references.set(node.identifier, node.url); });
     visit(tree, (node, index, parent) => {
@@ -167,6 +208,10 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
         if (!url) continue;
         if (match.index! > cursor) parts.push({ type: 'text', value: node.value.slice(cursor, match.index) });
         const link: Link = { type: 'link', url, children: match[2] ? [{ type: 'text', value: match[2].trim() }] : [] };
+        if (external.test(url)) {
+          if (!link.children.length) link.children = [{ type: 'text', value: url }];
+          link.data = { hProperties: { 'data-embed': 'true' } };
+        }
         wikiLinks.add(link);
         parts.push(link);
         cursor = match.index! + match[0].length;
@@ -230,6 +275,8 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       .sort((a, b) => b.directory.length - a.directory.length)[0]?.slug ?? null;
   }
   const catalog = await document(start);
+  if (catalog.metadata.branding !== undefined && typeof catalog.metadata.branding !== 'string') throw new Error(`Invalid branding in ${start}: expected text`);
+  graph.branding = typeof catalog.metadata.branding === 'string' ? catalog.metadata.branding.trim() : '';
   const coursePaths = referencePaths(catalog.metadata.courses, 'courses', start);
   for (const path of coursePaths) {
     const file = await markdownTarget(start, path);
@@ -257,11 +304,10 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
     name ||= slug.split('/').at(-1)!;
     const tags = metadata.tags ?? [];
     if (!Array.isArray(tags) || tags.some(tag => typeof tag !== 'string' || !tag.trim())) throw new Error(`Invalid tags in ${file}`);
-    const year = metadata.year ?? null;
-    if (year !== null && typeof year !== 'string' && typeof year !== 'number') throw new Error(`Invalid year in ${file}`);
+    if ('instructor' in metadata || 'year' in metadata) throw new Error(`Obsolete course metadata in ${file}: use author instead of instructor and remove year`);
     const image = text('image');
     const imageUrl = image ? await asset(await target(file, image)) : null;
-    graph.courses.push({ slug, name, instructor: text('instructor') || null, year, language: text('language', true), tags: [...new Set(tags.map(tag => tag.trim()))], intro: text('intro'), image: imageUrl });
+    graph.courses.push({ slug, name, author: text('author') || null, language: text('language', true), tags: [...new Set(tags.map(tag => tag.trim()))], contentTags: [], intro: text('intro'), image: imageUrl });
     titles.set(slug, name);
   }
   const processedChildren = new Set<string>();
@@ -291,11 +337,13 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       const usedIds = new Set<string>();
       let html = '';
       let author: string | null = null;
+      let chapter: NavItem['chapter'];
       let tags: string[] = [];
       async function append(file: string, ancestors: string[]) {
         if (ancestors.includes(file)) throw new Error(`Circular sources: ${[...ancestors, file].join(' -> ')}`);
         const { tree, sources, children, metadata } = await document(file);
         if (!ancestors.length) {
+          chapter = typeof metadata.chapter === 'string' || typeof metadata.chapter === 'number' ? metadata.chapter : undefined;
           if (metadata.author !== undefined && typeof metadata.author !== 'string') throw new Error(`Invalid author in ${file}`);
           author = typeof metadata.author === 'string' ? metadata.author.trim() || null : null;
           const pageTags = metadata.tags ?? [];
@@ -341,8 +389,8 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       title ||= slug.split('/').at(-1) || config.title;
       const parent = parents.get(slug) ?? null;
       const inTree = parents.has(slug);
-      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, inTree, author, tags, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
-      if (inTree) graph.navigation.push({ slug, title, parent });
+      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(chapter !== undefined ? { chapter } : {}), inTree, author, tags, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
+      if (inTree) graph.navigation.push({ slug, title, parent, ...(chapter !== undefined ? { chapter } : {}) });
     }
 
   // Reject hierarchy cycles even when a branch is reached through an ordinary link.
@@ -380,11 +428,23 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
     page.inTree = parents.has(page.slug);
     page.course = owner(files.get(page.slug)!);
   }
+  for (const course of graph.courses) {
+    const seen = new Set(course.tags.map(normalizeTag));
+    for (const page of graph.pages) {
+      if (page.course !== course.slug) continue;
+      for (const tag of page.tags) {
+        const key = normalizeTag(tag);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        course.contentTags.push(tag);
+      }
+    }
+  }
   const pagesBySlug = new Map(graph.pages.map(page => [page.slug, page]));
   graph.navigation = [];
   function navigationBranch(slug: string) {
     const page = pagesBySlug.get(slug)!;
-    graph.navigation.push({ slug, title: page.title, parent: page.parent });
+    graph.navigation.push({ slug, title: page.title, parent: page.parent, ...(page.chapter !== undefined ? { chapter: page.chapter } : {}) });
     const declaredChildren = [...membership].filter(([, rootSlug]) => rootSlug === slug).map(([member]) => member);
     const children = [...parents].filter(([child, parent]) => parent === slug && !declaredChildren.includes(child)).map(([child]) => child);
     for (const child of [...children, ...declaredChildren]) navigationBranch(child);
@@ -398,7 +458,7 @@ export async function generate() {
   const graph = await buildGraph(resolve(config.contentRoot), config.entrypoint, process.env.BASE_PATH || '', resolve('static/content-assets'));
   await mkdir('src/lib/generated', { recursive: true });
   await writeFile('src/lib/generated/content.json', JSON.stringify(graph));
-  await writeFile('src/lib/generated/catalog.json', JSON.stringify({ page: graph.pages.find(page => page.slug === '')!, courses: graph.courses }));
+  await writeFile('src/lib/generated/catalog.json', JSON.stringify({ branding: graph.branding || '', page: graph.pages.find(page => page.slug === '')!, courses: graph.courses }));
   await writeFile('static/.nojekyll', '');
   console.log(`Generated ${graph.pages.length} pages in ${graph.courses.length} courses.`);
   return graph;

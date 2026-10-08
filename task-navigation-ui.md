@@ -12,7 +12,7 @@ A kurzus teljes szerkezete legyen elérhető a bal oldali menüből, egyszerre e
 - Mobil kurzusmenü hamburgerrel nyitható panelben.
 - Breadcrumb és jobb oldali oldaltartalom-navigáció elrejtése mobilon.
 
-Kiindulópont: `src/lib/DocumentPage.svelte`, valamint az általa használt `src/lib/course-menu` modul. A megvalósítás előtt ellenőrizni kell az adatmodell és a kapcsolódó komponensek jelenlegi működését.
+Kiindulópont: `src/routes/(+lib)/DocumentPage.svelte`, valamint az általa használt `src/lib/course-menu` modul. A megvalósítás előtt ellenőrizni kell az adatmodell és a kapcsolódó komponensek jelenlegi működését.
 
 ## Bal oldali kurzusfa
 

@@ -27,8 +27,7 @@ A kurzusoldal tartalma és adatai a saját `course.md` fájljában vannak:
 ```md
 ---
 name: Web Programming 1
-instructor: Elvis
-year: 2026
+author: Elvis
 language: en
 tags: [web, programming]
 intro: How the web works.
@@ -64,7 +63,7 @@ A cím nélküli wikilink az első H1-et használja; egyedi címhez Markdown-lin
 
 Egy dokumentumnak egy hierarchikus szülője lehet. Ismételt gyermek, több szülő vagy hierarchikus kör buildhiba. A régi `series` és `tree` mezők hibát okoznak, át kell írni őket `children`-re. A `***` egyszerű Markdown-elválasztó, nincs navigációs szerepe.
 
-A katalógusban nincs oldaltartalom-jegyzék. Kurzuson belül balra egyszintű, kontextusfüggő menü, jobbra az aktuális dokumentum címsoraiból épülő tartalomjegyzék jelenik meg. Szülőoldalon a közvetlen gyermekeket, levéloldalon a közvetlen testvéreket mutatjuk. A szint címe a szülőoldalra vezet; a breadcrumb segítségével magasabb szintre is lehet lépni. Keskeny képernyőn a menü és a tartalomjegyzék a cikk fölé kerül.
+A katalógusban nincs oldaltartalom-jegyzék; a katalógus megtartja a széles, legfeljebb 2040 px-es keretet. Kurzuson belül 900 px-től balra rekurzív kurzusfa látható, 1280 px-től jobbra az aktuális dokumentum címsoraiból épülő tartalomjegyzék. Egyetlen ágútvonal nyitott: a teljes sor natív linkje navigál és megnyitja a kiválasztott útvonalat, nem toggle; az aktív link ismételt kattintása is visszaállítja az útvonalat. A breadcrumb külön mutatja az ősöket, a közvetlen szülőt és az aktuális dokumentumot. 900 px alatt a BookMD felirat bal oldalán hamburger nyit natív modális navigációs panelt, önállóan görgethető törzzsel; a tartalomjegyzék rejtett marad. A részletes működő kompozíciók: [navigációs panel](docs/ui/navigation-panel.md) és [katalóguskártya](docs/ui/catalog-card.md).
 
 A dokumentum saját tartalma után a `sources` fájljai sorrendben jelennek meg:
 
@@ -132,3 +131,5 @@ tags:
 ```
 
 A megadott szerző és címkék az anyagrész tartalma előtt jelennek meg. A címkék szabadon választhatók. Ezek az adatok nem öröklődnek a kurzustól, a szülőfejezettől vagy a `sources` fájlokból; hiányzó mezőhöz nem jelenik meg üres helyőrző.
+
+A kurzus szerzője az opcionális `author`; az elavult `instructor` és kurzus `year` mezők buildhibát okoznak. A katalógus a saját címkék mellett minden kurzushoz tartozó generált oldal címkéit is mutatja és keresi (`contentTags`), kis-/nagybetű-, ékezet- és whitespace-normalizált deduplikálással. Részletek és megjelenítési sorrend: [katalóguskártya](docs/ui/catalog-card.md).

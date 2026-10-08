@@ -6,6 +6,7 @@ courses:
   - "[[ux-ui-en/course.md]]"
   - "[[programming-5/course.md]]"
   - "[[programming-5-en/course.md]]"
+branding: University of Pécs FEIT
 ---
 # Courses
 

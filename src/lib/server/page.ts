@@ -11,7 +11,7 @@ export function loadPortalPage(slug = '') {
   const titleHeading = page.slug !== '' && firstHeading?.title === page.title ? firstHeading : null;
   const course = graph.courses.find(course => course.slug === page.course) || null;
   return {
-    page, course,
+    page, course, branding: graph.branding || '',
     courseTree: course ? tree.filter(item => {
       const path = breadcrumbPath(tree, item.slug);
       return path.some(parent => parent.slug === course.slug);
@@ -21,7 +21,7 @@ export function loadPortalPage(slug = '') {
     articleHtml: page.html,
     breadcrumb: breadcrumbPath(tree, page.inTree ? page.slug : course?.slug || ''),
     treePaths: Object.fromEntries(tree.map(item => [item.slug, breadcrumbPath(tree, item.slug)])),
-    ...readingOrder(graph.pages, page)
+    ...readingOrder(graph.pages, page, tree)
   };
 }
 export type PortalPageData = ReturnType<typeof loadPortalPage>;
