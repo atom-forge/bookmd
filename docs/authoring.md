@@ -2,6 +2,7 @@
 
 BookMD turns Markdown files into a static book collection on the web. This guide is for authors: how a collection and a book are structured, and which metadata and content the system supports.
 
+- Try your book without installing anything: [Previewing your book locally](#previewing-your-book-locally)
 - First upload to GitHub Pages: [Publishing a collection on GitHub](deploy-a-book.md)
 - Including a book from another repository: [Books from other GitHub repositories](remote-books.md)
 - On your own server: [Self-hosting: build and upload](self-hosted.md)
@@ -11,10 +12,11 @@ BookMD turns Markdown files into a static book collection on the web. This guide
 
 1. [Basic concepts](#basic-concepts)
 2. [The smallest collection](#the-smallest-collection)
-3. [Structure and hierarchy](#structure-and-hierarchy)
-4. [Metadata](#metadata)
-5. [Supported content](#supported-content)
-6. [URLs and the error page](#urls-and-the-error-page)
+3. [Previewing your book locally](#previewing-your-book-locally)
+4. [Structure and hierarchy](#structure-and-hierarchy)
+5. [Metadata](#metadata)
+6. [Supported content](#supported-content)
+7. [URLs and the error page](#urls-and-the-error-page)
 
 ## Basic concepts
 
@@ -71,6 +73,26 @@ The quickest start is the [`bookmd-starter`](https://github.com/atom-forge/bookm
 - The entry file of the collection (`books.md` here) is set in `portal.config.ts`. The catalogue is shown at `/`.
 - The content root may contain symlinks, for example to an external notes folder. A path that leaves the root with `../` is still an error.
 - Running the engine locally requires Bun 1.4+ and Node 22.12+. The GitHub Pages workflow installs them itself, so you need nothing on your own machine to publish.
+
+## Previewing your book locally
+
+You can check how a book looks **without installing anything and without a repository**. Every BookMD site has a preview page at `/@dev`, for example [atom-forge.github.io/@dev/](https://atom-forge.github.io/@dev/):
+
+1. Open the preview page in a desktop **Chrome or Edge** (the browser must offer folder access; it works on HTTPS and on localhost).
+2. Press **Open course folder** (the button still uses the old "course" wording), choose **the folder of your book**, the one that contains its `book.md`, and allow read access.
+3. Pick the entry file. `book.md`, `course.md`, `index.md` and `readme.md` are highlighted, and the best match is preselected; you always confirm the choice.
+4. Read the book as readers will see it: menu, chapters, numbering, formulas, callouts, embedded videos and figures.
+
+After you edit a file, press **Reload** in the bar above the preview to see the change. **Entry file** and **Folder** in the same bar switch to another entry file or folder. If the browser is reloaded, the preview restores the folder and the page; if Chrome no longer grants access, press "Continue with this folder".
+
+What to expect:
+
+- Your files are read in the browser only. Nothing is uploaded and nothing is written.
+- Broken links and missing images do not stop the preview. They are listed as diagnostics, so you can fix them before publishing.
+- Hidden folders and `node_modules` are skipped; at most 20,000 files are listed, and Markdown files over 5 MB are rejected.
+- The preview shows one book. The collection around it (the catalogue and other books) is not part of it.
+
+The preview is for writing. When the book is ready, [publish it](deploy-a-book.md).
 
 ## Structure and hierarchy
 

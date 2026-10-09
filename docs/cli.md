@@ -48,12 +48,7 @@ A collection needs a `package.json` that depends on the `@atom-forge/bookmd` pac
 
 ## Local preview in the browser (`/@dev`)
 
-On a published site (and on the `dev` server) the `/@dev` address gives an author preview: you can open a local folder in the browser (`showDirectoryPicker`, desktop Chrome or Edge, HTTPS or localhost) and see the content immediately. The files are read by the browser only; nothing is uploaded or written back. This site's own preview is at [atom-forge.github.io/@dev/](https://atom-forge.github.io/@dev/).
-
-- On start you can choose the entry file. Files named `book.md`, `course.md`, `index.md` and `readme.md` are highlighted.
-- Hidden folders and `node_modules` are skipped; at most 20,000 files are listed, and Markdown files over 5 MB are rejected.
-- Broken links and images appear as diagnostics; the preview does not stop.
-- After a reload the browser remembers the folder and the page. If Chrome no longer grants read access, a "Continue with this folder" button asks again.
+The `/@dev` page of any BookMD site (and of the `dev` server) previews a local folder directly in the browser, without installing anything. Authors should read [Previewing your book locally](authoring.md#previewing-your-book-locally).
 
 ## Change detection: `bookmd plan`
 
