@@ -79,7 +79,7 @@ The quickest start is the [`bookmd-starter`](https://github.com/atom-forge/bookm
 You can check how a book looks **without installing anything and without a repository**. Every BookMD site has a preview page at `/@dev`, for example [atom-forge.github.io/@dev/](https://atom-forge.github.io/@dev/):
 
 1. Open the preview page in a desktop **Chrome or Edge** (the browser must offer folder access; it works on HTTPS and on localhost).
-2. Press **Open course folder** (the button still uses the old "course" wording), choose **the folder of your book**, the one that contains its `book.md`, and allow read access.
+2. Press **Open book folder**, choose **the folder of your book**, the one that contains its `book.md`, and allow read access.
 3. Pick the entry file. `book.md`, `course.md`, `index.md` and `readme.md` are highlighted, and the best match is preselected; you always confirm the choice.
 4. Read the book as readers will see it: menu, chapters, numbering, formulas, callouts, embedded videos and figures.
 

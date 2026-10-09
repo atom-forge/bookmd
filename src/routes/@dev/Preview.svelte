@@ -161,7 +161,7 @@
     const location = parsePreviewHash(page.url.hash);
     if (!loaded || location.slug === null) return;
     if (!loaded.graph.pages.some(candidate => candidate.slug === location.slug)) {
-      error = `Page ${location.slug} is not part of this course; showing the course start page.`;
+      error = `Page ${location.slug} is not part of this book; showing the book start page.`;
       currentSlug = '';
       void goto(route, { replaceState: true, noScroll: true });
       return;
@@ -173,10 +173,10 @@
     if (!loaded || (slug === null && !heading)) return;
     void scrollTo(heading);
   });
-  // A reload that removed the open page returns to the course start.
+  // A reload that removed the open page returns to the book start.
   $effect(() => {
     if (loaded && currentSlug && !loaded.graph.pages.some(candidate => candidate.slug === currentSlug)) {
-      error = `Page ${currentSlug} no longer exists; showing the course start page.`;
+      error = `Page ${currentSlug} no longer exists; showing the book start page.`;
       currentSlug = '';
     }
   });

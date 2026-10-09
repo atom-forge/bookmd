@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-  <title>Local course preview · BookMD</title>
+  <title>Local book preview · BookMD</title>
   <meta name="robots" content="noindex"/>
 </svelte:head>
 <Preview/>

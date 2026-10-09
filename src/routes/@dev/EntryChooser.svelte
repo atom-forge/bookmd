@@ -13,7 +13,7 @@
 
 <section class="mx-auto mt-12 mb-16 flex w-full max-w-2xl flex-col" aria-labelledby="{id}-title">
   <h1 id="{id}-title" class="mx-5 text-2xl font-semibold tracking-tight">Choose the entry file</h1>
-  <p class="mx-5 mt-2 text-muted-contrast">Folder <strong class="break-all">{folder}</strong>. Pick the course Markdown file to render.</p>
+  <p class="mx-5 mt-2 text-muted-contrast">Folder <strong class="break-all">{folder}</strong>. Pick the book Markdown file to render.</p>
   {#if truncated}<p class="mx-5 mt-2 text-sm text-warning" role="status">The folder is very large; only the first files were listed.</p>{/if}
   {#if candidates.length}
     <Input class="mx-5 mt-5" bind:value={query} icon={Search} placeholder="Filter by path" aria-label="Filter Markdown files"/>

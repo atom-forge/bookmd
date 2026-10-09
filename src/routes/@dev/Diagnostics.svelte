@@ -9,7 +9,7 @@
 {/if}
 {#if items.length}
   <details class="border-b border-frame bg-canvas" open={items.length <= 5}>
-    <summary class="mx-5 my-2 cursor-pointer text-sm font-medium text-warning">{items.length} {items.length === 1 ? 'problem' : 'problems'} in the course</summary>
+    <summary class="mx-5 my-2 cursor-pointer text-sm font-medium text-warning">{items.length} {items.length === 1 ? 'problem' : 'problems'} in the book</summary>
     <ul class="mx-5 mt-1 mb-3 flex flex-col gap-2 text-sm">
       {#each items as item}
         <li class="min-w-0"><code class="break-all">{folderPath(item.file) ?? item.file}</code>: <code class="break-all">{item.target}</code> — <span class="break-words">{item.message}</span></li>

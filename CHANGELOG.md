@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- A "Support AtomForge" link (GitHub Sponsors) in the page footer.
+
+### Changed
+- The local preview (`/@dev`) says "book" instead of "course" ("Open book folder", "Local book preview").
+
 ## [0.1.2] - 2026-10-09
 
 ### Added
-- A "Support AtomForge" link (GitHub Sponsors) in the page footer.
 - A course entry named `book.md` gets the same short URL as `course.md` (`/<folder>/`).
 - `requires` and `teaches` page frontmatter; a block below "On this page" (at the end of the article on narrow screens) lists them.
 

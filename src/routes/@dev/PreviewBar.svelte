@@ -7,7 +7,7 @@
   } = $props();
 </script>
 
-<div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-frame bg-surface" role="region" aria-label="Local course preview">
+<div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-frame bg-surface" role="region" aria-label="Local book preview">
   <span class="mx-5 mt-2 mb-2 text-[10px] font-bold tracking-[1.5px] text-muted-contrast min-[900px]:mr-0">LOCAL PREVIEW</span>
   <span class="mx-5 my-1 min-w-0 flex-1 break-all text-xs min-[900px]:mx-0" title="{folder}/{entry}"><strong>{folder}</strong> / {entry}</span>
   {#if stale}<span class="mx-5 text-xs text-warning min-[900px]:mx-0" role="status">Showing the last successful load</span>{/if}
