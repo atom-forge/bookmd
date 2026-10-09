@@ -1,9 +1,9 @@
 node_modules
 .svelte-kit/
 build/
+.bookmd/
 src/lib/generated/*.json
 static/content-assets/
 .env
 .DS_Store
-
-.bookmd/
+*.tgz
