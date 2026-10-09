@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-09
+
 ### Added
 - A course entry named `book.md` gets the same short URL as `course.md` (`/<folder>/`).
 - `requires` and `teaches` page frontmatter; a block below "On this page" (at the end of the article on narrow screens) lists them.
