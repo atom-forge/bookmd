@@ -159,3 +159,16 @@ Every build command (`dev`, `build`, `check`, `content`) first downloads the Git
 - `.bookmd/course-sources.json` lists `id`, normalized source and resolved commit of the build. `bookmd dev` re-syncs only when restarted.
 
 Not yet done: the registry fingerprint and baseline comparison for change detection, the CI/time-window workflow, private sources.
+
+## Change detection: `bookmd plan`
+
+```sh
+bookmd plan --instance-commit <sha> --engine-commit <sha> [--baseline plan.json] [--out plan.json] [--force]
+bookmd build --sources plan.json
+```
+
+`plan` resolves every Git ref to a commit (no download) and writes a plan: schema version, the fingerprint, its inputs and the resolved sources. Inputs: instance commit (local content, config, integration), engine commit and version, SHA-256 of the instance `bun.lock`, SHA-256 of the normalized course registry, and every source with its commit. It compares the plan with a baseline — the plan of the last successful publication — and prints `Changed: <reasons>` or `Unchanged: nothing to publish`; under GitHub Actions it also writes `changed` and `reasons` to `$GITHUB_OUTPUT`.
+
+- A missing, corrupt, tampered, unknown-schema or incomplete baseline always means a full build. `--force` always rebuilds. An unresolvable ref or invalid registry fails the command (exit code 1).
+- `--sources plan.json` makes `build`, `check`, `content` and `sources` download exactly the planned commits and never resolve a ref again, so the commits that were checked are the commits that are built, even if a branch moved in between. A plan that does not match the registry is rejected.
+- The baseline is the instance's responsibility: the plan file of a deployment is stored only after that deployment succeeded.

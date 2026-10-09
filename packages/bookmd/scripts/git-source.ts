@@ -101,12 +101,27 @@ export async function checkout(source: ResolvedSource, root: string, transport: 
   return { ...source, directory, contentRoot: dirname(entry), entrypoint: entry.slice(dirname(entry).length + sep.length) };
 }
 
-/** Validates, resolves and downloads every Git source of a registry. The first failure aborts: no partial result. */
-export async function syncSources(entries: string[], root: string, transport: GitTransport = githubHttps): Promise<CheckedOut[]> {
+/** Pinned commits by lower-cased normalized source, as recorded by a plan. */
+export type Pins = Map<string, string>;
+
+/**
+ * Validates, resolves and downloads every Git source of a registry. The first failure aborts: no partial result.
+ * With `pins`, exactly the planned commits are downloaded and no ref is resolved again.
+ */
+export async function syncSources(entries: string[], root: string, transport: GitTransport = githubHttps, pins?: Pins): Promise<CheckedOut[]> {
   const parsed = entries.map(parseSourceRef);
   const duplicates = parsed.filter((source, index) => parsed.findIndex(other => other.normalized.toLowerCase() === source.normalized.toLowerCase()) !== index);
   if (duplicates.length) throw new GitSourceError(duplicates[0].normalized, 'listed more than once');
-  const resolved = await Promise.all(parsed.map(source => resolveRef(source, transport)));
+  if (pins) {
+    const known = new Set(parsed.map(source => source.normalized.toLowerCase()));
+    for (const key of pins.keys()) if (!known.has(key)) throw new GitSourceError(key, 'the plan contains a source that is not in the registry; create the plan again');
+  }
+  const resolved = await Promise.all(parsed.map(async (source): Promise<ResolvedSource> => {
+    if (!pins) return resolveRef(source, transport);
+    const commit = pins.get(source.normalized.toLowerCase());
+    if (!commit) throw new GitSourceError(source.normalized, 'the plan does not contain this source; create the plan again');
+    return { ...source, commit, refKind: 'commit' };
+  }));
   const result: CheckedOut[] = [];
   for (const source of resolved) result.push(await checkout(source, root, transport));
   return result;

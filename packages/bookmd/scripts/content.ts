@@ -3,6 +3,7 @@ import { resolve, relative, extname, sep, isAbsolute, basename } from 'node:path
 import { createHash } from 'node:crypto';
 import { processContent, type ContentGraph } from '../src/core/content';
 import { assemble } from './assemble';
+import type { Pins } from './git-source';
 import { gitEntries } from './registry';
 export * from '../src/core/content';
 
@@ -27,7 +28,7 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
   }, entrypoint, { base, title: titleFallback, rootName: basename(root), sealed });
 }
 
-export async function generate(config: { contentRoot: string; entrypoint: string; title?: string }, workRoot = process.cwd(), base = process.env.BASE_PATH || '', options: { refresh?: boolean } = {}) {
+export async function generate(config: { contentRoot: string; entrypoint: string; title?: string }, workRoot = process.cwd(), base = process.env.BASE_PATH || '', options: { refresh?: boolean; pins?: Pins } = {}) {
   const output = (path: string) => resolve(workRoot, path);
   await rm(output('static/content-assets'), { recursive: true, force: true });
   // Git course sources are downloaded and combined with the local content first.

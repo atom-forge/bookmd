@@ -2,7 +2,7 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { isSourceRef } from '../src/core/source-ref';
-import { syncSources, type CheckedOut, type GitTransport } from './git-source';
+import { syncSources, type CheckedOut, type GitTransport, type Pins } from './git-source';
 
 const frontmatter = /^﻿?---\r?\n((?:[^\n]*\n)*?)---(?:\r?\n|$)/;
 /** URL-safe course identifier: lower-case words joined by single hyphens. */
@@ -42,10 +42,10 @@ const synced = new Map<string, CheckedOut[]>();
  * `<work>/content`, with each external course under its own id. Registries without Git
  * entries are processed in place. The versioned local content is never written.
  */
-export async function assemble(config: { contentRoot: string; entrypoint: string }, work: string, entries: string[], options: { transport?: GitTransport; refresh?: boolean } = {}): Promise<Assembly> {
+export async function assemble(config: { contentRoot: string; entrypoint: string }, work: string, entries: string[], options: { transport?: GitTransport; refresh?: boolean; pins?: Pins } = {}): Promise<Assembly> {
   if (!entries.length) return { contentRoot: config.contentRoot, entrypoint: config.entrypoint, sealed: [], sources: [] };
   let checkouts = options.refresh === false ? synced.get(work) : undefined;
-  if (!checkouts) { checkouts = await syncSources(entries, work, options.transport); synced.set(work, checkouts); }
+  if (!checkouts) { checkouts = await syncSources(entries, work, options.transport, options.pins); synced.set(work, checkouts); }
   const ids = new Map<string, string>();
   const sources: AssembledSource[] = [];
   const local = new Set((await readdir(config.contentRoot)).map(name => name.toLowerCase().replace(/\.md$/, '')));

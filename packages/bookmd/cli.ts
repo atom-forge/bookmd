@@ -1,25 +1,30 @@
 #!/usr/bin/env bun
-import { cp, mkdir, rm, writeFile, copyFile, access, readFile, symlink } from 'node:fs/promises';
+import { cp, mkdir, rm, writeFile, copyFile, access, readFile, symlink, appendFile } from 'node:fs/promises';
 import { dirname, resolve, relative, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { generate } from './scripts/content';
-import { syncSources } from './scripts/git-source';
+import { syncSources, type Pins } from './scripts/git-source';
+import { compare, createPlan, parsePlan } from './scripts/plan';
 import { gitEntries } from './scripts/registry';
 
 const engine = dirname(fileURLToPath(import.meta.url));
 const [command, ...args] = process.argv.slice(2);
-const commands = ['dev', 'build', 'check', 'content', 'preview', 'sources'];
+const commands = ['dev', 'build', 'check', 'content', 'preview', 'sources', 'plan'];
 if (!commands.includes(command)) {
-  console.error('Usage: bookmd dev|build|check|content|preview|sources [--config FILE] [-- VITE_ARGS]');
+  console.error('Usage: bookmd dev|build|check|content|preview|sources|plan [--config FILE] [--sources PLAN_FILE] [-- VITE_ARGS]\n  plan --instance-commit SHA --engine-commit SHA [--baseline FILE] [--out FILE] [--force]');
   process.exit(1);
 }
-let configFile = resolve('portal.config.ts');
 let forwarded: string[] = [];
+const valueOptions = ['--config', '--sources', '--baseline', '--out', '--instance-commit', '--engine-commit'];
+const given: Record<string, string> = {};
+let force = false;
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--') { forwarded = args.slice(i + 1); break; }
-  if (args[i] !== '--config' || !args[i + 1]) throw new Error(`Unknown or incomplete argument: ${args[i]}`);
-  configFile = resolve(args[++i]);
+  if (args[i] === '--force') { force = true; continue; }
+  if (!valueOptions.includes(args[i]) || !args[i + 1]) throw new Error(`Unknown or incomplete argument: ${args[i]}`);
+  given[args[i]] = args[++i];
 }
+const configFile = resolve(given['--config'] ?? 'portal.config.ts');
 const instance = dirname(configFile);
 const work = resolve(instance, '.bookmd');
 const output = resolve(instance, 'build');
@@ -40,12 +45,35 @@ for (const writable of [work, output]) {
 }
 await access(resolve(contentRoot, config.entrypoint));
 await mkdir(work, { recursive: true });
+const engineManifest = JSON.parse(await readFile(resolve(engine, 'package.json'), 'utf8'));
+if (command === 'plan') {
+  // Resolves the Git refs (no download) and decides whether a new publication is needed.
+  const sha = /^[0-9a-f]{40}$/;
+  const instanceCommit = given['--instance-commit'], engineCommit = given['--engine-commit'];
+  if (!sha.test(instanceCommit ?? '') || !sha.test(engineCommit ?? '')) { console.error('Error: plan requires --instance-commit and --engine-commit (full commit SHAs).'); process.exit(1); }
+  let plan;
+  try { plan = await createPlan({ contentRoot, entrypoint: config.entrypoint }, { instanceCommit, engineCommit, engineVersion: engineManifest.version, lockfile: resolve(instance, 'bun.lock') }); }
+  catch (error) { console.error(`Error: ${error instanceof Error ? error.message : error}`); process.exit(1); }
+  const baseline = given['--baseline'] ? parsePlan(await readFile(resolve(given['--baseline']), 'utf8').catch(() => '')) : null;
+  const decision = compare(baseline, plan, force);
+  await writeFile(resolve(given['--out'] ?? resolve(work, 'plan.json')), JSON.stringify(plan, null, 2) + '\n');
+  for (const source of plan.sources) console.log(`${source.commit}  ${source.source}`);
+  console.log(decision.changed ? `Changed: ${decision.reasons.join('; ')}` : 'Unchanged: nothing to publish.');
+  if (process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT, `changed=${decision.changed}\nreasons=${decision.reasons.join('; ').replace(/[\r\n]/g, ' ')}\n`);
+  process.exit(0);
+}
+let pins: Pins | undefined;
+if (given['--sources']) {
+  const plan = parsePlan(await readFile(resolve(given['--sources']), 'utf8').catch(() => ''));
+  if (!plan) { console.error('Error: --sources is not a valid plan file.'); process.exit(1); }
+  pins = new Map(plan.sources.map(source => [source.source.toLowerCase(), source.commit]));
+}
 if (command === 'sources') {
   // Resolves and downloads the Git course sources of the registry; any failure aborts without a partial result.
   const entries = await gitEntries(contentRoot, config.entrypoint);
   if (!entries.length) { console.log('No Git course sources in the registry.'); process.exit(0); }
   let sources;
-  try { sources = await syncSources(entries, work); }
+  try { sources = await syncSources(entries, work, undefined, pins); }
   catch (error) { console.error(`Error: ${error instanceof Error ? error.message : error}`); process.exit(1); }
   for (const source of sources) console.log(`${source.commit}  ${source.normalized}  (${source.refKind})`);
   await writeFile(resolve(work, 'course-sources.json'), JSON.stringify({ schemaVersion: 1, sources: sources.map(source => ({ source: source.normalized, commit: source.commit })) }, null, 2) + '\n');
@@ -95,7 +123,7 @@ export default defineConfig({ ssr: { noExternal: ['@atom-forge/ui', 'lucide-svel
   }
 }] });
 `);
-await generate(settings, work, base);
+await generate(settings, work, base, { pins });
 async function run(bin: string, arguments_: string[]) {
   const packageName = bin.startsWith('@') ? bin.split('/').slice(0, 2).join('/') : bin.split('/')[0];
     let root = dirname(fileURLToPath(import.meta.resolve(packageName)));

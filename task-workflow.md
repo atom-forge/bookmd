@@ -154,5 +154,6 @@ A teljes motor-elfogadási kapu nem lezárt: nincs vizuális/böngészős regres
 - [ ] Git-import publikus és privát forrással, kézi indítással kész és validált.
   - Kész és validált (78 teszt, valódi `pte-mik/info` repó): forrásszintaxis-parser, ref→SHA feloldás (branch/tag/SHA, fallback nélkül), pontos SHA letöltése (`bookmd sources`), hibák blokkolják a futást. Elkészült még: kötelező külső kurzus-`id` és URL-névtér, helyi+külső összeállítás egy build inputtá, kurzusonként lezárt hivatkozási határ, forrásverzió-jegyzék (`course-sources.json`). Nyitott: valódi külső kurzus kipróbálása a példányban, privát (SSH) transport.
 - [ ] Változásalapú, időablakos publikálás kész és validált.
+  - Motor oldal kész és tesztelt (106 teszt): `bookmd plan` (fingerprint, baseline-összevetés, force), `--sources` pin a buildben. Nyitott: időablak-gate, workflow, baseline-artifact, végponttól végpontig próba.
 
 A részletes taskok a funkcionális követelmények forrásai; ez a dokumentum a sorrendet és a szakaszhatárokat rögzíti. A közös szerződések változásakor mindhárom kapcsolódó taskot aktualizálni kell.
