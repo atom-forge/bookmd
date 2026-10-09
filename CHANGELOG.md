@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.1] - 2026-10-09
 
+### Fixed
+- Git no longer tries to run a non-portable `/bin/false` as credential helper (it failed to start on macOS and obscured the real error).
+
 ### Changed
 - `bookmd plan`: `--engine-commit` is optional, for engines installed from a registry; their version and the instance lockfile identify the engine.
 

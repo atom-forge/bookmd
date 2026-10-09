@@ -61,7 +61,7 @@ async function git(args: string[], options: { cwd?: string; env?: Record<string,
       env: {
         PATH: process.env.PATH ?? '', HOME: '/nonexistent', LC_ALL: 'C',
         GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null', GIT_CONFIG_NOSYSTEM: '1',
-        GIT_TERMINAL_PROMPT: '0', GIT_ASKPASS: '/bin/false', GIT_LFS_SKIP_SMUDGE: '1', ...options.env
+        GIT_TERMINAL_PROMPT: '0', GIT_ASKPASS: 'false', GIT_LFS_SKIP_SMUDGE: '1', ...options.env
       }
     }, (error, stdout, stderr) => {
       if (!error) return done(stdout);
