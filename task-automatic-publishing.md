@@ -264,7 +264,7 @@ Kapcsolódó taskok: [helyi előnézet](task-local-course-preview.md), [motor/p�
 
 ## Elfogadási feltételek
 
-- [ ] Helyi és egysoros Git-kurzusforrások együtt működnek, publikus és a machine userrel megosztott privát repóval is.
+- [x] Helyi és egysoros Git-kurzusforrások együtt működnek, publikus és privát (GitHub App-pal olvasott) repóval is.
 - [ ] Elfogadott meghívás, hiányzó SSH secret, hibás/visszavont hozzáférés konkrét diagnosztikával ellenőrizve; hiba esetén nincs részleges publikálás.
 - [ ] SSH-kulcs csak forrásolvasáskor elérhető, ellenőrzött hostkulccsal; nincs credential a logban, cache-ben, artifactban vagy outputban. A privát tartalom publikálási jóváhagyása rögzített.
 - [x] Branch, tag, commit SHA és `/`-t tartalmazó ref helyesen feloldható.
