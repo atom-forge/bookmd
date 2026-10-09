@@ -3,12 +3,14 @@ import { cp, mkdir, rm, writeFile, copyFile, access, readFile, symlink } from 'n
 import { dirname, resolve, relative, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { generate } from './scripts/content';
+import { syncSources } from './scripts/git-source';
+import { gitEntries } from './scripts/registry';
 
 const engine = dirname(fileURLToPath(import.meta.url));
 const [command, ...args] = process.argv.slice(2);
-const commands = ['dev', 'build', 'check', 'content', 'preview'];
+const commands = ['dev', 'build', 'check', 'content', 'preview', 'sources'];
 if (!commands.includes(command)) {
-  console.error('Usage: bookmd dev|build|check|content|preview [--config FILE] [-- VITE_ARGS]');
+  console.error('Usage: bookmd dev|build|check|content|preview|sources [--config FILE] [-- VITE_ARGS]');
   process.exit(1);
 }
 let configFile = resolve('portal.config.ts');
@@ -38,6 +40,17 @@ for (const writable of [work, output]) {
 }
 await access(resolve(contentRoot, config.entrypoint));
 await mkdir(work, { recursive: true });
+if (command === 'sources') {
+  // Resolves and downloads the Git course sources of the registry; any failure aborts without a partial result.
+  const entries = await gitEntries(contentRoot, config.entrypoint);
+  if (!entries.length) { console.log('No Git course sources in the registry.'); process.exit(0); }
+  let sources;
+  try { sources = await syncSources(entries, work); }
+  catch (error) { console.error(`Error: ${error instanceof Error ? error.message : error}`); process.exit(1); }
+  for (const source of sources) console.log(`${source.commit}  ${source.normalized}  (${source.refKind})`);
+  await writeFile(resolve(work, 'course-sources.json'), JSON.stringify({ schemaVersion: 1, sources: sources.map(source => ({ source: source.normalized, commit: source.commit })) }, null, 2) + '\n');
+  process.exit(0);
+}
 const manifest = JSON.parse(await readFile(resolve(engine, 'package.json'), 'utf8'));
 for (const name of Object.keys(manifest.dependencies)) {
   let root = dirname(fileURLToPath(import.meta.resolve(`${name}/package.json`)));
@@ -64,6 +77,8 @@ await writeFile(resolve(work, 'vite.config.ts'), `import { sveltekit } from '@sv
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { generate } from './scripts/content';
+import { syncSources } from './scripts/git-source';
+import { gitEntries } from './scripts/registry';
 export default defineConfig({ ssr: { noExternal: ['@atom-forge/ui', 'lucide-svelte'] }, plugins: [tailwindcss(), sveltekit(), {
   name: 'bookmd-content', configureServer(server) {
     const root = ${JSON.stringify(contentRoot)};

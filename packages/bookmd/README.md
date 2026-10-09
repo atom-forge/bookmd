@@ -139,3 +139,15 @@ A statically prerendered `/@dev` route lets an author open a local folder with `
 - A failed reload keeps the previous successful preview, marked as such.
 
 Validated: check, 57 tests (entry candidates, hash scheme, source/core integration, diagnostics, scheme and containment rules), static build, and a scripted desktop Chrome session against an OPFS directory handle (entry choice, navigation, back, heading scroll, blob images, callout/math/Mermaid, reload with changes, failed reload, no external requests). Not yet exercised: the native folder dialog, a non-empty base path, narrow viewports and a build/browser parity test.
+
+## Git course sources (registry syntax and download)
+
+A registry entry can point at a course in a GitHub repository: `<ref>@github.com/<owner>/<repo>/<path-to-entry.md>`, for example `main@github.com/colleague/course/materials/course.md`. The entry file's directory is the course content root. Local `[[…]]` entries are unchanged.
+
+- The ref is required and may be a branch, tag or full commit SHA (ASCII `A–Z a–z 0–9 . _ + - /`). The first `@` separates ref and source. There is no default-branch fallback; a name that is both a branch and a tag is rejected (use a SHA). Only `github.com` is supported; owner and repo are compared case-insensitively.
+- The parser (`src/core/source-ref.ts`) gives a concrete error for a missing ref, unsupported host, invalid owner/repository, a missing or non-`.md` path, and path segments such as `..` or empty ones. Refs cannot start with `-`; Git is always started with an argument array, never a shell.
+- `bookmd sources` resolves every ref to one commit SHA and downloads exactly that commit into `.bookmd/repos/<sha256 of repository+ref>/` (one checkout serves several courses from the same repository and ref; the hash is not a URL). It writes `.bookmd/course-sources.json` (`schemaVersion`, `source`, `commit`). Any failure — unreadable repository, unknown ref, missing entry file, duplicate listing — aborts the whole command with a message and exit code 1.
+- Git runs without user or system configuration (no credential helpers, URL rewriting or hooks), never prompts, creates no symlinks (they become plain files), skips LFS and submodules, and leaves no `.git` directory in the checkout.
+- Public repositories use anonymous HTTPS. Private sources need a different transport (machine-user SSH) and are not implemented; the transport is a replaceable `GitTransport` in `scripts/git-source.ts`.
+
+Not yet done: stable course IDs and URL namespaces for external courses, assembling local and external courses into one build input, and the source-version manifest used for change detection.
