@@ -49,7 +49,7 @@ describe('fingerprint and comparison', () => {
 
 describe('plan against Git repositories', () => {
   let work: string;
-  const transport: GitTransport = { url: ({ repo }) => `file://${join(work, 'remote', repo)}` };
+  const transport: GitTransport = { url: ({ repo }) => `file://${join(work, 'remote', repo.toLowerCase())}` };
   const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...args], { cwd, stdio: 'pipe' }).toString().trim();
   const course = (title: string) => `---\nid: ext\nname: Ext\nlanguage: en\n---\n# ${title}\n`;
   beforeAll(async () => {

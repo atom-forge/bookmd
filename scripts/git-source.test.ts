@@ -40,7 +40,8 @@ describe('source reference parser', () => {
 
 describe('git adapter', () => {
   let work: string; let repo: string; let first: string; let second: string;
-  const transport: GitTransport = { url: ({ repo: name }) => `file://${join(work, name)}` };
+  // Like GitHub, the fake server ignores the case of repository names (the file system might not).
+  const transport: GitTransport = { url: ({ repo: name }) => `file://${join(work, name.toLowerCase())}` };
   const sh = async (cwd: string, ...args: string[]) => {
     const child = Bun.spawn(['git', '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...args], { cwd, stdout: 'pipe', stderr: 'pipe' });
     const out = await new Response(child.stdout).text();
