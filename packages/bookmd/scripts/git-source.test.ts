@@ -69,6 +69,18 @@ describe('git adapter', () => {
     expect((await resolveRef(parseSourceRef('v1@github.com/o/course-repo/materials/course.md'), transport))).toMatchObject({ commit: first, refKind: 'tag' });
     expect((await resolveRef(parseSourceRef(`${first}@github.com/o/course-repo/materials/course.md`), transport))).toMatchObject({ commit: first, refKind: 'commit' });
   });
+  test('ignores the configuration of the repository it runs in', async () => {
+    const host = join(work, 'host');
+    await mkdir(host, { recursive: true });
+    await sh(host, 'init', '-q', '-b', 'main');
+    // Like the credentials actions/checkout stores: local configuration that would break every other source.
+    await sh(host, 'config', `url.file:///nowhere/.insteadOf`, `file://${join(work, 'course-repo')}`);
+    const before = process.cwd();
+    process.chdir(host);
+    try {
+      expect(await resolveRef(parseSourceRef('main@github.com/o/course-repo/materials/course.md'), transport)).toMatchObject({ commit: second });
+    } finally { process.chdir(before); }
+  });
   test('resolves a ref that contains a slash', async () => {
     expect(await resolveRef(parseSourceRef('release/2026@github.com/o/course-repo/materials/course.md'), transport)).toMatchObject({ commit: first, refKind: 'branch' });
   });

@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep, isAbsolute } from 'node:path';
@@ -46,6 +47,9 @@ export class GitSourceError extends Error {
 }
 
 const timeoutMs = 120_000;
+// Commands that need no repository run outside any: the working directory may be a repository whose
+// local configuration (for example the credentials actions/checkout stores) must not apply to other sources.
+const neutral = tmpdir();
 const fullSha = /^[0-9a-f]{40}$/i;
 
 // Git runs without the user's or system configuration (no credential helpers, URL rewrites or hooks)
@@ -73,7 +77,7 @@ export async function resolveRef(source: SourceRef, transport: GitTransport = de
   if (fullSha.test(source.ref)) return { ...source, commit: source.ref.toLowerCase(), refKind: 'commit' };
   let result;
   try {
-    result = await withAccess(source, transport, ({ url, env }) => git(['ls-remote', '--', url, `refs/heads/${source.ref}`, `refs/tags/${source.ref}`, `refs/tags/${source.ref}^{}`], { env }));
+    result = await withAccess(source, transport, ({ url, env }) => git(['ls-remote', '--', url, `refs/heads/${source.ref}`, `refs/tags/${source.ref}`, `refs/tags/${source.ref}^{}`], { env, cwd: neutral }));
   } catch (error) {
     throw new GitSourceError(source.normalized, `cannot read repository ${source.owner}/${source.repo}: ${(error as Error).message}`);
   }
