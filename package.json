@@ -45,7 +45,10 @@
     "test": "bun test src scripts",
     "check": "bun cli.ts check --config examples/minimal/portal.config.ts",
     "build:example": "bun cli.ts build --config examples/minimal/portal.config.ts",
-    "verify": "bun run test && bun run check && bun run build:example"
+    "verify": "bun run test && bun run check && bun run build:example",
+    "pub": "ship-it",
+    "pub-check": "ship-it check",
+    "pub-validate": "ship-it validate"
   },
   "dependencies": {
     "@atom-forge/ui": "^0.0.37",
@@ -83,6 +86,13 @@
     "@atom-forge/ship": "0.1.0"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "ship": {
+    "verify": [
+      "bun run check",
+      "bun run test"
+    ]
   }
 }

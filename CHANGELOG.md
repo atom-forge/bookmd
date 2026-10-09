@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-09
+
 ### Added
 - `bookmd` CLI (`dev`, `build`, `check`, `content`, `preview`, `sources`, `plan`) that runs the portal app in a disposable `.bookmd/` work directory of the instance.
 - Browser-safe content core (`@atom-forge/bookmd/core`): Markdown/frontmatter processing, hierarchy, numbering, link and asset resolution through a `ContentSource` adapter.
@@ -16,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change detection (`bookmd plan`) with fingerprints, baseline comparison, forced rebuilds and builds pinned to the planned commits.
 
 ### Changed
+- Configure releases with Ship.
+
 - Markdown links with schemes other than `http`, `https`, `mailto` and `tel` are rendered as text.
 
 ---
