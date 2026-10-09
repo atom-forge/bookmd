@@ -2,6 +2,8 @@
 
 SvelteKit + Bun statikus tananyagportál, az AtomForge UI alapértelmezett témájával.
 
+A motor a helyi `packages/bookmd` subprojekt: privát, verziózott `@atom-forge/bookmd@0.1.0` csomag, saját alkalmazásforrással és generátorral. A gyökér az első fogyasztó: config, tartalom, lockfile és deploy marad itt. A `bookmd` CLI az ignorált `.bookmd/` munkatérben futtatja az alkalmazást, statikus kimenete továbbra is `build/`. Bun 1.4+ és Node 22.12+ szükséges. [CLI, csomagolás, második példány és ismert korlátok](packages/bookmd/README.md).
+
 ```sh
 bun install
 bun run dev

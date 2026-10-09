@@ -5,13 +5,17 @@
     "": {
       "name": "tananyag-portal",
       "dependencies": {
-        "@atom-forge/ui": "^0.0.37",
-        "highlight.js": "^11.12.0",
-        "katex": "^0.16.47",
-        "lucide-svelte": "^1.0.1",
-        "mermaid": "^11.17.2",
+        "@atom-forge/bookmd": "workspace:*",
       },
-      "devDependencies": {
+    },
+    "packages/bookmd": {
+      "name": "@atom-forge/bookmd",
+      "version": "0.1.0",
+      "bin": {
+        "bookmd": "./cli.ts",
+      },
+      "dependencies": {
+        "@atom-forge/ui": "^0.0.37",
         "@sveltejs/adapter-static": "^3.0.10",
         "@sveltejs/kit": "^2.70.3",
         "@sveltejs/vite-plugin-svelte": "^6.2.4",
@@ -20,7 +24,11 @@
         "@types/bun": "latest",
         "@types/hast": "^3.0.5",
         "@types/mdast": "^4.0.4",
+        "highlight.js": "^11.12.0",
+        "katex": "^0.16.47",
+        "lucide-svelte": "^1.0.1",
         "mdast-util-to-string": "^4.0.0",
+        "mermaid": "^11.17.2",
         "rehype-highlight": "^7.0.2",
         "rehype-katex": "^7.0.1",
         "rehype-slug": "^6.0.0",
@@ -46,6 +54,8 @@
     "@atlaskit/pragmatic-drag-and-drop": ["@atlaskit/pragmatic-drag-and-drop@1.8.1", "", { "dependencies": { "@babel/runtime": "^7.0.0", "bind-event-listener": "^3.0.0", "raf-schd": "^4.0.3" } }, "sha512-uXWNPpL8n4OmTVbduH7nq8pk8htqGo/prR5cYEE8sVCPJGAUMWn6lzvWTfI+4VCeQvHiDRODVz4YzH06OVAxhw=="],
 
     "@atlaskit/pragmatic-drag-and-drop-hitbox": ["@atlaskit/pragmatic-drag-and-drop-hitbox@1.2.0", "", { "dependencies": { "@atlaskit/pragmatic-drag-and-drop": "^1.8.0", "@babel/runtime": "^7.0.0" } }, "sha512-eWJvvuHZOC4Yk+Li7QpS+JM2F/I50/3PhMvEcyvcHbXI0FP0kCDD1MiF8Hv7uSOxpk5JNqKoOmK8e1ncOzTgqA=="],
+
+    "@atom-forge/bookmd": ["@atom-forge/bookmd@workspace:packages/bookmd"],
 
     "@atom-forge/ui": ["@atom-forge/ui@0.0.37", "", { "dependencies": { "@atlaskit/pragmatic-drag-and-drop": "^1.7.9", "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0", "chart.js": "^4.5.1", "esm-env": "^1.2.2", "lucide-svelte": "^0.561.0", "marked": "^17.0.4", "sheetclip": "^0.3.0", "svelte-dnd-action": "^0.9.70", "svelte-highlight": "^7.9.0", "tailwind-merge": "^3.4.0", "turndown": "^7.2.0" }, "peerDependencies": { "@sveltejs/kit": "^2.0.0", "svelte": "^5.0.0" } }, "sha512-/CqQ/FJhHxxfjvyaekmxMLzbiAfPEtNhTbXknqAAGY0nOKdLagO6EuDgPMbw6bp5rkwLZz9um2/7l8TjJXOgCQ=="],
 

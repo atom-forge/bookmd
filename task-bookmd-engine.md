@@ -4,7 +4,7 @@
 
 A BookMD alkalmazásmotor telepíthető, verziózott csomag legyen; a jelenlegi `portal` az első fogyasztó példány, nem eldobandó prototípus. Egy második, minimális példány ugyanazzal a csomaggal indíthasson fejlesztői szervert és készíthessen statikus oldalt az alkalmazás forrásának másolása nélkül.
 
-Ez architektúra- és megvalósítási terv, nem kész API vagy implementáció. Jóváhagyott sorrend: meglévő metaadat-előfeltétel → motor/példány szétválasztás → közös feldolgozás → helyi előnézet → Git-források → automatizálás. A motor és a közös feldolgozás tervezése összehangolt, de implementációjuk külön kapun halad át.
+A helyi motor/példány szétválasztás első működő implementációja elkészült: `packages/bookmd`, privát `@atom-forge/bookmd@0.1.0`, workspace-fogyasztó portal és tarballból telepített második példány. Részletes döntések, CLI-szerződés, ellenőrzések és korlátok: [motor README](packages/bookmd/README.md). A közös feldolgozómag és az új tartalomszerződés is elkészült: környezetfüggetlen `@atom-forge/bookmd/core`, build-adapter, közös típusalapú számozás. A meglévő szerepek megfeleltek, fájlátnevezés nem kellett. 49 teszt, portal check/build és friss tarballból telepített külön fogyasztó check/build sikeres. Jóváhagyott további sorrend: helyi előnézet → Git-források → automatizálás. A motor és a közös feldolgozás tervezése összehangolt, de implementációjuk külön kapun halad át.
 
 Kapcsolatok:
 
@@ -45,7 +45,7 @@ A meglévő kód célzott leltára alapján közösen tervezzük meg a motor hat
 
 ### B kapu: SvelteKit csomagolási spike és tényleges CLI-terv
 
-A telepített SvelteKit/Vite/adapter verziókból induló, későbbi célzott spike szükséges; egy npm-függőség önmagában nem bizonyítja, hogy annak route-jait a fogyasztó SvelteKitje felismeri.
+A helyi spike megvalósult a telepített SvelteKit/Vite/adapter verziókkal: a CLI a csomag alkalmazását példányonkénti `.bookmd/` munkatérből futtatja. A tarballból önállóan telepített második példány `/second/demo/` dev-kérése HTTP 200, checkje és statikus buildje sikeres. A route-okat a munkatér SvelteKitje deríti fel; nincs automatikus npm-route-import. A config hot reload nem készült el, újraindítás szükséges. [Konkrét szerződés és további korlátok](packages/bookmd/README.md).
 
 Összehasonlítandó minimális megoldások: a csomag alkalmazását futtató CLI, amely explicit példánykonfigurációt és bemenetet kap; vagy minimális fogyasztói bootstrap dokumentált csomagintegrációval. Ha generált munkakönyvtár szükséges, az újraépíthető, gitignore-olt motor-kimenet legyen, ne kézzel karbantartott alkalmazásmásolat. A választás bizonyítékát és korlátait rögzíteni kell.
 
@@ -61,7 +61,7 @@ A spike vizsgálja:
 
 A CLI nem előre létezőnek tekintett API. A tervnek meg kell határoznia a bin nevét, támogatott parancsokat, konfigurációkeresést vagy explicit config argumentumot, relatív utak bázisát, validációs sorrendet, output/work könyvtárakat, hibakódokat, runtime-követelményeket és a példány scripts/workflow integrációját. Válasszon a támogatott futtatók közül a jelenlegi lockfile/runtime vizsgálatával; ne feltételezzen tetszőleges Bun/Node kompatibilitást.
 
-Kizárólag illusztratív parancsok, nem létező vagy jóváhagyott CLI-szerződés:
+Megvalósított helyi CLI-parancsok (a további `content`, `check`, `preview` parancsokat a motor README írja le):
 
 ```text
 bookmd dev --config ./portal.config.ts
@@ -81,11 +81,11 @@ A motor verziózott registry-csomag lesz; a registry és a csomag publikus/priv�
 - A registry read/publish jogosultság külön a forrásrepók machine-user SSH-kulcsától és a deploy hitelesítésétől. A példány ne kapjon csomagpublikálási jogot.
 - Package tarball, log, cache, artifact és statikus output nem tartalmazhat titkot, privát kurzust vagy példányspecifikus regisztert. Telepítési hitelesítés ne maradjon elérhető külső tartalom feldolgozásakor.
 
-A terv rögzítse a választott csomagnevet, registryt, verziózást, támogatott verziókat, konfigurációs sémát, upgrade/rollback folyamatot és lockfile-frissítést. A motorfrissítés legyen explicit példányváltozás, ne észrevétlen „latest” letöltés. A későbbi publikálási fingerprint és provenance tartalmazza a tényleges motorverziót/lockfile-azonosságot.
+A helyi név `@atom-forge/bookmd`, verzió `0.1.0`, publikálásvédelme `private: true`; nincs registryválasztás vagy kiadás. A támogatott runtime, konfiguráció, upgrade/rollback és lockfile-kezelés a motor README-ben rögzített; a registry és láthatóság a tényleges kiadás előtt döntendő el. A motorfrissítés legyen explicit példányváltozás, ne észrevétlen „latest” letöltés. A későbbi publikálási fingerprint és provenance tartalmazza a tényleges motorverziót/lockfile-azonosságot.
 
 ## Migrációs sorrend
 
-1. Metaadat-előfeltétel lezárása és a portal aktuális viselkedésének/URL-jeinek regressziós alapja.
+1. **Elkészült alap:** metaadatmodell, aggregálás és megjelenítés; nem új migrációs előfeltétel.
 2. A és B tervezési kapu, a közös feldolgozási tervvel koordinálva; registrydöntés a kiadás előtt.
 3. Alkalmazás, renderer és meglévő generálás áthelyezése a motorba a jóváhagyott csomaghatáron, működésváltoztatás nélkül.
 4. `portal` átállítása első fogyasztóvá: saját config, regiszter, helyi tartalom, lockfile és build/deploy megmarad; csak a motor implementációját nem tartja saját másolatként.
@@ -96,11 +96,11 @@ A `/@dev` a motor felelőssége, de funkciójának elkészítése a későbbi pr
 
 ## Elfogadási feltételek
 
-- [ ] A motorcsomag tulajdonolja az alkalmazást, renderert és generálást; a `/@dev` tulajdonosa és későbbi integrációja egyértelmű.
+- [x] A motorcsomag tulajdonolja az alkalmazást, renderert és generálást; a `/@dev` tulajdonosa és későbbi integrációja egyértelmű.
 - [ ] A két koordinált tervezési kapu döntése és spike-eredménye dokumentált; nincs feltételezett SvelteKit route- vagy CLI API.
 - [ ] A `portal` az első fogyasztó, jelenlegi tartalma, URL-jei, metaadatai, navigációja, megjelenítése és statikus deploy-viselkedése regresszió nélkül megmarad.
-- [ ] Második minimális példány config + kurzusregiszter/helyi tartalom + package manifest/lockfile + szükséges vékony buildintegráció alapján dev és statikus build módban működik, alkalmazásforrás másolása nélkül.
-- [ ] A második példány tiszta, csomagolt telepítésből is működik; nincs motor-repo checkout-, symlink- vagy közös workspace-függés.
+- [x] Második minimális példány config + kurzusregiszter/helyi tartalom + package manifest/lockfile alapján dev és statikus build módban működik, kézzel karbantartott alkalmazásforrás nélkül; a CLI újraépíthető munkamásolatot készít.
+- [x] A második példány tiszta, csomagolt telepítésből is működik; nincs motor-repo checkout- vagy közös workspace-függés. A saját telepített függőségeire mutató generált munkatéri linkek szükségesek.
 - [ ] Root és nem üres base path, közvetlen kurzusroute, navigáció, CSS/font/kép/rendererasset és prerender ellenőrizve.
 - [ ] A két példány konfigurációja, tartalma, munkakönyvtára és outputja nem szivárog egymásba; nincs írás a csomagba vagy a verziókezelt tartalomba.
 - [ ] Registry/láthatóság, kompatibilitás, verziózás, telepítési/publikálási titkok és upgrade/rollback dokumentáltak.

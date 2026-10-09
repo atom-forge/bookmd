@@ -29,7 +29,7 @@ Nem része: szerkesztés, fájlmentés, Git-műveletek, feltöltés, automatikus
 1. Az oktató megnyitja a `/@dev` oldalt.
 2. A „Kurzusmappa megnyitása” gombbal könyvtárat választ.
 3. A rendszer beolvassa a fájllistát, és belépőfájlt kér.
-4. A `course.md`, `index.md`, `readme.md` fájlokat kis-/nagybetűtől függetlenül kiemelt jelöltként mutatja. A teljes relatív útvonal is látszódjon, hogy az azonos nevű fájlok megkülönböztethetők legyenek.
+4. A `book.md`, `course.md`, `index.md`, `readme.md` fájlokat kis-/nagybetűtől függetlenül, ebben a preferencia-sorrendben kiemelt jelöltként mutatja; az egyértelműen legjobbat előválasztja. A teljes relatív útvonal is látszódjon, hogy az azonos nevű fájlok megkülönböztethetők legyenek.
 5. Más Markdown-fájl is választható. Egyetlen kiemelt jelölt előválasztható, de a rendereléshez explicit megerősítés kell.
 6. Megerősítés után a kurzus megjelenik a megszokott portálfelülettel.
 7. Egy kompakt előnézeti sáv mutatja a mappa nevét és a belépőfájl relatív útvonalát, valamint az újratöltés és választásváltás műveleteit.
@@ -126,18 +126,18 @@ A közös tartalomfeldolgozó a motor hordozható infrastruktúrája; annak alka
 
 ## Elfogadási feltételek
 
-- [ ] A publikált statikus portálon a `/@dev` közvetlenül megnyitható, base path alatt is.
-- [ ] Támogatott Chrome-környezetben kattintással választható helyi mappa; megszakítás és nem támogatott böngésző megfelelően kezelt.
-- [ ] A belépőválasztó kiemeli a megadott neveket, és bármely Markdown-fájlt enged választani.
-- [ ] Egyazon fixture a build és a böngészős adapterrel egyenértékű kurzusfát, linkcélokat, headingeket és tartalmat ad, környezetspecifikus URL-eltérésektől eltekintve.
-- [ ] Menü, belső linkek, vissza/előre navigáció, headingnavigáció és helyi képek működnek.
+- [x] A publikált statikus portálon a `/@dev` közvetlenül megnyitható, base path alatt is (`BASE_PATH=/courses` build, scriptelt Chrome-futás: teljes folyamat és böngésző-újratöltés).
+- [x] Támogatott Chrome-környezetben kattintással választható helyi mappa; megszakítás és nem támogatott böngésző megfelelően kezelt.
+- [x] A belépőválasztó kiemeli a megadott neveket, és bármely Markdown-fájlt enged választani.
+- [x] Egyazon fixture a build és a böngészős adapterrel egyenértékű kurzusfát, linkcélokat, headingeket és tartalmat ad, környezetspecifikus URL-eltérésektől eltekintve.
+- [x] Menü, belső linkek, vissza/előre navigáció, headingnavigáció és helyi képek működnek.
 - [ ] Az egyetlen nyitott ágútvonal és a mobil navigáció meglévő működése megmarad.
-- [ ] Újratöltéskor az új, módosított és törölt fájlok változásai is érvényesülnek.
-- [ ] Hiányzó fájlok és hibás linkek látható, fájlhoz köthető diagnosztikát adnak.
+- [x] Újratöltéskor az új, módosított és törölt fájlok változásai is érvényesülnek.
+- [x] Hiányzó fájlok és hibás linkek látható, fájlhoz köthető diagnosztikát adnak.
 - [ ] Gyors mappaváltásnál vagy újratöltésnél nincs elavult eredményfelülírás vagy blob URL-szivárgás.
-- [ ] Nincs fájlírás, tartalomfeltöltés vagy helyi tartalmat továbbító telemetria.
-- [ ] Nem megbízható Markdown/HTML nem futtathat scriptet és nem léphet ki a fájlhozzáférési határból.
-- [ ] A meglévő publikálási pipeline és a normál portáloldalak működése megmarad.
+- [x] Nincs fájlírás, tartalomfeltöltés vagy helyi tartalmat továbbító telemetria.
+- [x] Nem megbízható Markdown/HTML nem futtathat scriptet és nem léphet ki a fájlhozzáférési határból.
+- [x] A meglévő publikálási pipeline és a normál portáloldalak működése megmarad.
 
 ## Validáció
 

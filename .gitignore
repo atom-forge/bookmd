@@ -5,3 +5,5 @@ src/lib/generated/*.json
 static/content-assets/
 .env
 .DS_Store
+
+.bookmd/

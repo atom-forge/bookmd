@@ -1,0 +1,141 @@
+# @atom-forge/bookmd — local engine 0.1.0
+
+This private, locally versioned package owns the SvelteKit app (`src/`), Markdown generator and renderer (`scripts/`), build integration, and `bookmd` CLI. It is not published. The portal is its first workspace consumer. Future browser preview and Git adapters belong here, but are not implemented by this extraction.
+
+## Runtime and commands
+
+Use Bun 1.4.0 or newer and Node 22.12+ (validated with Bun 1.4.0 / Node 24.4.1). Bun runs the TypeScript CLI/generator; Node runs SvelteKit, Vite, and svelte-check. The package owns its existing Svelte 5 / SvelteKit 2 / Vite 7 / Tailwind 4 dependencies, rather than requiring an instance to assemble a build stack. Instance lockfiles pin the resolved versions. No peer runtime or plugin API is introduced.
+
+```sh
+bookmd dev --config ./portal.config.ts
+bookmd build --config ./portal.config.ts
+bookmd check --config ./portal.config.ts
+bookmd content --config ./portal.config.ts
+bookmd preview --config ./portal.config.ts -- --host 127.0.0.1
+```
+
+`--config` defaults to `portal.config.ts` in the current working directory. All instance paths resolve relative to the config file, not the shell's working directory. Arguments after `--` go to Vite. Invalid commands/configuration, missing input, and failed tools exit nonzero. Config is trusted executable TypeScript, never untrusted course code or a place for secrets.
+
+```ts
+export default {
+  title: 'BookMD',              // optional title fallback
+  contentRoot: './content',    // required; read only
+  entrypoint: 'courses.md',    // required; relative to contentRoot
+  basePath: ''                 // optional; e.g. '/courses', no trailing slash
+};
+```
+
+`BASE_PATH` overrides `basePath`, including an explicitly empty value. The existing course registry/frontmatter, metadata, slug and URL rules are unchanged. No new chapter/content scheme is introduced.
+
+## SvelteKit integration and write boundary
+
+The CLI stages package app sources into `<instance>/.bookmd/`, a disposable, ignored work directory. This is a generated execution copy, not a second maintained app or instance fork. SvelteKit discovers actual route/layout/load files there and generates its normal `$types`, SSR and prerender output. `$lib`, relative model imports and Tailwind source scanning retain the original app layout.
+
+Each engine dependency is resolved from the installed engine and linked into the work directory. These are generated dependency links, not links to the engine checkout; the same procedure works with a tarball installation and Bun's isolated dependency layout. UI and lucide-svelte are explicitly bundled for SSR because their published Svelte sources cannot be executed as ordinary Node external modules.
+
+Generated JSON, content assets, `.nojekyll`, `.svelte-kit`, and caches live in `.bookmd/`. The static adapter writes to `<instance>/build/`, and the CLI copies the prerendered 404 catalog to `build/404.html` for Pages. Neither installed package files nor source content are written. Work/output locations are currently fixed; concurrent commands for the same instance are unsupported. The root `static/` directory is not an extension point: currently the app has no static engine assets beyond generated content and `.nojekyll`; fonts/renderer assets come from dependencies.
+
+`dev` watches the configured content root, regenerates content, and requests full browser reloads. Restart `dev` after config or engine source changes. `preview` serves the existing build (and currently prepares the generated work app first). The generator remains filesystem-based; separating a browser-safe core is the next workflow stage, not claimed complete here.
+
+## Local packaging and a second consumer
+
+From the engine directory:
+
+```sh
+bun pm pack --destination ../../.bookmd
+```
+
+In a separate instance directory, create a package manifest with `@atom-forge/bookmd` pointing to the absolute path of that tarball, then run `bun install`. Add `portal.config.ts`, `content/courses.md`, and at least one course:
+
+```md
+---
+courses: ["[[demo/course.md]]"]
+---
+# My catalog
+```
+
+`content/demo/course.md`:
+
+```md
+---
+language: en
+---
+# Demo course
+```
+
+Use scripts such as `"dev": "bookmd dev"`, `"build": "bookmd build"`, and `"check": "bookmd check"`. Ignore `.bookmd/`, `build/`, and `node_modules/`; retain the consumer's lockfile. The existing app's all-prerenderable catch-all route requires a nonempty course catalog for a static build; an empty registry currently fails SvelteKit prerender coverage.
+
+The 0.1.0 tarball contains app/generator/config integration and icon-license data, not portal configuration, course content, generated JSON, lockfiles, build output or credentials. Packing does not publish anything. `private: true` deliberately blocks registry publication pending registry, visibility, licensing and authentication decisions.
+
+An upgrade/rollback is an explicit engine version/tarball dependency change followed by lockfile update, check, tests and build. In this local workspace, engine source changes take effect on the next CLI invocation; an immutable published release workflow is not implemented.
+
+## Validation recorded for this extraction
+
+- Portal: `bookmd check` — zero errors/warnings; 46 tests / 213 assertions passed; static build generated 393 pages across 6 courses and Pages `404.html`.
+- Independently installed local tarball: own manifest, lockfile and dependencies; config/content only, no maintained app source; check passed; `/second` static build passed with one demo course.
+- Tarball dev server: bounded localhost request to `/second/demo/` returned HTTP 200 with the expected SSR title. Changing the local Markdown title was reflected by subsequent HTTP requests; the fixture was restored and the server stopped. Browser/WebSocket reload was not directly exercised.
+- Second static output: direct course HTML, `404.html`, `.nojekyll`, two CSS files and 19 WOFF2 font files present; installed `bookmd` bin also executed successfully.
+- Root portal and `/second` use separate content, generated work and build output. Package source does not receive generated data.
+
+No browser-driven visual/navigation regression comparison has been performed. Config hot reload, empty catalogs and Windows dependency-link behavior are not validated/supported by this initial local package. Registry release, preview, Git import and automation remain outside this implementation.
+
+## Shared content contract
+
+`@atom-forge/bookmd/core` exports `processContent`, `ContentSource` and the shared
+`ContentGraph`/page/navigation types. The core parses Markdown/frontmatter,
+composes sources, resolves references through the adapter, renders HTML, validates
+hierarchy and computes navigation and numbering. It imports no filesystem,
+Node path/crypto modules or environment variables.
+
+```ts
+import { processContent, type ContentSource } from '@atom-forge/bookmd/core';
+const graph = await processContent(source, 'courses.md', { base: '/preview' });
+```
+
+A `ContentSource` resolves absolute slash-separated virtual paths within `/`,
+reads their text, and supplies asset URLs. `resolve` must return a canonical
+identifier, verify existence and reject storage escapes; missing paths use an
+error with `code: 'ENOENT'` for the optional Obsidian vault-root fallback
+(`rootName`). The core rejects lexical traversal above `/`. Asset storage and URL
+lifetimes belong to the adapter. The build adapter keeps realpath/symlink
+containment, asset hashing/copying and generated JSON in `scripts/content.ts`.
+
+- `type: chapter`: numbered container; descendants inherit its number prefix.
+- `type: content`: numbered material within the nearest chapter context.
+- Any other or missing type: unnumbered auxiliary material; consumes no number.
+- Declared `children` order determines traversal and numbering, including through
+  unnumbered wrappers. Each course starts its own numbering; nested chapters
+  extend the prefix. Root-level content uses a course-level number.
+- Filenames have no numbering requirement. Frontmatter `chapter` is ignored;
+  computed `page.chapter` is also copied to navigation for menus and breadcrumbs.
+- Pages outside the course's declared tree remain unnumbered. `sources` compose
+  a page and do not independently create numbered pages.
+- The export manifest includes only numbered `content` pages and their computed
+  number arrays; an exporter must consume these rather than count again.
+
+Existing six courses already have explicit chapter/content/resource roles on
+all 390 material files; course entries and the catalog retain their separate
+registry semantics. No filename or URL migration was necessary.
+
+Validation for the shared-core step: 49 tests / 250 assertions passed, including
+build-adapter/core model parity across existing success fixtures. Browser-target
+bundling succeeded without Node imports. Portal check: zero errors/warnings;
+static build: 393 pages / 6 courses, 346 numbered pages and 286 content export
+entries. Every navigation number matches its page. A newly packed tarball was
+reinstalled in the independent consumer: public core import, check and `/second`
+static build all succeeded. Browser preview behavior is reserved for the next
+stage; no registry publication was performed.
+
+## Local preview (`/@dev`)
+
+A statically prerendered `/@dev` route lets an author open a local folder with `showDirectoryPicker({ mode: 'read' })` (desktop Chrome/Edge, HTTPS or localhost). Files are read in the browser only; nothing is uploaded or written.
+
+- The shared core processes the folder, mounted under the virtual `/course` beside a generated catalog, so a `course.md` in the folder root is a valid entry. Candidates named `book.md`, `course.md`, `index.md`, `readme.md` are highlighted and listed in that order of preference (then shallower paths first); the uniquely best one is preselected, but confirming a choice is always required.
+- Hidden directories and `node_modules` are skipped; at most 20000 files are listed and Markdown files over 5 MB are rejected.
+- `processContent` accepts `link` (custom page URLs) and `diagnostics` options. With `diagnostics`, broken local links/assets are collected instead of failing; builds still fail. Link schemes other than http, https, mailto and tel are rendered as text (also in builds).
+- Pages use `#page=<slug>[&heading=<id>]`. In-page `#fragment` clicks are rewritten to keep the page in the hash.
+- Assets become blob URLs, revoked after a reload replaced them or when the route is left. SVG is allowed only as an image, never as a link; HTML and other active documents are not exposed.
+- A browser reload restores the preview: the folder handle and entry path (never contents) are kept in IndexedDB, and the page hash restores the position. If Chrome no longer grants read access, a "Continue with this folder" button asks again (it needs a click); otherwise the folder is reopened automatically.
+- A failed reload keeps the previous successful preview, marked as such.
+
+Validated: check, 57 tests (entry candidates, hash scheme, source/core integration, diagnostics, scheme and containment rules), static build, and a scripted desktop Chrome session against an OPFS directory handle (entry choice, navigation, back, heading scroll, blob images, callout/math/Mermaid, reload with changes, failed reload, no external requests). Not yet exercised: the native folder dialog, a non-empty base path, narrow viewports and a build/browser parity test.

@@ -42,13 +42,7 @@ Kapcsolódó specifikációk:
 - [Publikálás: kapcsolat a helyi előnézettel](task-automatic-publishing.md#kapcsolat-a-helyi-előnézettel)
 - [Publikálás: stabil kurzusazonosító](task-automatic-publishing.md#stabil-kurzusazonosító)
 
-Feladatok:
-
-- A jelenlegi pipeline és függőségeinek feltérképezése.
-- A fájlolvasás leválasztása a környezetfüggetlen feldolgozásról.
-- A kurzusgyökér, stabil ID, link- és assetfeloldás közös szerződésének rögzítése, helyi kompatibilitással.
-- Közös HTML-/URL-biztonsági szabályok és diagnosztika.
-- A meglévő build adapter bekötése a közös magra.
+Elkészült: környezetfüggetlen feldolgozás és megőrzött build-adapter, virtuális tartalomgyökér és útvonal-/asset-szerződés, meglévő HTML-/URL-kezelés és diagnosztika. A konkrét API és tartalomszerződés a [motor README-ben](packages/bookmd/README.md#shared-content-contract) szerepel. A 390 meglévő tananyagfájl chapter/content/resource szerepei már megfeleltek; fájlátnevezés nem történt.
 
 **Továbbhaladási feltétel:** a jelenlegi kurzusok és URL-ek regresszió nélkül működnek; a közös mag nem függ Node/Bun fájlkezeléstől. Tesztek, típusellenőrzés és build sikeresek.
 
@@ -149,11 +143,13 @@ Feladatok:
 
 - [x] Metaadatmodell, aggregálás, megjelenítés és keresés implementálva, automatizáltan validálva.
 
-- [ ] Koordinált motor-/pipeline-terv, SvelteKit spike és CLI-terv kapui lezárva.
-- [ ] Motor/példány szétválasztás, portal és második minimális fogyasztó validálva.
-- [ ] Közös feldolgozómag és szerződések a motorban.
+- [x] Helyi motorhatár és CLI megvalósítva: `packages/bookmd`, portal workspace-fogyasztó, példányonkénti generált SvelteKit munkatér.
+- [x] Portal check/46 teszt/statikus build és tarballból telepített második minimális fogyasztó check/build/dev HTTP-próba validálva.
+
+A teljes motor-elfogadási kapu nem lezárt: nincs vizuális/böngészős regresszióvizsgálat, a configváltozás dev-újraindítást igényel, a registrykiadás döntése nyitott. A konkrét helyi szerződés és korlátok a [motor README-ben](packages/bookmd/README.md) szerepelnek. A környezetfüggetlen közös mag a `src/core` alatt elkészült; a `buildGraph` fájlrendszeres adapterként ezt hívja. Az új típusalapú számozás a közös modellben él, a menü és breadcrumb ugyanazt használja.
+- [x] Közös feldolgozómag és tartalomszerződés a motorban; 49 teszt, adapterparitás, böngészős csomagolás, portal check/build és friss tarballos külön fogyasztó check/build sikeres.
 - [ ] Hosting/Actions-előfeltételek ellenőrizve.
-- [ ] Helyi kurzuselőnézet kész és validált.
+- [x] Helyi kurzuselőnézet (`/@dev`) kész: check, 58 teszt (köztük build–böngésző paritásteszt), statikus build, scriptelt Chrome-próba és a szerző kézi tesztje (dev mód, valódi mappaválasztó) sikeres. Base path (`/courses`) alatt is ellenőrizve. Nyitott: mobil és világos témás ellenőrzés.
 - [ ] Machine user, meghíváskezelés és védett központi SSH-hitelesítés beállítva.
 - [ ] Git-import publikus és privát forrással, kézi indítással kész és validált.
 - [ ] Változásalapú, időablakos publikálás kész és validált.
