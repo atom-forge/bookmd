@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Configure releases with Ship.
-
+- `bookmd plan`: `--engine-commit` is optional, for engines installed from a registry; their version and the instance lockfile identify the engine.
 - Markdown links with schemes other than `http`, `https`, `mailto` and `tel` are rendered as text.
 
 ---

@@ -11,7 +11,7 @@ const engine = dirname(fileURLToPath(import.meta.url));
 const [command, ...args] = process.argv.slice(2);
 const commands = ['dev', 'build', 'check', 'content', 'preview', 'sources', 'plan'];
 if (!commands.includes(command)) {
-  console.error('Usage: bookmd dev|build|check|content|preview|sources|plan [--config FILE] [--sources PLAN_FILE] [-- VITE_ARGS]\n  plan --instance-commit SHA --engine-commit SHA [--baseline FILE] [--out FILE] [--force]');
+  console.error('Usage: bookmd dev|build|check|content|preview|sources|plan [--config FILE] [--sources PLAN_FILE] [-- VITE_ARGS]\n  plan --instance-commit SHA [--engine-commit SHA] [--baseline FILE] [--out FILE] [--force]');
   process.exit(1);
 }
 let forwarded: string[] = [];
@@ -50,9 +50,9 @@ if (command === 'plan') {
   // Resolves the Git refs (no download) and decides whether a new publication is needed.
   const sha = /^[0-9a-f]{40}$/;
   const instanceCommit = given['--instance-commit'], engineCommit = given['--engine-commit'];
-  if (!sha.test(instanceCommit ?? '') || !sha.test(engineCommit ?? '')) { console.error('Error: plan requires --instance-commit and --engine-commit (full commit SHAs).'); process.exit(1); }
+  if (!sha.test(instanceCommit ?? '') || (engineCommit !== undefined && !sha.test(engineCommit))) { console.error('Error: plan requires --instance-commit (a full commit SHA); --engine-commit is optional and must be one too.'); process.exit(1); }
   let plan;
-  try { plan = await createPlan({ contentRoot, entrypoint: config.entrypoint }, { instanceCommit, engineCommit, engineVersion: engineManifest.version, lockfile: resolve(instance, 'bun.lock') }); }
+  try { plan = await createPlan({ contentRoot, entrypoint: config.entrypoint }, { instanceCommit, engineCommit: engineCommit ?? '', engineVersion: engineManifest.version, lockfile: resolve(instance, 'bun.lock') }); }
   catch (error) { console.error(`Error: ${error instanceof Error ? error.message : error}`); process.exit(1); }
   const baseline = given['--baseline'] ? parsePlan(await readFile(resolve(given['--baseline']), 'utf8').catch(() => '')) : null;
   const decision = compare(baseline, plan, force);

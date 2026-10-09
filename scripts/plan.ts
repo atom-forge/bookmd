@@ -11,6 +11,7 @@ const frontmatter = /^﻿?---\r?\n((?:[^\n]*\n)*?)---(?:\r?\n|$)/;
 export type PlanInputs = {
   /** Instance commit: covers local content, config and build integration. */
   instanceCommit: string;
+  /** Commit of an engine checkout; empty when the engine comes from a registry (version and lockfile identify it). */
   engineCommit: string; engineVersion: string;
   /** SHA-256 of the instance lockfile; empty when the instance has none. */
   lockfile: string;
@@ -63,7 +64,7 @@ export function parsePlan(text: string): Plan | null {
     const plan = JSON.parse(text) as Plan;
     const { inputs } = plan;
     if (plan.schemaVersion !== planSchemaVersion || typeof plan.fingerprint !== 'string' || !Array.isArray(plan.sources) || !inputs) return null;
-    if (![inputs.instanceCommit, inputs.engineCommit].every(isSha) || typeof inputs.engineVersion !== 'string' || typeof inputs.lockfile !== 'string' || typeof inputs.registry !== 'string') return null;
+    if (!isSha(inputs.instanceCommit) || (inputs.engineCommit !== '' && !isSha(inputs.engineCommit)) || typeof inputs.engineVersion !== 'string' || typeof inputs.lockfile !== 'string' || typeof inputs.registry !== 'string') return null;
     if (!plan.sources.every(s => typeof s?.source === 'string' && isSha(s.commit))) return null;
     return fingerprintOf(inputs, plan.sources) === plan.fingerprint ? plan : null;
   } catch { return null; }

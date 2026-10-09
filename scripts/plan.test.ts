@@ -36,6 +36,13 @@ describe('fingerprint and comparison', () => {
     expect(compare(base, makePlan(inputs, [...sources, { source: 'main@github.com/o/c/course.md', commit: sha('3') }])).reasons[0]).toContain('new source');
     expect(compare(base, makePlan(inputs, [sources[0]])).reasons[0]).toContain('removed source');
   });
+  test('an engine installed from a registry has no commit; its version and the lockfile identify it', () => {
+    const registry = makePlan({ ...inputs, engineCommit: '' }, sources);
+    expect(parsePlan(JSON.stringify(registry))).toEqual(registry);
+    expect(compare(registry, makePlan({ ...inputs, engineCommit: '', engineVersion: '0.1.1' }, sources)).reasons).toEqual(['engine version changed']);
+    expect(compare(registry, makePlan({ ...inputs, engineCommit: '', lockfile: 'other' }, sources)).reasons).toEqual(['lockfile changed']);
+    expect(parsePlan(JSON.stringify({ ...registry, inputs: { ...registry.inputs, engineCommit: 'not-a-sha' } }))).toBeNull();
+  });
   test('a missing, corrupt, unknown-schema or tampered baseline means a full build', () => {
     const plan = makePlan(inputs, sources);
     const text = JSON.stringify(plan);
