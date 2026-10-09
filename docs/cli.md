@@ -39,7 +39,7 @@ A gyűjteménynek kell egy `package.json`, ami függ az `@atom-forge/bookmd` cso
 ```json
 { "private": true, "type": "module",
   "scripts": { "dev": "bookmd dev", "build": "bookmd build", "check": "bookmd check" },
-  "dependencies": { "@atom-forge/bookmd": "^0.1.1" } }
+  "dependencies": { "@atom-forge/bookmd": "^0.1.2" } }
 ```
 
 - A `.bookmd/`, `build/` és `node_modules/` mappát ne commitold; a lockfile mehet.
