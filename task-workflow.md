@@ -152,7 +152,7 @@ A teljes motor-elfogadási kapu nem lezárt: nincs vizuális/böngészős regres
 - [x] Helyi kurzuselőnézet (`/@dev`) kész: check, 58 teszt (köztük build–böngésző paritásteszt), statikus build, scriptelt Chrome-próba és a szerző kézi tesztje (dev mód, valódi mappaválasztó) sikeres. Base path (`/courses`) alatt is ellenőrizve. Mobil nézet és világos téma a szerző kézi tesztjében rendben. Nyitott: célzott ellenőrzés a gyors mappaváltás és újratöltés elavult eredményeire.
 - [ ] Machine user, meghíváskezelés és védett központi SSH-hitelesítés beállítva.
 - [ ] Git-import publikus és privát forrással, kézi indítással kész és validált.
-  - Kész és validált (78 teszt, valódi `pte-mik/info` repó): forrásszintaxis-parser, ref→SHA feloldás (branch/tag/SHA, fallback nélkül), pontos SHA letöltése (`bookmd sources`), hibák blokkolják a futást. Nyitott: stabil kurzus-ID és névtér, helyi+külső összeállítás build inputtá, forrásverzió-jegyzék a buildben, privát (SSH) transport.
+  - Kész és validált (78 teszt, valódi `pte-mik/info` repó): forrásszintaxis-parser, ref→SHA feloldás (branch/tag/SHA, fallback nélkül), pontos SHA letöltése (`bookmd sources`), hibák blokkolják a futást. Elkészült még: kötelező külső kurzus-`id` és URL-névtér, helyi+külső összeállítás egy build inputtá, kurzusonként lezárt hivatkozási határ, forrásverzió-jegyzék (`course-sources.json`). Nyitott: valódi külső kurzus kipróbálása a példányban, privát (SSH) transport.
 - [ ] Változásalapú, időablakos publikálás kész és validált.
 
 A részletes taskok a funkcionális követelmények forrásai; ez a dokumentum a sorrendet és a szakaszhatárokat rögzíti. A közös szerződések változásakor mindhárom kapcsolódó taskot aktualizálni kell.

@@ -88,7 +88,7 @@ export default defineConfig({ ssr: { noExternal: ['@atom-forge/ui', 'lucide-svel
       if (!file.startsWith(root + '/')) return;
       clearTimeout(pending);
       pending = setTimeout(async () => {
-        try { await generate(${JSON.stringify(settings)}, ${JSON.stringify(work)}, ${JSON.stringify(base)}); server.ws.send({ type: 'full-reload' }); }
+        try { await generate(${JSON.stringify(settings)}, ${JSON.stringify(work)}, ${JSON.stringify(base)}, { refresh: false }); server.ws.send({ type: 'full-reload' }); }
         catch (error) { console.error(error); }
       }, 150);
     });

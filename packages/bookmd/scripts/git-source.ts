@@ -1,3 +1,4 @@
+import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep, isAbsolute } from 'node:path';
@@ -20,20 +21,19 @@ const fullSha = /^[0-9a-f]{40}$/i;
 // Git runs without the user's or system configuration (no credential helpers, URL rewrites or hooks)
 // and never prompts. Arguments are an array: registry text is never interpreted by a shell.
 async function git(args: string[], options: { cwd?: string } = {}): Promise<string> {
-  const child = Bun.spawn(['git', ...args], {
-    cwd: options.cwd, stdout: 'pipe', stderr: 'pipe', stdin: 'ignore',
-    env: {
-      PATH: process.env.PATH ?? '', HOME: '/nonexistent', LC_ALL: 'C',
-      GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null', GIT_CONFIG_NOSYSTEM: '1',
-      GIT_TERMINAL_PROMPT: '0', GIT_ASKPASS: '/bin/false', GIT_LFS_SKIP_SMUDGE: '1'
-    }
+  return new Promise((done, fail) => {
+    execFile('git', args, {
+      cwd: options.cwd, timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024, encoding: 'utf8',
+      env: {
+        PATH: process.env.PATH ?? '', HOME: '/nonexistent', LC_ALL: 'C',
+        GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null', GIT_CONFIG_NOSYSTEM: '1',
+        GIT_TERMINAL_PROMPT: '0', GIT_ASKPASS: '/bin/false', GIT_LFS_SKIP_SMUDGE: '1'
+      }
+    }, (error, stdout, stderr) => {
+      if (!error) return done(stdout);
+      fail(new Error(stderr.trim().split('\n').slice(-2).join(' ') || error.message));
+    });
   });
-  const timer = setTimeout(() => child.kill(), timeoutMs);
-  try {
-    const [stdout, stderr, code] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
-    if (code !== 0) throw new Error(stderr.trim().split('\n').slice(-2).join(' ') || `git ${args[0]} exited with ${code}`);
-    return stdout;
-  } finally { clearTimeout(timer); }
 }
 
 export type ResolvedSource = SourceRef & { commit: string; refKind: 'commit' | 'branch' | 'tag' };

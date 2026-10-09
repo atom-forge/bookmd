@@ -136,7 +136,7 @@ async function renderSource(tree: MarkdownRoot, usedIds: Set<string>) {
   return { html, headings };
 }
 
-export async function processContent(source: ContentSource, entrypoint: string, options: { base?: string; title?: string; rootName?: string; diagnostics?: ContentDiagnostic[]; link?: (slug: string, query: string, fragment: string) => string } = {}): Promise<ContentGraph> {
+export async function processContent(source: ContentSource, entrypoint: string, options: { base?: string; title?: string; rootName?: string; sealed?: string[]; diagnostics?: ContentDiagnostic[]; link?: (slug: string, query: string, fragment: string) => string } = {}): Promise<ContentGraph> {
   const root = '/';
   const base = options.base ?? '';
   const titleFallback = options.title ?? 'BookMD';
@@ -235,17 +235,29 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     });
     return { tree, sources, children: childLinks, metadata };
   }
+  // A sealed directory is one course's own territory: its files may only reference files inside it.
+  const sealed = (options.sealed ?? []).map(directory => resolve(root, directory));
+  const inside = (directory: string, file: string) => { const rel = relative(directory, file); return rel !== '..' && !rel.startsWith('..' + sep) && !rel.startsWith(sep); };
+  async function confined(file: string, found: string) {
+    const home = sealed.find(directory => inside(directory, file));
+    if (home && !inside(home, found)) throw new Error(`Reference leaves the course root in ${file}: ${found}`);
+    return found;
+  }
   async function target(file: string, url: string) {
     if (external.test(url) || !url.split(/[?#]/)[0]) throw new Error(`Expected local path in ${file}: ${url}`);
     const path = decodeURIComponent(url.split(/[?#]/)[0]);
+    const wanted = path.startsWith('/') ? resolve(root, '.' + path) : resolve(dirname(file), path);
+    const home = sealed.find(directory => inside(directory, file));
+    // Check the lexical target first so a sealed course never probes files outside itself.
+    if (home && !inside(home, wanted)) throw new Error(`Reference leaves the course root in ${file}: ${url}`);
     try {
-      return await contained(path.startsWith('/') ? resolve(root, '.' + path) : resolve(dirname(file), path));
+      return await confined(file, await contained(wanted));
     } catch (error) {
       const marker = `/${options.rootName ?? ""}/`;
       const index = path.indexOf(marker);
       if ((error as { code?: string }).code !== 'ENOENT' || index === -1) throw error;
       // Obsidian may rewrite links as paths from the vault root.
-      return contained(resolve(root, path.slice(index + marker.length)));
+      return confined(file, await contained(resolve(root, path.slice(index + marker.length))));
     }
   }
   async function markdownTarget(file: string, path: string) {

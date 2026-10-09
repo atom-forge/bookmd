@@ -29,7 +29,7 @@ export function isSourceRef(entry: string): boolean {
 
 export function parseSourceRef(entry: string): SourceRef {
   const text = entry.trim();
-  if (/[\u0000-\u001f\u007f\\?#%]/.test(text)) throw new SourceRefError(entry, 'contains an unsupported character');
+  if (/[\u0000-\u001f\u007f\\?#%]/.test(text) || /@github\.com\/.*[[\]]/i.test(text)) throw new SourceRefError(entry, 'contains an unsupported character');
   const at = text.indexOf('@');
   if (at === -1) throw new SourceRefError(entry, 'expected <ref>@github.com/<owner>/<repo>/<path>.md');
   const ref = text.slice(0, at);

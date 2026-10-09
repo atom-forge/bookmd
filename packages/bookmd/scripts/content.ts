@@ -2,9 +2,11 @@ import { readFile, writeFile, mkdir, copyFile, realpath, rm } from 'node:fs/prom
 import { resolve, relative, extname, sep, isAbsolute, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 import { processContent, type ContentGraph } from '../src/core/content';
+import { assemble } from './assemble';
+import { gitEntries } from './registry';
 export * from '../src/core/content';
 
-export async function buildGraph(contentRoot: string, entrypoint: string, base = '', assetDir = resolve('static/content-assets'), titleFallback = 'BookMD'): Promise<ContentGraph> {
+export async function buildGraph(contentRoot: string, entrypoint: string, base = '', assetDir = resolve('static/content-assets'), titleFallback = 'BookMD', sealed: string[] = []): Promise<ContentGraph> {
   const root = await realpath(contentRoot);
   async function physical(path: string) {
     const file = await realpath(resolve(root, '.' + path));
@@ -22,17 +24,19 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       await copyFile(file, resolve(assetDir, name));
       return `${base}/content-assets/${name}`;
     }
-  }, entrypoint, { base, title: titleFallback, rootName: basename(root) });
+  }, entrypoint, { base, title: titleFallback, rootName: basename(root), sealed });
 }
 
-export async function generate(config: { contentRoot: string; entrypoint: string; title?: string }, workRoot = process.cwd(), base = process.env.BASE_PATH || '') {
+export async function generate(config: { contentRoot: string; entrypoint: string; title?: string }, workRoot = process.cwd(), base = process.env.BASE_PATH || '', options: { refresh?: boolean } = {}) {
   const output = (path: string) => resolve(workRoot, path);
   await rm(output('static/content-assets'), { recursive: true, force: true });
-  const graph = await buildGraph(resolve(config.contentRoot), config.entrypoint, base, output('static/content-assets'), config.title);
+  // Git course sources are downloaded and combined with the local content first.
+  const assembly = await assemble(config, workRoot, await gitEntries(config.contentRoot, config.entrypoint), options);
+  const graph = await buildGraph(resolve(assembly.contentRoot), assembly.entrypoint, base, output('static/content-assets'), config.title, assembly.sealed);
   await mkdir(output('src/lib/generated'), { recursive: true });
   await writeFile(output('src/lib/generated/content.json'), JSON.stringify(graph));
   await writeFile(output('src/lib/generated/catalog.json'), JSON.stringify({ branding: graph.branding || '', page: graph.pages.find(page => page.slug === '')!, courses: graph.courses }));
   await writeFile(output('static/.nojekyll'), '');
-  console.log(`Generated ${graph.pages.length} pages in ${graph.courses.length} courses.`);
+  console.log(`Generated ${graph.pages.length} pages in ${graph.courses.length} courses${assembly.sources.length ? ` (${assembly.sources.length} from Git)` : ''}.`);
   return graph;
 }

@@ -150,4 +150,12 @@ A registry entry can point at a course in a GitHub repository: `<ref>@github.com
 - Git runs without user or system configuration (no credential helpers, URL rewriting or hooks), never prompts, creates no symlinks (they become plain files), skips LFS and submodules, and leaves no `.git` directory in the checkout.
 - Public repositories use anonymous HTTPS. Private sources need a different transport (machine-user SSH) and are not implemented; the transport is a replaceable `GitTransport` in `scripts/git-source.ts`.
 
-Not yet done: stable course IDs and URL namespaces for external courses, assembling local and external courses into one build input, and the source-version manifest used for change detection.
+### Course ids and assembly
+
+Every build command (`dev`, `build`, `check`, `content`) first downloads the Git sources and assembles one content root `.bookmd/content/`: a copy of the local content plus each external course's directory (the entry file's directory) under `<id>/`. The registry entry becomes `<id>/<entry file>`, so the course URL namespace is its id (`/<id>/` when the entry is `course.md`, otherwise `/<id>/<name>/`). The versioned local content is never written. Registries without Git entries are processed in place.
+
+- The external entry file must declare `id` in its frontmatter: lower-case letters, digits and single hyphens, at most 64 characters, not reserved (`_app`, `404`, `@dev`, `content-assets`, `assets`, `static`, `favicon.ico`). A missing, invalid, reserved or duplicate id, or a collision with a local top-level file or directory, blocks the build.
+- Each external course is sealed: its files may only reference files inside its own directory (relative links and `/`-rooted links alike); other courses, local content and the rest of the repository are unreachable. Local courses keep their current URLs and rules.
+- `.bookmd/course-sources.json` lists `id`, normalized source and resolved commit of the build. `bookmd dev` re-syncs only when restarted.
+
+Not yet done: the registry fingerprint and baseline comparison for change detection, the CI/time-window workflow, private sources.
