@@ -57,7 +57,7 @@ describe('plan against Git repositories', () => {
     const repo = join(work, 'remote', 'ext');
     await mkdir(repo, { recursive: true });
     await writeFile(join(repo, 'course.md'), course('One'));
-    git(repo, 'init', '-q', '-b', 'main'); git(repo, 'add', '-A'); git(repo, 'commit', '-q', '-m', '1');
+    git(repo, 'init', '-q', '-b', 'main'); git(repo, 'config', 'uploadpack.allowAnySHA1InWant', 'true'); git(repo, 'add', '-A'); git(repo, 'commit', '-q', '-m', '1');
     await mkdir(join(work, 'site'), { recursive: true });
     await writeFile(join(work, 'site', 'courses.md'), '---\ncourses:\n  - "main@github.com/O/Ext/course.md"\n---\n# C\n');
   });

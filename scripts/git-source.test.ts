@@ -52,6 +52,8 @@ describe('git adapter', () => {
     repo = join(work, 'course-repo');
     await mkdir(join(repo, 'materials'), { recursive: true });
     await sh(repo, 'init', '-q', '-b', 'main');
+    // GitHub serves any reachable commit by SHA; plain local servers only do so when asked.
+    await sh(repo, 'config', 'uploadpack.allowAnySHA1InWant', 'true');
     await writeFile(join(repo, 'materials/course.md'), '---\nlanguage: en\n---\n# One');
     await symlink('/etc/passwd', join(repo, 'materials/link.md'));
     await sh(repo, 'add', '-A'); await sh(repo, 'commit', '-q', '-m', 'one');

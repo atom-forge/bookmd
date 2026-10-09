@@ -15,7 +15,7 @@ const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-c', 'user
 async function remote(name: string, files: Record<string, string>) {
   const dir = join(work, 'remote', name);
   for (const [path, text] of Object.entries(files)) { await mkdir(join(dir, path, '..'), { recursive: true }); await writeFile(join(dir, path), text); }
-  git(dir, 'init', '-q', '-b', 'main'); git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'init');
+  git(dir, 'init', '-q', '-b', 'main'); git(dir, 'config', 'uploadpack.allowAnySHA1InWant', 'true'); git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'init');
 }
 async function local(name: string, registry: string, files: Record<string, string> = {}) {
   const dir = join(work, name);
