@@ -70,34 +70,19 @@ Feladatok:
 
 **Továbbhaladási feltétel:** az előnézeti task [elfogadási feltételei](local-course-preview.md#elfogadási-feltételek) teljesülnek, a [validáció](local-course-preview.md#validáció) megtörtént. A helyi fájlokat nem töltjük fel és nem módosítjuk.
 
-### Privát forrásrepók hozzáférése: központi machine user
+### Privát forrásrepók hozzáférése: GitHub App
 
-A választott hozzáférési modell egy külön GitHub-fiók a generátornak. A `bookmd-reader` egyelőre javasolt név; a fiók létrehozása és tényleges nevének rögzítése külön üzemeltetési feladat.
+A választott modell egy, az üzemeltető szervezet által birtokolt GitHub App („PTE MIK BookMD reader”). A korábban tervezett machine user + SSH modellt ez váltotta ki: a machine user személyes privát repóban írási jogot is kap, az App repónként csak olvasási jogot ad.
 
-**A tartalomfejlesztő teendője:**
+**A tartalomfejlesztő teendője:** telepíti az Appet a saját fiókjára (vagy szervezetére), és kiválasztja a kurzusrepót („Only select repositories”). Nincs token, secret vagy workflow a szerzőnél. A regiszter hivatkozása változatlan: `main@github.com/owner/repo/path/course.md`.
 
-> Add hozzá a generátor megadott GitHub-felhasználóját kollaborátorként a tananyagrepódhoz. Szervezeti repóban Read jogosultságot adj neki.
+**Üzemeltetői teendők:** az App létrehozása (Contents: read-only, Metadata: read-only; bárki telepítheti), a `BOOKMD_APP_ID` és `BOOKMD_APP_PRIVATE_KEY` Actions secret a példányon, kulcsrotáció (az Appnak több kulcsa lehet), a hozzáférési nyilvántartás (`GET /app/installations`).
 
-Nem kell saját tokent generálnia, Actions secretet beállítania vagy workflow-t készítenie. A kurzusregiszter hivatkozása változatlan: `main@github.com/owner/repo/path/course.md`.
+**Működés:** a forrást a motor előbb névtelenül próbálja, így nyilvános forrásnál nincs hitelesítés. Csak ha ez sikertelen, kér az App egy rövid életű, egyetlen repóra szóló, csak olvasási installation tokent; az a Gitnek környezeten át jut, nem argumentumban vagy URL-ben, és a naplóban maszkolt. A hitelesítés csak a `plan` és a forrásletöltés lépésben él, a `check`/`build` nélküle fut.
 
-**Központi üzemeltetési feladatok:**
+**Jóváhagyás:** a privát forrás nem teszi priváttá az oldalt. A hitelesítést igénylő forrást a motor csak akkor publikálja, ha a belépőfájl frontmatterében `publish: true` szerepel.
 
-- A botfiók létrehozása, 2FA-ja, helyreállítási adatainak védelme és felelősének kijelölése.
-- Repo-meghívások elfogadása; a meghívás önmagában még nem aktív hozzáférés.
-- A bot SSH-kulcsának kezelése: a privát kulcs kizárólag a központi BookMD Actions secretje legyen, nem adjuk ki a kollégáknak.
-- A forrásadapter a publikus regisztercím alapján képezzen ellenőrzött SSH repo-címet a hitelesített Git-műveletekhez; a ref feloldását és a letöltést is ugyanazzal a hozzáféréssel végezze. A portál saját `GITHUB_TOKEN`-ja nem ad általános hozzáférést más privát repókhoz.
-- Ellenőrzött GitHub SSH hostkulcs-kezelés; ne tiltsuk le a hostellenőrzést.
-- A kulcs csak a forrásolvasási lépésekben legyen elérhető, ne kerüljön logba, cache-be, artifactba vagy build outputba. Külső tartalom nem futtathat kódot a kulccsal rendelkező környezetben.
-- Kulcsrotáció, hozzáférési nyilvántartás, szervezeti SSO/policy és esetleges fizetős seat ellenőrzése.
-
-**Korlátok és publikálási jóváhagyás:**
-
-- Személyes privát repóban a collaborator írási jogosultságot is kap; a generátor kizárólag olvasási műveleteket végez, de ez nem technikai read-only jogosultságkorlát. Szigorú read-only igény esetén GitHub App vagy repónkénti read-only deploy key szükséges.
-- A bot account SSH-kulcsa a fiók hozzáféréseit örökli; kompromittálása minden számára elérhető repót érinthet.
-- A tulajdonos a collaborator eltávolításával visszavonhatja a jövőbeni hozzáférést. Ez a korábban publikált tartalmat nem törli automatikusan; eltávolítása külön regiszter-/publikálási művelet.
-- A privát forrás nem teszi priváttá a generált oldalt. A kijelölt tananyag publikálását a szerzőnek külön, egyértelműen jóvá kell hagynia.
-
-A modell a Git-import szakasz része; a [publikálási task](automatic-publishing.md) hatóköre publikus és a machine userrel megosztott privát forrásokat is tartalmaz. Az SSH-adapter a motoré, a kulcs és hozzáférés üzemeltetése a példányé.
+**Nyilvánosság:** a példányrepó publikus, ezért a privát források nevei a regiszterben és a naplókban látszanak; ez tudatos döntés. A Free csomag Pagest csak publikus repóból enged.
 
 ### 4. Git-források bekötése, kézi ellenőrzéssel
 
@@ -141,20 +126,21 @@ Feladatok:
 
 ## Követési lista
 
-- [x] Metaadatmodell, aggregálás, megjelenítés és keresés implementálva, automatizáltan validálva.
+Kész és validált:
 
-- [x] Helyi motorhatár és CLI megvalósítva: a repó gyökere, portal workspace-fogyasztó, példányonkénti generált SvelteKit munkatér.
-- [x] Portal check/46 teszt/statikus build és tarballból telepített második minimális fogyasztó check/build/dev HTTP-próba validálva.
+- [x] Kurzusmetaadatok, aggregálás, megjelenítés és keresés.
+- [x] Motor/példány szétválasztás: a repó gyökere a `@atom-forge/bookmd` csomag (publikus npm, MIT; kiadás a ship-pel, Trusted Publishing), a példányok (`pte-mik/info`, tartalom: `laborci/books`) külön repók.
+- [x] Közös, böngészőbiztos feldolgozómag és tartalomszerződés.
+- [x] Helyi kurzuselőnézet (`/@dev`): scriptelt Chrome-próba, szerzői kézi teszt, base path, mobil és világos téma.
+- [x] Git-források: forrásszintaxis, ref→SHA, pontos commit letöltése, kötelező külső kurzus-`id`, lezárt kurzushatár, forrásjegyzék.
+- [x] Privát források GitHub Appal, kötelező `publish: true` jóváhagyással; élő próba privát repóval.
+- [x] Változásalapú, időablakos publikálás (`bookmd plan`, pin-elt build, baseline sikeres deploy után): élő próba a változatlan, force, hibás és újrapróbált esetre.
+- [x] Hosting: publikus példányrepó + GitHub Pages (Free csomagon privát repóból a Pages nem működik).
 
-A teljes motor-elfogadási kapu nem lezárt: nincs vizuális/böngészős regresszióvizsgálat, a configváltozás dev-újraindítást igényel, a registrykiadás döntése nyitott. A konkrét helyi szerződés és korlátok a [motor README-ben](../../README.md) szerepelnek. A környezetfüggetlen közös mag a `src/core` alatt elkészült; a `buildGraph` fájlrendszeres adapterként ezt hívja. Az új típusalapú számozás a közös modellben él, a menü és breadcrumb ugyanazt használja.
-- [x] Közös feldolgozómag és tartalomszerződés a motorban; 49 teszt, adapterparitás, böngészős csomagolás, portal check/build és friss tarballos külön fogyasztó check/build sikeres.
-- [ ] Hosting/Actions-előfeltételek ellenőrizve.
-- [x] Helyi kurzuselőnézet (`/@dev`) kész: check, 58 teszt (köztük build–böngésző paritásteszt), statikus build, scriptelt Chrome-próba és a szerző kézi tesztje (dev mód, valódi mappaválasztó) sikeres. Base path (`/courses`) alatt is ellenőrizve. Mobil nézet és világos téma a szerző kézi tesztjében rendben. Nyitott: célzott ellenőrzés a gyors mappaváltás és újratöltés elavult eredményeire.
-- [ ] Privát források hozzáférése. **Döntés (módosítja a machine user tervet):** GitHub App (repónként csak olvasás, az oktató egy kattintással telepíti), mert a machine user személyes repón írási jogot kap. A motor oldal kész és tesztelt (névtelen próba előbb, app-token csak szükség esetén, kötelező `publish: true` jóváhagyás, hitelesítés csak a plan/letöltés lépésben, publikus példányrepóban tiltva). Az App („PTE MIK BookMD reader”, a `pte-mik` szervezetben) létrehozva, secretek beállítva, a `laborci/books` privát repóra telepítve; élő próba sikeres: privát forrás olvasása jóváhagyással megjelenik az oldalon, jóváhagyás nélkül a build leáll (nincs deploy, baseline és oldal marad), a token nem kerül a naplóba. Az `info` repó **publikus** marad (a privát források nevei a regiszterben és a naplóban látszanak, ez tudatos döntés). A telepítés visszavonásának élő próbája szándékosan elmaradt: a hozzáférés megszűnése következik a privát repó természetéből, az üzenetet unit teszt fedi, a hibás futás utáni viselkedést (nincs deploy, baseline és oldal marad) két éles hibafutás igazolta.
-- [~] ~~Machine user és SSH~~ — az App váltja ki (lásd fent).
-- [ ] Git-import publikus és privát forrással, kézi indítással kész és validált.
-  - Kész és validált (78 teszt, valódi `pte-mik/info` repó): forrásszintaxis-parser, ref→SHA feloldás (branch/tag/SHA, fallback nélkül), pontos SHA letöltése (`bookmd sources`), hibák blokkolják a futást. Elkészült még: kötelező külső kurzus-`id` és URL-névtér, helyi+külső összeállítás egy build inputtá, kurzusonként lezárt hivatkozási határ, forrásverzió-jegyzék (`course-sources.json`). Nyitott: valódi külső kurzus kipróbálása a példányban, privát (SSH) transport.
-- [ ] Változásalapú, időablakos publikálás kész és validált.
-  - Kész és végponttól végpontig kipróbálva a `pte-mik/info` példányon: `bookmd plan` + pin-elt build, időablak-gate (tesztelt, nyári/téli idővel), baseline-artifact csak sikeres deploy után, kézi/push indítás, force, változatlan futás kihagyása, szándékos hiba (nincs deploy, régi oldal és baseline marad), újrapróbálás. Nyitott: az első valódi ütemezett (cron) futás megfigyelése, privát források, a `bookmd-reader` machine user.
+Nyitott:
+
+- [ ] Az első valódi ütemezett (cron) futás: a `schedule` trigger be van állítva, de ütemezett futást még nem figyeltünk meg.
+- [ ] Célzott ellenőrzés a `/@dev` gyors mappaváltásánál (elavult eredmény, blob-szivárgás).
+- [ ] A második példány (`pte-mik/architecture`).
 
 A részletes taskok a funkcionális követelmények forrásai; ez a dokumentum a sorrendet és a szakaszhatárokat rögzíti. A közös szerződések változásakor mindhárom kapcsolódó taskot aktualizálni kell.

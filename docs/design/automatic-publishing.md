@@ -265,12 +265,12 @@ Kapcsolódó taskok: [helyi előnézet](local-course-preview.md), [motor/példá
 ## Elfogadási feltételek
 
 - [x] Helyi és egysoros Git-kurzusforrások együtt működnek, publikus és privát (GitHub App-pal olvasott) repóval is.
-- [ ] Elfogadott meghívás, hiányzó SSH secret, hibás/visszavont hozzáférés konkrét diagnosztikával ellenőrizve; hiba esetén nincs részleges publikálás.
-- [ ] SSH-kulcs csak forrásolvasáskor elérhető, ellenőrzött hostkulccsal; nincs credential a logban, cache-ben, artifactban vagy outputban. A privát tartalom publikálási jóváhagyása rögzített.
+- [x] Hozzáférés GitHub Appal (a machine user/SSH modell helyett): hiányzó telepítés, elutasított kulcs, hiányzó hitelesítés és elutasított tokenkérés konkrét diagnosztikával, unit tesztekkel ellenőrizve; hiba esetén nincs részleges publikálás (élő hibafutás igazolta). Az élő telepítés-visszavonás szándékosan nem lett kipróbálva.
+- [x] Az App privát kulcsa csak a `plan` és a forrásletöltés lépésben érhető el, a `check`/`build` nélküle fut; az installation token a Gitnek környezeten át jut és maszkolt; nincs credential a logban, artifactban vagy outputban (élő naplók ellenőrizve). A privát tartalom publikálását a szerző `publish: true`-val hagyja jóvá.
 - [x] Branch, tag, commit SHA és `/`-t tartalmazó ref helyesen feloldható.
 - [x] Az ellenőrzött SHA kerül buildbe, mozgó branch esetén is.
 - [x] Stabil ID biztosítja az URL-t; hibás vagy ütköző ID blokkolja a buildet.
-- [ ] Kurzusonkénti wikilinkek, relatív linkek és assetek nem ütköznek.
+- [x] Kurzusonkénti wikilinkek, relatív linkek és assetek nem ütköznek: külön névtér (`id`), lezárt kurzushatár; a hat helyi kurzus azonos fájlnevekkel is ütközésmentes.
 - [x] Magyar helyi idő szerinti 08–18 óránkénti, 18–24 kétóránkénti ablak és éjszakai tiltás helyes, téli/nyári időszámítással is.
 - [x] Kézi indítás és main push ablakon kívül is használható; force rebuild működik.
 - [x] Változatlan bemenetnél nincs build/deploy; új portál- vagy forráscommit esetén van.
@@ -278,8 +278,8 @@ Kapcsolódó taskok: [helyi előnézet](local-course-preview.md), [motor/példá
 - [x] Egyetlen hibás kurzus esetén a korábbi publikált oldal marad elérhető.
 - [x] Forrásjegyzék és konkrét hibadiagnosztika rendelkezésre áll.
 - [x] Külső repo kódja nem fut le, és fájlútvonal/symlink nem léphet ki a tartalomgyökérből.
-- [ ] A privát portálrepo hostingjogosultságai és a publikált oldal láthatósága ellenőrizve és dokumentálva vannak.
-- [ ] A jelenlegi helyi kurzusok és build működése regresszió nélkül megmarad.
+- [x] Hosting ellenőrizve és dokumentálva: a példányrepó publikus, a Pages Actions-forrással működik; Free csomagon privát repóból a Pages nem érhető el. A privát források nevei ezért a regiszterben és a naplókban látszanak (tudatos döntés).
+- [x] A jelenlegi helyi kurzusok és build működése regresszió nélkül megmarad (393 oldal, 6 kurzus a motor minden szakaszában).
 
 ## Validáció
 
