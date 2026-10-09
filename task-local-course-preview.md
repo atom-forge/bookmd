@@ -131,7 +131,7 @@ A közös tartalomfeldolgozó a motor hordozható infrastruktúrája; annak alka
 - [x] A belépőválasztó kiemeli a megadott neveket, és bármely Markdown-fájlt enged választani.
 - [x] Egyazon fixture a build és a böngészős adapterrel egyenértékű kurzusfát, linkcélokat, headingeket és tartalmat ad, környezetspecifikus URL-eltérésektől eltekintve.
 - [x] Menü, belső linkek, vissza/előre navigáció, headingnavigáció és helyi képek működnek.
-- [ ] Az egyetlen nyitott ágútvonal és a mobil navigáció meglévő működése megmarad.
+- [x] Az egyetlen nyitott ágútvonal és a mobil navigáció meglévő működése megmarad (a szerző kézi tesztje: mobil és világos téma).
 - [x] Újratöltéskor az új, módosított és törölt fájlok változásai is érvényesülnek.
 - [x] Hiányzó fájlok és hibás linkek látható, fájlhoz köthető diagnosztikát adnak.
 - [ ] Gyors mappaváltásnál vagy újratöltésnél nincs elavult eredményfelülírás vagy blob URL-szivárgás.

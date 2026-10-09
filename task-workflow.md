@@ -149,7 +149,7 @@ Feladatok:
 A teljes motor-elfogadási kapu nem lezárt: nincs vizuális/böngészős regresszióvizsgálat, a configváltozás dev-újraindítást igényel, a registrykiadás döntése nyitott. A konkrét helyi szerződés és korlátok a [motor README-ben](packages/bookmd/README.md) szerepelnek. A környezetfüggetlen közös mag a `src/core` alatt elkészült; a `buildGraph` fájlrendszeres adapterként ezt hívja. Az új típusalapú számozás a közös modellben él, a menü és breadcrumb ugyanazt használja.
 - [x] Közös feldolgozómag és tartalomszerződés a motorban; 49 teszt, adapterparitás, böngészős csomagolás, portal check/build és friss tarballos külön fogyasztó check/build sikeres.
 - [ ] Hosting/Actions-előfeltételek ellenőrizve.
-- [x] Helyi kurzuselőnézet (`/@dev`) kész: check, 58 teszt (köztük build–böngésző paritásteszt), statikus build, scriptelt Chrome-próba és a szerző kézi tesztje (dev mód, valódi mappaválasztó) sikeres. Base path (`/courses`) alatt is ellenőrizve. Nyitott: mobil és világos témás ellenőrzés.
+- [x] Helyi kurzuselőnézet (`/@dev`) kész: check, 58 teszt (köztük build–böngésző paritásteszt), statikus build, scriptelt Chrome-próba és a szerző kézi tesztje (dev mód, valódi mappaválasztó) sikeres. Base path (`/courses`) alatt is ellenőrizve. Mobil nézet és világos téma a szerző kézi tesztjében rendben. Nyitott: célzott ellenőrzés a gyors mappaváltás és újratöltés elavult eredményeire.
 - [ ] Machine user, meghíváskezelés és védett központi SSH-hitelesítés beállítva.
 - [ ] Git-import publikus és privát forrással, kézi indítással kész és validált.
 - [ ] Változásalapú, időablakos publikálás kész és validált.
