@@ -267,17 +267,17 @@ Kapcsolódó taskok: [helyi előnézet](task-local-course-preview.md), [motor/p�
 - [ ] Helyi és egysoros Git-kurzusforrások együtt működnek, publikus és a machine userrel megosztott privát repóval is.
 - [ ] Elfogadott meghívás, hiányzó SSH secret, hibás/visszavont hozzáférés konkrét diagnosztikával ellenőrizve; hiba esetén nincs részleges publikálás.
 - [ ] SSH-kulcs csak forrásolvasáskor elérhető, ellenőrzött hostkulccsal; nincs credential a logban, cache-ben, artifactban vagy outputban. A privát tartalom publikálási jóváhagyása rögzített.
-- [ ] Branch, tag, commit SHA és `/`-t tartalmazó ref helyesen feloldható.
-- [ ] Az ellenőrzött SHA kerül buildbe, mozgó branch esetén is.
-- [ ] Stabil ID biztosítja az URL-t; hibás vagy ütköző ID blokkolja a buildet.
+- [x] Branch, tag, commit SHA és `/`-t tartalmazó ref helyesen feloldható.
+- [x] Az ellenőrzött SHA kerül buildbe, mozgó branch esetén is.
+- [x] Stabil ID biztosítja az URL-t; hibás vagy ütköző ID blokkolja a buildet.
 - [ ] Kurzusonkénti wikilinkek, relatív linkek és assetek nem ütköznek.
-- [ ] Magyar helyi idő szerinti 08–18 óránkénti, 18–24 kétóránkénti ablak és éjszakai tiltás helyes, téli/nyári időszámítással is.
-- [ ] Kézi indítás és main push ablakon kívül is használható; force rebuild működik.
-- [ ] Változatlan bemenetnél nincs build/deploy; új portál- vagy forráscommit esetén van.
-- [ ] Sikertelen publikálás nem változtatja meg a baseline-t; a következő futás újra próbálkozik.
-- [ ] Egyetlen hibás kurzus esetén a korábbi publikált oldal marad elérhető.
-- [ ] Forrásjegyzék és konkrét hibadiagnosztika rendelkezésre áll.
-- [ ] Külső repo kódja nem fut le, és fájlútvonal/symlink nem léphet ki a tartalomgyökérből.
+- [x] Magyar helyi idő szerinti 08–18 óránkénti, 18–24 kétóránkénti ablak és éjszakai tiltás helyes, téli/nyári időszámítással is.
+- [x] Kézi indítás és main push ablakon kívül is használható; force rebuild működik.
+- [x] Változatlan bemenetnél nincs build/deploy; új portál- vagy forráscommit esetén van.
+- [x] Sikertelen publikálás nem változtatja meg a baseline-t; a következő futás újra próbálkozik.
+- [x] Egyetlen hibás kurzus esetén a korábbi publikált oldal marad elérhető.
+- [x] Forrásjegyzék és konkrét hibadiagnosztika rendelkezésre áll.
+- [x] Külső repo kódja nem fut le, és fájlútvonal/symlink nem léphet ki a tartalomgyökérből.
 - [ ] A privát portálrepo hostingjogosultságai és a publikált oldal láthatósága ellenőrizve és dokumentálva vannak.
 - [ ] A jelenlegi helyi kurzusok és build működése regresszió nélkül megmarad.
 

@@ -60,6 +60,7 @@ describe('git adapter', () => {
     await writeFile(join(repo, 'materials/course.md'), '---\nlanguage: en\n---\n# Two');
     await sh(repo, 'commit', '-q', '-am', 'two');
     second = await sh(repo, 'rev-parse', 'HEAD');
+    await sh(repo, 'branch', 'release/2026', first);
   });
   afterAll(() => rm(work, { recursive: true, force: true }));
 
@@ -67,6 +68,9 @@ describe('git adapter', () => {
     expect((await resolveRef(parseSourceRef('main@github.com/o/course-repo/materials/course.md'), transport))).toMatchObject({ commit: second, refKind: 'branch' });
     expect((await resolveRef(parseSourceRef('v1@github.com/o/course-repo/materials/course.md'), transport))).toMatchObject({ commit: first, refKind: 'tag' });
     expect((await resolveRef(parseSourceRef(`${first}@github.com/o/course-repo/materials/course.md`), transport))).toMatchObject({ commit: first, refKind: 'commit' });
+  });
+  test('resolves a ref that contains a slash', async () => {
+    expect(await resolveRef(parseSourceRef('release/2026@github.com/o/course-repo/materials/course.md'), transport)).toMatchObject({ commit: first, refKind: 'branch' });
   });
   test('an unknown ref or repository fails without a fallback', async () => {
     await expect(resolveRef(parseSourceRef('nope@github.com/o/course-repo/materials/course.md'), transport)).rejects.toThrow('was not found');
