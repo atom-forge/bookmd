@@ -49,6 +49,8 @@ export function withApp(transport: GitTransport, credentials: AppCredentials, fe
     ...transport,
     async authenticate(source): Promise<GitAccess> {
       const token = await installationToken(credentials, source, fetcher);
+      // On GitHub Actions this makes the runner mask the token in every log line, in case anything ever prints it.
+      if (process.env.GITHUB_ACTIONS === 'true') console.log(`::add-mask::${token}`);
       const header = `AUTHORIZATION: basic ${Buffer.from(`x-access-token:${token}`).toString('base64')}`;
       return { url: transport.url(source), env: { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader', GIT_CONFIG_VALUE_0: header } };
     }
