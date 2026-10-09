@@ -42,7 +42,7 @@ Kapcsolódó specifikációk:
 - [Publikálás: kapcsolat a helyi előnézettel](automatic-publishing.md#kapcsolat-a-helyi-előnézettel)
 - [Publikálás: stabil kurzusazonosító](automatic-publishing.md#stabil-kurzusazonosító)
 
-Elkészült: környezetfüggetlen feldolgozás és megőrzött build-adapter, virtuális tartalomgyökér és útvonal-/asset-szerződés, meglévő HTML-/URL-kezelés és diagnosztika. A konkrét API és tartalomszerződés a [motor README-ben](../../README.md#shared-content-contract) szerepel. A 390 meglévő tananyagfájl chapter/content/resource szerepei már megfeleltek; fájlátnevezés nem történt.
+Elkészült: környezetfüggetlen feldolgozás és megőrzött build-adapter, virtuális tartalomgyökér és útvonal-/asset-szerződés, meglévő HTML-/URL-kezelés és diagnosztika. A konkrét API és tartalomszerződés a [motor README-ben](bookmd-engine.md#shared-content-contract) szerepel. A 390 meglévő tananyagfájl chapter/content/resource szerepei már megfeleltek; fájlátnevezés nem történt.
 
 **Továbbhaladási feltétel:** a jelenlegi kurzusok és URL-ek regresszió nélkül működnek; a közös mag nem függ Node/Bun fájlkezeléstől. Tesztek, típusellenőrzés és build sikeresek.
 

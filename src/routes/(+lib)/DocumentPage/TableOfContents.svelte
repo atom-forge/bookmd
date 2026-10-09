@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PortalPageData } from '$lib/portal-page';
-  let { headings, hasCourse }: { headings: PortalPageData['page']['headings']; hasCourse: boolean } = $props();
+  import PageConcepts from './PageConcepts.svelte';
+  let { headings, requires, teaches, hasCourse }: { headings: PortalPageData['page']['headings']; requires: string[]; teaches: string[]; hasCourse: boolean } = $props();
   const sections = $derived(headings.filter(heading => heading.depth <= 3));
 </script>
 
@@ -12,4 +13,5 @@
       <a class={`block py-[7px] text-[13px] leading-relaxed [overflow-wrap:anywhere] text-muted-contrast hover:text-accent ${section.depth === 3 ? 'ml-2.5' : ''}`} href={`#${section.id}`}>{section.title}</a>
     {/each}
   </nav>
+  <PageConcepts {requires} {teaches} class="mx-5 mb-9"/>
 </aside>

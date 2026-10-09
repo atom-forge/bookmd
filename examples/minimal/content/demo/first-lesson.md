@@ -1,5 +1,10 @@
 ---
 type: content
+requires:
+  - Markdown basics
+teaches:
+  - Callouts
+  - Code blocks
 ---
 # First lesson
 

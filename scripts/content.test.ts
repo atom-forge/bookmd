@@ -291,6 +291,39 @@ test('page author and free-form tags belong to the document without inheritance'
   });
 });
 
+test('a course entry named book.md is served at its folder URL', async () => {
+  await fixture({
+    'courses.md': md({ courses: ['[[web/book.md]]'] }, '# Courses'),
+    'web/book.md': md({ language: 'en', children: ['[[lesson.md]]'] }, '# Web'),
+    'web/lesson.md': '# Lesson'
+  }, async root => {
+    const graph = await build(root);
+    expect(graph.pages.map(page => page.slug)).toContain('web');
+    expect(graph.pages.map(page => page.slug)).toContain('web/lesson');
+  });
+});
+
+test('page requires and teaches are trimmed, deduplicated and validated', async () => {
+  await fixture({
+    'courses.md': catalog,
+    'web/course.md': md({ language: 'en', children: ['[[chapter.md]]', '[[plain.md]]'] }, '# Web'),
+    'web/chapter.md': md({ requires: [' kliens–szerver modell ', 'kliens–szerver modell'], teaches: ['HTTP', 'HTTP-metódus'] }, '# Chapter'),
+    'web/plain.md': '# Plain'
+  }, async root => {
+    const graph = await build(root);
+    const chapter = graph.pages.find(page => page.slug === 'web/chapter')!;
+    expect(chapter.requires).toEqual(['kliens–szerver modell']);
+    expect(chapter.teaches).toEqual(['HTTP', 'HTTP-metódus']);
+    const plain = graph.pages.find(page => page.slug === 'web/plain')!;
+    expect(plain.requires).toEqual([]);
+    expect(plain.teaches).toEqual([]);
+    for (const metadata of [{ requires: 'HTTP' }, { teaches: [''] }, { teaches: [1] }]) {
+      await writeFile(join(root, 'web/plain.md'), md(metadata, '# Plain'));
+      await expect(build(root)).rejects.toThrow('Invalid');
+    }
+  });
+});
+
 test('aggregates all owned pages, including non-tree links, with normalized deduplication', async () => {
   await fixture({
     'courses.md': md({ courses: ['[[web/course.md]]', '[[other/course.md]]'] }, '# Courses'),

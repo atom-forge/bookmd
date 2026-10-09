@@ -10,18 +10,18 @@ export * from '../src/core/content';
 export async function buildGraph(contentRoot: string, entrypoint: string, base = '', assetDir = resolve('static/content-assets'), titleFallback = 'BookMD', sealed: string[] = []): Promise<ContentGraph> {
   const root = await realpath(contentRoot);
   async function physical(path: string) {
-    const file = await realpath(resolve(root, '.' + path));
-    const rel = relative(root, file);
+    const lexical = resolve(root, '.' + path);
+    const rel = relative(root, lexical);
     if (rel === '..' || rel.startsWith('..' + sep) || isAbsolute(rel)) throw new Error(`Content escapes root: ${path}`);
-    return file;
+    return { file: await realpath(lexical), rel };
   }
   await mkdir(assetDir, { recursive: true });
   return processContent({
-    async resolve(path) { return '/' + relative(root, await physical(path)).split(sep).join('/'); },
-    async readText(path) { return readFile(await physical(path), 'utf8'); },
+    async resolve(path) { return '/' + (await physical(path)).rel.split(sep).join('/'); },
+    async readText(path) { return readFile((await physical(path)).file, 'utf8'); },
     async assetUrl(path, base) {
-      const file = await physical(path);
-      const name = `${createHash('sha256').update(relative(root, file)).digest('hex').slice(0, 16)}${extname(file)}`;
+      const { file, rel } = await physical(path);
+      const name = `${createHash('sha256').update(rel).digest('hex').slice(0, 16)}${extname(file)}`;
       await copyFile(file, resolve(assetDir, name));
       return `${base}/content-assets/${name}`;
     }

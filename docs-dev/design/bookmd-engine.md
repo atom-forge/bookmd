@@ -114,3 +114,82 @@ A `/@dev` a motor felelőssége, de funkciójának elkészítése a későbbi pr
 - Második példány dev újratöltésének és statikus outputjának ellenőrzése, base path alatt is.
 - Hiányzó/hibás config, nem kompatibilis függőség, írási hiba és assetfeloldási hiba konkrét diagnosztikája.
 - Titok- és példányadat-szivárgás ellenőrzése tarballban, bundle-ben, logban és outputban; a későbbi `/@dev` build–böngésző paritását saját taskja validálja.
+
+## Megvalósítási jegyzetek (a korábbi README-ből)
+
+Az alábbi szakaszok a motor README-jéből kerültek ide; a README már csak áttekintés. Angol nyelvűek maradtak.
+
+### SvelteKit integration and write boundary
+
+The CLI stages package app sources into `<instance>/.bookmd/`, a disposable, ignored work directory. This is a generated execution copy, not a second maintained app or instance fork. SvelteKit discovers actual route/layout/load files there and generates its normal `$types`, SSR and prerender output. `$lib`, relative model imports and Tailwind source scanning retain the original app layout.
+
+Each engine dependency is resolved from the installed engine and linked into the work directory. These are generated dependency links, not links to the engine checkout; the same procedure works with a tarball installation and Bun's isolated dependency layout. UI and lucide-svelte are explicitly bundled for SSR because their published Svelte sources cannot be executed as ordinary Node external modules.
+
+Generated JSON, content assets, `.nojekyll`, `.svelte-kit`, and caches live in `.bookmd/`. The static adapter writes to `<instance>/build/`, and the CLI copies the prerendered 404 catalog to `build/404.html` for Pages. Neither installed package files nor source content are written. Work/output locations are currently fixed; concurrent commands for the same instance are unsupported. The root `static/` directory is not an extension point: currently the app has no static engine assets beyond generated content and `.nojekyll`; fonts/renderer assets come from dependencies.
+
+`dev` watches the configured content root, regenerates content, and requests full browser reloads. Restart `dev` after config or engine source changes. `preview` serves the existing build (and currently prepares the generated work app first). The generator remains filesystem-based; separating a browser-safe core is the next workflow stage, not claimed complete here.
+
+### Developing the engine
+
+```sh
+bun install
+bun run verify   # tests, type check and a static build of examples/minimal
+```
+
+### Validation recorded for the engine extraction
+
+- Portal: `bookmd check` — zero errors/warnings; 46 tests / 213 assertions passed; static build generated 393 pages across 6 courses and Pages `404.html`.
+- Independently installed local tarball: own manifest, lockfile and dependencies; config/content only, no maintained app source; check passed; `/second` static build passed with one demo course.
+- Tarball dev server: bounded localhost request to `/second/demo/` returned HTTP 200 with the expected SSR title. Changing the local Markdown title was reflected by subsequent HTTP requests; the fixture was restored and the server stopped. Browser/WebSocket reload was not directly exercised.
+- Second static output: direct course HTML, `404.html`, `.nojekyll`, two CSS files and 19 WOFF2 font files present; installed `bookmd` bin also executed successfully.
+- Root portal and `/second` use separate content, generated work and build output. Package source does not receive generated data.
+
+No browser-driven visual/navigation regression comparison has been performed. Config hot reload, empty catalogs and Windows dependency-link behavior are not validated/supported by this initial local package. Registry release, preview, Git import and automation remain outside this implementation.
+
+### Shared content contract
+
+`@atom-forge/bookmd/core` exports `processContent`, `ContentSource` and the shared
+`ContentGraph`/page/navigation types. The core parses Markdown/frontmatter,
+composes sources, resolves references through the adapter, renders HTML, validates
+hierarchy and computes navigation and numbering. It imports no filesystem,
+Node path/crypto modules or environment variables.
+
+```ts
+import { processContent, type ContentSource } from '@atom-forge/bookmd/core';
+const graph = await processContent(source, 'books.md', { base: '/preview' });
+```
+
+A `ContentSource` resolves absolute slash-separated virtual paths within `/`,
+reads their text, and supplies asset URLs. `resolve` must return a canonical
+identifier, verify existence and reject storage escapes; missing paths use an
+error with `code: 'ENOENT'` for the optional Obsidian vault-root fallback
+(`rootName`). The core rejects lexical traversal above `/`. Asset storage and URL
+lifetimes belong to the adapter. The build adapter keeps realpath/symlink
+containment, asset hashing/copying and generated JSON in `scripts/content.ts`.
+
+- `type: chapter`: numbered container; descendants inherit its number prefix.
+- `type: content`: numbered material within the nearest chapter context.
+- Any other or missing type: unnumbered auxiliary material; consumes no number.
+- Declared `children` order determines traversal and numbering, including through
+  unnumbered wrappers. Each course starts its own numbering; nested chapters
+  extend the prefix. Root-level content uses a course-level number.
+- Filenames have no numbering requirement. Frontmatter `chapter` is ignored;
+  computed `page.chapter` is also copied to navigation for menus and breadcrumbs.
+- Pages outside the course's declared tree remain unnumbered. `sources` compose
+  a page and do not independently create numbered pages.
+- The export manifest includes only numbered `content` pages and their computed
+  number arrays; an exporter must consume these rather than count again.
+
+Existing six courses already have explicit chapter/content/resource roles on
+all 390 material files; course entries and the catalog retain their separate
+registry semantics. No filename or URL migration was necessary.
+
+Validation for the shared-core step: 49 tests / 250 assertions passed, including
+build-adapter/core model parity across existing success fixtures. Browser-target
+bundling succeeded without Node imports. Portal check: zero errors/warnings;
+static build: 393 pages / 6 courses, 346 numbered pages and 286 content export
+entries. Every navigation number matches its page. A newly packed tarball was
+reinstalled in the independent consumer: public core import, check and `/second`
+static build all succeeded. Browser preview behavior is reserved for the next
+stage; no registry publication was performed.
+

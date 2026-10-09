@@ -10,6 +10,15 @@ Remove stale or redundant checklist items instead of carrying them forward. Repo
 actual validation limits honestly in the implementation summary, without turning
 every unperformed check into a new workflow task.
 
+## Changelog
+
+Every change that affects users or the published package gets an entry in the
+`[Unreleased]` section of `CHANGELOG.md` in the same change, following the
+existing Keep a Changelog headings (`Added`, `Changed`, `Fixed`, `Removed`).
+Write it for readers of the package, not as a commit log. Do not wait to be
+asked, and do not add entries for internal-only changes such as refactors or
+test-only work.
+
 ## AtomForge UI
 
 Before implementing UI with `@atom-forge/ui`, read:

@@ -15,7 +15,7 @@ A regiszterparser, Git-adapter, összeállítás, validáció és generálás ú
 ## Hatókör — első verzió
 
 - Publikus és a központi machine userrel megosztott privát GitHub-kurzusrepók támogatása, helyi kurzusokkal együtt.
-- Egysoros Git-forráshivatkozások a `content/courses.md` regiszterben.
+- Egysoros Git-forráshivatkozások a `content/books.md` regiszterben.
 - Stabil kurzusazonosítók.
 - Generált, elkülönített build input összeállítása.
 - Időablakos változásellenőrzés magyar helyi idő szerint.
@@ -102,7 +102,7 @@ Példa, a tényleges helyeket a meglévő buildhez igazítva:
 ```text
 content/                     # Verziókezelt helyi tartalom és regiszter
 .generated/content/          # Gitignore-olt, összeállított build input
-  courses.md
+  books.md
   web-programming-1/
   algorithms/
 .generated/course-sources.json
@@ -293,3 +293,51 @@ Kapcsolódó taskok: [helyi előnézet](local-course-preview.md), [motor/példá
 - Meghívás elfogadása, hiányzó secret, visszavont hozzáférés és hostkulcshiba: nincs deploy vagy baseline-frissítés; titokszivárgás ellenőrzése.
 - Szándékosan hibás kurzussal ellenőrzés: nincs új deploy, előző oldal megmarad, következő futás újra próbál.
 - Actions runneridő és hostingbeállítások ellenőrzése; a GitHub aktuális korlátait ne korábbi becslésekből feltételezzük.
+
+## Megvalósítási jegyzetek (a korábbi README-ből)
+
+Az alábbi szakaszok a motor README-jéből kerültek ide: Git-források, változásellenőrzés és privát források (GitHub App).
+
+### Git course sources (registry syntax and download)
+
+A registry entry can point at a course in a GitHub repository: `<ref>@github.com/<owner>/<repo>/<path-to-entry.md>`, for example `main@github.com/colleague/course/materials/course.md`. The entry file's directory is the course content root. Local `[[…]]` entries are unchanged.
+
+- The ref is required and may be a branch, tag or full commit SHA (ASCII `A–Z a–z 0–9 . _ + - /`). The first `@` separates ref and source. There is no default-branch fallback; a name that is both a branch and a tag is rejected (use a SHA). Only `github.com` is supported; owner and repo are compared case-insensitively.
+- The parser (`src/core/source-ref.ts`) gives a concrete error for a missing ref, unsupported host, invalid owner/repository, a missing or non-`.md` path, and path segments such as `..` or empty ones. Refs cannot start with `-`; Git is always started with an argument array, never a shell.
+- `bookmd sources` resolves every ref to one commit SHA and downloads exactly that commit into `.bookmd/repos/<sha256 of repository+ref>/` (one checkout serves several courses from the same repository and ref; the hash is not a URL). It writes `.bookmd/course-sources.json` (`schemaVersion`, `source`, `commit`). Any failure — unreadable repository, unknown ref, missing entry file, duplicate listing — aborts the whole command with a message and exit code 1.
+- Git runs without user or system configuration (no credential helpers, URL rewriting or hooks), never prompts, creates no symlinks (they become plain files), skips LFS and submodules, and leaves no `.git` directory in the checkout.
+- Public repositories use anonymous HTTPS. Private sources need a different transport (machine-user SSH) and are not implemented; the transport is a replaceable `GitTransport` in `scripts/git-source.ts`.
+
+#### Course ids and assembly
+
+Every build command (`dev`, `build`, `check`, `content`) first downloads the Git sources and assembles one content root `.bookmd/content/`: a copy of the local content plus each external course's directory (the entry file's directory) under `<id>/`. The registry entry becomes `<id>/<entry file>`, so the course URL namespace is its id (`/<id>/` when the entry is `course.md`, otherwise `/<id>/<name>/`). The versioned local content is never written. Registries without Git entries are processed in place.
+
+- The external entry file must declare `id` in its frontmatter: lower-case letters, digits and single hyphens, at most 64 characters, not reserved (`_app`, `404`, `@dev`, `content-assets`, `assets`, `static`, `favicon.ico`). A missing, invalid, reserved or duplicate id, or a collision with a local top-level file or directory, blocks the build.
+- Each external course is sealed: its files may only reference files inside its own directory (relative links and `/`-rooted links alike); other courses, local content and the rest of the repository are unreachable. Local courses keep their current URLs and rules.
+- `.bookmd/course-sources.json` lists `id`, normalized source and resolved commit of the build. `bookmd dev` re-syncs only when restarted.
+
+Not yet done: the registry fingerprint and baseline comparison for change detection, the CI/time-window workflow, private sources.
+
+### Change detection: `bookmd plan`
+
+```sh
+bookmd plan --instance-commit <sha> [--engine-commit <sha>] [--baseline plan.json] [--out plan.json] [--force]
+bookmd build --sources plan.json
+```
+
+`plan` resolves every Git ref to a commit (no download) and writes a plan: schema version, the fingerprint, its inputs and the resolved sources. Inputs: instance commit (local content, config, integration), the engine version (and its commit, when the engine is a checkout rather than an installed package), SHA-256 of the instance `bun.lock`, SHA-256 of the normalized course registry, and every source with its commit. It compares the plan with a baseline — the plan of the last successful publication — and prints `Changed: <reasons>` or `Unchanged: nothing to publish`; under GitHub Actions it also writes `changed` and `reasons` to `$GITHUB_OUTPUT`.
+
+- A missing, corrupt, tampered, unknown-schema or incomplete baseline always means a full build. `--force` always rebuilds. An unresolvable ref or invalid registry fails the command (exit code 1).
+- `--sources plan.json` makes `build`, `check`, `content` and `sources` download exactly the planned commits and never resolve a ref again, so the commits that were checked are the commits that are built, even if a branch moved in between. A plan that does not match the registry is rejected.
+- The baseline is the instance's responsibility: the plan file of a deployment is stored only after that deployment succeeded.
+
+### Private course sources (GitHub App)
+
+A course author can keep the repository private and still have it published. Access is read-only and per repository, through a GitHub App owned by the instance operator.
+
+- **Author:** installs the app on their account and selects the course repository (Contents: read). No tokens, secrets or workflows. Removing the installation ends future reads; it does not unpublish what was published.
+- **Approval:** a private repository does not make the generated site private. A source that needed credentials is published only if its entry file has `publish: true` in the frontmatter; otherwise the build fails with an explanation.
+- **Operator:** creates the app (permissions: Contents read-only, Metadata read-only), then provides `BOOKMD_APP_ID` and `BOOKMD_APP_PRIVATE_KEY` (PEM) as environment variables or Actions secrets. The list of installations (`GET /app/installations`) is the access register; extra private keys allow rotation without downtime.
+- **Behaviour:** every source is tried anonymously first, so public sources never involve credentials. Only if that fails, the engine signs a short-lived app JWT, looks up the installation of that repository and asks for a one-repository, read-only installation token. The token reaches Git through the environment (`GIT_CONFIG_*` extra header), never through arguments or the URL, and is not written anywhere. Failures say whether the app is not installed (or the repository does not exist), the credentials were rejected, or no credentials are configured.
+- **CI:** credentials are given only to the `plan` and `sources` steps; `check` and `build` run without them from the downloaded, pinned commits. The reference workflow refuses credentials in a public repository, because its logs and artifacts would reveal private repository names.
+

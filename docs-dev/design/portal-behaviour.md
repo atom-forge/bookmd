@@ -4,7 +4,7 @@ A portál működésére és felületére vonatkozó, diktálás alapján össze
 
 ## Kurzuslista
 
-- A kurzuslista a `courses.md` összefoglaló oldala.
+- A kurzuslista a `books.md` összefoglaló oldala.
 - A Markdown-törzs adja a bevezetőt; a frontmatter `courses` listája tartalmazza a kurzusok belépési pontjait.
 - A `courses`, `sources` és `children` listákban idézőjelezett wikilinkek használatosak: `- "[[kurzus/course.md]]"`.
 - A kurzuskártyák a hivatkozott `course.md` metaadatait jelenítik meg.

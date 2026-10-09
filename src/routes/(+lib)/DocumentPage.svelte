@@ -10,6 +10,7 @@
   import DocumentBreadcrumb from './DocumentPage/DocumentBreadcrumb.svelte';
   import ReadingNavigation from './DocumentPage/ReadingNavigation.svelte';
   import DocumentMetadata from './DocumentPage/DocumentMetadata.svelte';
+  import PageConcepts from './DocumentPage/PageConcepts.svelte';
   import TableOfContents from './DocumentPage/TableOfContents.svelte';
   let { data }: { data: PortalPageData } = $props();
   const theme = getThemeManager();
@@ -59,6 +60,7 @@
       <article class="w-full min-w-0 [&_.prose]:max-w-none" lang={data.course?.language}>
         <Article html={data.articleHtml} dark={theme.dark}/>
       </article>
+      {#if data.page.slug !== ''}<PageConcepts requires={data.page.requires} teaches={data.page.teaches} class="mt-10 min-[1280px]:hidden"/>{/if}
       {#if data.page.slug === ''}
         <CourseCatalog courses={data.courses}/>
 
@@ -66,7 +68,7 @@
     </div>
   </main>
   {#if data.page.slug !== ''}
-    <TableOfContents headings={data.page.headings} hasCourse={data.course !== null}/>
+    <TableOfContents headings={data.page.headings} requires={data.page.requires} teaches={data.page.teaches} hasCourse={data.course !== null}/>
   {/if}
 </div>
 

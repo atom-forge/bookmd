@@ -70,7 +70,7 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
   const visible = (path: string) => !basename(path).startsWith('.');
-  await cp(config.contentRoot, output, { recursive: true, filter: visible });
+  await cp(config.contentRoot, output, { recursive: true, dereference: true, filter: visible });
   for (const [index, checked] of checkouts.entries()) await cp(checked.contentRoot, resolve(output, sources[index].id), { recursive: true, filter: visible });
 
   const registry = resolve(output, config.entrypoint);

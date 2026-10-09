@@ -149,3 +149,22 @@ A közös tartalomfeldolgozó a motor hordozható infrastruktúrája; annak alka
 - Manuális desktop Chrome-teszt HTTPS/localhost alatt: valódi mappaválasztás, megszakítás, jogosultságvesztés, újratöltés és böngészőhistory.
 - Világos/sötét téma, hosszú útvonalak és szűk viewport vizuális ellenőrzése.
 - Network panel ellenőrzés: a helyi tananyag nem kerül továbbításra; az esetleges külső beágyazáskérések külön azonosíthatók.
+
+## Megvalósítási jegyzetek (a korábbi README-ből)
+
+A következő szakasz a motor README-jéből került ide.
+
+### Local preview (`/@dev`)
+
+A statically prerendered `/@dev` route lets an author open a local folder with `showDirectoryPicker({ mode: 'read' })` (desktop Chrome/Edge, HTTPS or localhost). Files are read in the browser only; nothing is uploaded or written.
+
+- The shared core processes the folder, mounted under the virtual `/course` beside a generated catalog, so a `course.md` in the folder root is a valid entry. Candidates named `book.md`, `course.md`, `index.md`, `readme.md` are highlighted and listed in that order of preference (then shallower paths first); the uniquely best one is preselected, but confirming a choice is always required.
+- Hidden directories and `node_modules` are skipped; at most 20000 files are listed and Markdown files over 5 MB are rejected.
+- `processContent` accepts `link` (custom page URLs) and `diagnostics` options. With `diagnostics`, broken local links/assets are collected instead of failing; builds still fail. Link schemes other than http, https, mailto and tel are rendered as text (also in builds).
+- Pages use `#page=<slug>[&heading=<id>]`. In-page `#fragment` clicks are rewritten to keep the page in the hash.
+- Assets become blob URLs, revoked after a reload replaced them or when the route is left. SVG is allowed only as an image, never as a link; HTML and other active documents are not exposed.
+- A browser reload restores the preview: the folder handle and entry path (never contents) are kept in IndexedDB, and the page hash restores the position. If Chrome no longer grants read access, a "Continue with this folder" button asks again (it needs a click); otherwise the folder is reopened automatically.
+- A failed reload keeps the previous successful preview, marked as such.
+
+Validated: check, 57 tests (entry candidates, hash scheme, source/core integration, diagnostics, scheme and containment rules), static build, and a scripted desktop Chrome session against an OPFS directory handle (entry choice, navigation, back, heading scroll, blob images, callout/math/Mermaid, reload with changes, failed reload, no external requests). Not yet exercised: the native folder dialog, a non-empty base path, narrow viewports and a build/browser parity test.
+

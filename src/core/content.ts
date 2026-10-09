@@ -32,6 +32,7 @@ export type ContentPage = NavItem & {
   type?: string; course: string | null; html: string; text: string; inTree: boolean;
   previous: string | null; next: string | null;
   author: string | null; tags: string[];
+  requires: string[]; teaches: string[];
   headings: { id: string; title: string; depth: number }[];
 };
 export type Course = {
@@ -300,7 +301,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
   for (const path of coursePaths) {
     const file = await markdownTarget(start, path);
     if (aliases.has(file)) throw new Error(`Repeated course: ${path}`);
-    const route = relative(root, file).split(sep).join('/').replace(/(?:^|\/)course\.md$/i, '').replace(/\.md$/i, '');
+    const route = relative(root, file).split(sep).join('/').replace(/(?:^|\/)(?:course|book)\.md$/i, '').replace(/\.md$/i, '');
     if (!route) throw new Error('Course entry must have its own route');
     aliases.set(file, route);
     const slug = register(file);
@@ -360,6 +361,8 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       let author: string | null = null;
       let type: string | undefined;
       let tags: string[] = [];
+      let requires: string[] = [];
+      let teaches: string[] = [];
       async function append(file: string, ancestors: string[]) {
         if (ancestors.includes(file)) throw new Error(`Circular sources: ${[...ancestors, file].join(' -> ')}`);
         const { tree, sources, children, metadata } = await document(file);
@@ -372,6 +375,13 @@ export async function processContent(source: ContentSource, entrypoint: string, 
           const pageTags = metadata.tags ?? [];
           if (!Array.isArray(pageTags) || pageTags.some(tag => typeof tag !== 'string' || !tag.trim())) throw new Error(`Invalid tags in ${file}`);
           tags = [...new Set(pageTags.map(tag => tag.trim()))];
+          for (const key of ['requires', 'teaches'] as const) {
+            if (relative(root, file).split(sep).includes('resources') && key in metadata) throw new Error(`Resources cannot have ${key}: ${file}`);
+            const concepts = metadata[key] ?? [];
+            if (!Array.isArray(concepts) || concepts.some(concept => typeof concept !== 'string' || !concept.trim())) throw new Error(`Invalid ${key} in ${file}`);
+            const unique = [...new Set<string>(concepts.map(concept => concept.trim()))];
+            if (key === 'requires') requires = unique; else teaches = unique;
+          }
         }
         await registerChildren(file, children);
         visit(tree, 'heading', node => { if (!title && node.depth === 1) title = toString(node); });
@@ -431,7 +441,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       title ||= slug.split('/').at(-1) || titleFallback;
       const parent = parents.get(slug) ?? null;
       const inTree = parents.has(slug);
-      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, author, tags, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
+      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, author, tags, requires, teaches, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
       if (inTree) graph.navigation.push({ slug, title, parent });
     }
 
