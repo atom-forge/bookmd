@@ -72,6 +72,31 @@ describe('git adapter', () => {
   test('resolves a ref that contains a slash', async () => {
     expect(await resolveRef(parseSourceRef('release/2026@github.com/o/course-repo/materials/course.md'), transport)).toMatchObject({ commit: first, refKind: 'branch' });
   });
+  test('falls back to credentialed access only when anonymous access fails', async () => {
+    let authenticated = 0;
+    const gated: GitTransport = {
+      url: ({ repo: name }) => `file://${join(work, name === 'private-course' ? 'nowhere' : name)}`,
+      authenticate: async ({ repo: name }) => { authenticated++; return { url: `file://${join(work, 'course-repo')}`, env: { BOOKMD_TEST: name } }; }
+    };
+    const open = await resolveRef(parseSourceRef('main@github.com/o/course-repo/materials/course.md'), gated);
+    expect(open).toMatchObject({ commit: second, access: 'public' });
+    expect(authenticated).toBe(0); // public sources never touch credentials
+    const closed = await resolveRef(parseSourceRef('main@github.com/o/private-course/materials/course.md'), gated);
+    expect(closed).toMatchObject({ commit: second, access: 'private' });
+    const root = join(work, 'out-private');
+    const checked = await checkout(closed, root, gated);
+    expect(checked.access).toBe('private');
+    expect(authenticated).toBe(2);
+    expect((await checkout(closed, root, { url: gated.url })).access).toBe('private'); // a reused checkout remembers it
+  });
+  test('without credentials a closed repository points at the app setup', async () => {
+    const closed: GitTransport = { url: () => `file://${join(work, 'nowhere')}` };
+    await expect(resolveRef(parseSourceRef('main@github.com/o/secret/materials/course.md'), closed)).rejects.toThrow('configure the BookMD GitHub App');
+  });
+  test('an app failure is reported as such', async () => {
+    const broken: GitTransport = { url: () => `file://${join(work, 'nowhere')}`, authenticate: async () => { throw new Error('the BookMD GitHub App is not installed on o/secret'); } };
+    await expect(resolveRef(parseSourceRef('main@github.com/o/secret/materials/course.md'), broken)).rejects.toThrow('not installed on o/secret');
+  });
   test('an unknown ref or repository fails without a fallback', async () => {
     await expect(resolveRef(parseSourceRef('nope@github.com/o/course-repo/materials/course.md'), transport)).rejects.toThrow('was not found');
     await expect(resolveRef(parseSourceRef('main@github.com/o/missing/materials/course.md'), transport)).rejects.toThrow('cannot read repository');

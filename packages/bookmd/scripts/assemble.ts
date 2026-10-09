@@ -26,12 +26,20 @@ export function validateCourseId(id: unknown, source: string): string {
   return id;
 }
 
-async function courseId(checked: CheckedOut): Promise<string> {
+async function entryMetadata(checked: CheckedOut): Promise<Record<string, unknown>> {
   const text = await readFile(resolve(checked.contentRoot, checked.entrypoint), 'utf8');
   const match = text.match(frontmatter);
-  let metadata: unknown = null;
-  try { metadata = match ? parseYaml(match[1]) : null; } catch { throw new Error(`${checked.normalized}: the entry file has invalid frontmatter`); }
-  return validateCourseId((metadata as Record<string, unknown> | null)?.id, checked.normalized);
+  try { return (match ? parseYaml(match[1]) : null) ?? {}; } catch { throw new Error(`${checked.normalized}: the entry file has invalid frontmatter`); }
+}
+
+/**
+ * A private repository does not make the generated site private. Its author must therefore approve
+ * publication explicitly, in the course itself: `publish: true` in the entry file's frontmatter.
+ */
+export function requireApproval(checked: Pick<CheckedOut, 'normalized' | 'access'>, metadata: Record<string, unknown>): void {
+  if (checked.access === 'private' && metadata.publish !== true) {
+    throw new Error(`${checked.normalized}: this source is a private repository, and a private source does not make the published site private. The author must approve publication by adding "publish: true" to the entry file's frontmatter`);
+  }
 }
 
 // Synced sources are reused while a dev server regenerates after local edits; a new process syncs again.
@@ -50,7 +58,9 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   const sources: AssembledSource[] = [];
   const local = new Set((await readdir(config.contentRoot)).map(name => name.toLowerCase().replace(/\.md$/, '')));
   for (const checked of checkouts) {
-    const id = await courseId(checked);
+    const metadata = await entryMetadata(checked);
+    requireApproval(checked, metadata);
+    const id = validateCourseId(metadata.id, checked.normalized);
     if (ids.has(id)) throw new Error(`${checked.normalized}: course id "${id}" is already used by ${ids.get(id)}`);
     if (local.has(id)) throw new Error(`${checked.normalized}: course id "${id}" collides with local content "${id}"`);
     ids.set(id, checked.normalized);
