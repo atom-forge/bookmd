@@ -72,4 +72,7 @@
   {/if}
 </div>
 
-<footer class="fixed inset-x-0 bottom-0 z-40 flex h-10 items-center justify-center border-t border-frame bg-canvas text-[10px] text-muted-contrast">Built with AtomForge BookMD</footer>
+<footer class="fixed inset-x-0 bottom-0 z-40 flex h-10 items-center justify-center border-t border-frame bg-canvas text-[10px] text-muted-contrast"><span>Built with AtomForge BookMD</span>
+  <span class="mx-2" aria-hidden="true">·</span>
+  <a class="hover:text-accent" href="https://github.com/sponsors/atom-forge" rel="noopener"><span aria-hidden="true">♥</span> Support AtomForge</a>
+</footer>
