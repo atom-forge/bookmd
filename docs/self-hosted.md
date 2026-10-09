@@ -1,86 +1,86 @@
-# Saját szerveren: a build és a feltöltés
+# Self-hosting: build and upload
 
-A GitHub Pages helyett a gyűjteményt bármilyen statikus tárhelyen kiszolgálhatod: saját webszerveren, objektumtárolón (például S3-szerű tárhelyen) vagy egy statikus hosting szolgáltatón. A BookMD nem igényel futó szervert, a build eredménye sima HTML-, CSS- és JavaScript-fájlok mappája. Ez az útmutató azt írja le, hogyan működik a build, és mit kell a feltöltésnél figyelembe venni.
+Instead of GitHub Pages you can serve the collection from any static host: your own web server, object storage (for example S3-like storage) or a static hosting service. BookMD needs no running server; the result of the build is a folder of plain HTML, CSS and JavaScript files. This guide describes how the build works and what to consider when uploading.
 
-A gyűjteményed felépítését a [szerzői útmutató](authoring.md), a GitHub Pages-es utat a [feltöltési útmutató](deploy-a-book.md) írja le.
+The structure of your collection is described in the [authoring guide](authoring.md), the GitHub Pages route in the [publishing guide](deploy-a-book.md).
 
-## Mit csinál a build?
+## What does the build do?
 
-A `bookmd build` (a gyűjtemény `package.json`-jában `bun run build`) a következőket végzi:
+`bookmd build` (`bun run build` in the `package.json` of the collection) does the following:
 
-1. **Forrásokat szerez.** Ha a `books.md` tartalmaz más GitHub-repóra mutató sort ([könyv beemelése](remote-books.md)), letölti azokat a commitokat, és a helyi tartalommal egy közös tartalomgyökérbe állítja össze. A helyi `content/` mappát nem módosítja.
-2. **Feldolgozza a Markdownt.** Kiolvassa a metaadatokat, felépíti a hierarchiát és a számozást, a Markdownból HTML-t készít, a képeket és csatolt fájlokat átmásolja. Ha a tartalom hibás (például törött hivatkozás), a build leáll.
-3. **Előállítja az oldalakat.** Az `.bookmd/` mappában (eldobható munkaterület, ne commitold) a beépített SvelteKit-alkalmazással minden oldalt előre kirajzol statikus HTML-be.
-4. **Kiírja az eredményt** a `build/` mappába, és a hibaoldalt `build/404.html` néven is elmenti.
+1. **Fetches sources.** If `books.md` contains lines pointing at other GitHub repositories ([included books](remote-books.md)), it downloads those commits and assembles them with the local content into one common content root. The local `content/` folder is not modified.
+2. **Processes the Markdown.** It reads the metadata, builds the hierarchy and the numbering, turns Markdown into HTML, and copies images and attached files. If the content is faulty (for example a broken link), the build stops.
+3. **Produces the pages.** In the `.bookmd/` folder (a disposable work area, do not commit it) the built-in SvelteKit application prerenders every page into static HTML.
+4. **Writes the result** to the `build/` folder, and saves the error page as `build/404.html` too.
 
-A `.bookmd/` és a `build/` generált mappák, bármikor törölhetők és újraépíthetők.
+`.bookmd/` and `build/` are generated folders; you can delete and rebuild them at any time.
 
-## Építés a saját gépeden
+## Building on your own machine
 
-Szükséges: Bun 1.4.0+ és Node 22.12+.
+Required: Bun 1.4.0+ and Node 22.12+.
 
 ```sh
 bun install
-bun run check     # hibák keresése; opcionális, de érdemes
+bun run check     # look for errors; optional but worthwhile
 bun run build
 ```
 
-Ha a gyűjtemény nem a tartomány gyökerén él, hanem egy alkönyvtárban (például `https://example.com/konyvek/`), add meg az előtagot. Záró perjel nélkül, perjellel kezdve:
+If the collection does not live at the root of the domain but in a subdirectory (for example `https://example.com/books/`), give the prefix. Start it with a slash, no trailing slash:
 
 ```sh
-BASE_PATH=/konyvek bun run build
+BASE_PATH=/books bun run build
 ```
 
-Ugyanez a `portal.config.ts`-ben a `basePath` mezővel is megadható. A `BASE_PATH` környezeti változó felülírja a configot, üres érték esetén is. Ha a gyűjtemény a tartomány gyökerén él, ne adj meg semmit.
+The same can be set with the `basePath` field in `portal.config.ts`. The `BASE_PATH` environment variable overrides the config, even when its value is empty. If the collection lives at the root of the domain, set nothing.
 
-A kész oldal kipróbálása feltöltés előtt:
+To try the finished site before uploading:
 
 ```sh
 bunx bookmd preview
 ```
 
-A parancs a meglévő `build/` mappát szolgálja ki helyben.
+The command serves the existing `build/` folder locally.
 
-## Mi van a `build/` mappában?
+## What is in `build/`?
 
 ```text
 build/
-  index.html            # a gyűjtemény nyitóoldala
-  404.html              # hibaoldal (a könyvlistát mutatja)
-  .nojekyll             # csak GitHub Pages-hez kell
-  _app/                 # a motor JavaScript- és CSS-fájljai, tartalomhash-szel
-  <könyv>/index.html    # egy könyv nyitóoldala
-  <könyv>/<oldal>/index.html
+  index.html            # the front page of the collection
+  404.html              # error page (shows the list of books)
+  .nojekyll             # only needed for GitHub Pages
+  _app/                 # the engine's JavaScript and CSS files, with content hashes
+  <book>/index.html     # the front page of a book
+  <book>/<page>/index.html
   ...
 ```
 
-Minden oldalnak saját `mappa/index.html` fájlja van, ezért az URL-ek perjel nélkül is, perjellel is kiszolgálhatók, ha a szerver a mappákhoz az `index.html`-t adja. A mappa teljes tartalma feltölthető, mást nem kell hozzá telepíteni.
+Every page has its own `folder/index.html` file, so URLs work with or without a trailing slash if the server serves `index.html` for folders. The whole folder can be uploaded; nothing else needs to be installed.
 
-## Feltöltés
+## Upload
 
-Másold a `build/` mappa **tartalmát** a tárhely gyökerébe (vagy a `BASE_PATH` szerinti alkönyvtárba):
+Copy the **contents** of the `build/` folder to the root of the host (or to the subdirectory matching `BASE_PATH`):
 
 ```sh
-rsync -av --delete build/ felhasznalo@szerver:/var/www/konyvek/
+rsync -av --delete build/ user@server:/var/www/books/
 ```
 
-A `--delete` eltávolítja a már nem létező oldalakat. Frissítéskor építsd újra, és töltsd fel ugyanígy.
+`--delete` removes pages that no longer exist. When you update, rebuild and upload the same way.
 
-## A szerver beállítása
+## Server settings
 
-A szervernek három dolgot kell tudnia:
+The server must do three things:
 
-1. **Mappához az `index.html`-t adja.** A legtöbb webszerver alapból ezt teszi.
-2. **A hiányzó oldalra a `404.html`-t adja, 404-es állapotkóddal.** A hibaoldal a könyvlistát mutatja. Átirányítás nem szükséges, az URL megmarad.
-3. **A `_app/` fájljait hosszan gyorsítótárazhassa.** A fájlnevek tartalomhash-t viselnek, ezért biztonságosan lehet rájuk hosszú lejáratot adni.
+1. **Serve `index.html` for folders.** Most web servers do this by default.
+2. **Serve `404.html` for a missing page, with a 404 status code.** The error page shows the list of books. No redirect is needed; the URL stays as it is.
+3. **Allow long caching of the files in `_app/`.** The file names carry a content hash, so they are safe to cache for a long time.
 
-Példa nginx-konfiguráció (az elv a lényeg, a pontos beállítás a te szervereden múlik):
+An example nginx configuration (the principle matters; the exact setup depends on your server):
 
 ```nginx
 server {
   listen 80;
   server_name example.com;
-  root /var/www/konyvek;
+  root /var/www/books;
   index index.html;
 
   location / {
@@ -95,15 +95,15 @@ server {
 }
 ```
 
-Alkönyvtárban futó gyűjteménynél a `root` és a `location` útvonalakat a `BASE_PATH`-hoz kell igazítani.
+For a collection in a subdirectory, adjust `root` and the `location` paths to match `BASE_PATH`.
 
-## Automatikus építés
+## Automatic builds
 
-A build nem kötődik a GitHubhoz, ugyanezek a lépések futnak bármely CI-ben: telepíti a Bunt és a Nodeot, majd `bun install`, `bun run check`, `bun run build`, végül a `build/` feltöltése. A build letölti a beemelt könyveket is, ezért hálózatot igényel. Egy beemelt könyv ágának frissülése csak újabb build után látszik az oldalon, ezért érdemes a buildet időzíteni vagy kézzel indítani. Hogy csak tényleges változás esetén építsen újra, használd a [`bookmd plan`](cli.md#változásellenőrzés-bookmd-plan) parancsot.
+The build is not tied to GitHub: the same steps run in any CI. Install Bun and Node, then `bun install`, `bun run check`, `bun run build`, and finally upload `build/`. The build also downloads included books, so it needs network access. A change on the branch of an included book shows up on the site only after a new build, so it is worth scheduling the build or starting it by hand. To rebuild only when something has really changed, use the [`bookmd plan`](cli.md#change-detection-bookmd-plan) command.
 
-## Hibák
+## Troubleshooting
 
-- **Az oldal CSS nélkül jelenik meg, a hivatkozások törtek:** hiányzik vagy hibás a `BASE_PATH`.
-- **Az aloldalak 404-et adnak:** a szerver nem keresi az `index.html`-t a mappákban (lásd az 1. pontot).
-- **A hibás címen 200-as kód jön a 404.html helyett:** a szerver átírja a hiányzó oldalakat a nyitóoldalra (SPA-szerű beállítás). Kapcsold ki, vagy állítsd a 404-es kódot.
-- **A `build` leáll hibával:** a hibaüzenet megnevezi a fájlt és a problémát. Javítsd, és építs újra.
+- **The site appears without CSS and with broken links:** `BASE_PATH` is missing or wrong.
+- **Subpages return 404:** the server does not look for `index.html` in folders (see point 1).
+- **A wrong address returns 200 instead of 404.html:** the server rewrites missing pages to the front page (an SPA-style setup). Turn that off, or set the 404 status.
+- **The `build` stops with an error:** the error message names the file and the problem. Fix it and build again.

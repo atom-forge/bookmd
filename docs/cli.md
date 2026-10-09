@@ -1,40 +1,40 @@
-# A `bookmd` parancssor és a beállítások
+# The `bookmd` command line and configuration
 
-A gyűjtemény egy kis projekt: `package.json`, `portal.config.ts` és a `content/` mappa. A motor a `bookmd` parancsot adja, ami az eldobható `.bookmd/` munkaterületben futtatja az alkalmazást, a statikus kimenet pedig a `build/` mappába kerül. Futtatáshoz Bun 1.4.0+ és Node 22.12+ kell.
+A collection is a small project: `package.json`, `portal.config.ts` and the `content/` folder. The engine provides the `bookmd` command, which runs the application in the disposable `.bookmd/` work area; the static output goes to the `build/` folder. Running it requires Bun 1.4.0+ and Node 22.12+.
 
-## Parancsok
+## Commands
 
 ```sh
-bookmd dev       # fejlesztői szerver élő újratöltéssel
-bookmd check     # a tartalom és a hivatkozások ellenőrzése
-bookmd build     # statikus oldal a build/ mappába
-bookmd preview   # a kész build kiszolgálása helyben
-bookmd content   # csak a tartalom feldolgozása (hibakereséshez)
-bookmd sources   # a beemelt Git-források letöltése
-bookmd plan      # változásellenőrzés, lásd lent
+bookmd dev       # development server with live reload
+bookmd check     # check the content and the links
+bookmd build     # static site into the build/ folder
+bookmd preview   # serve the finished build locally
+bookmd content   # process the content only (for debugging)
+bookmd sources   # download the included Git sources
+bookmd plan      # change detection, see below
 ```
 
-- A `--config <fájl>` megadja a konfigurációt; alapértéke az aktuális mappa `portal.config.ts` fájlja. A projekt útvonalai a konfigurációs fájlhoz viszonyítva értendők.
-- A `--` utáni argumentumokat a Vite kapja (például `bookmd preview -- --host 127.0.0.1`).
-- Hibás parancs vagy beállítás, hiányzó bemenet és sikertelen eszköz nem nulla kilépési kóddal jár.
-- A `dev` figyeli a tartalommappát, és újratölti a böngészőt. A konfiguráció vagy a motor változtatása után indítsd újra.
+- `--config <file>` gives the configuration; the default is `portal.config.ts` in the current folder. The paths of the project are relative to the configuration file.
+- Arguments after `--` go to Vite (for example `bookmd preview -- --host 127.0.0.1`).
+- An invalid command or setting, missing input and a failing tool all end with a non-zero exit code.
+- `dev` watches the content folder and reloads the browser. After changing the configuration or the engine, restart it.
 
-## Konfiguráció (`portal.config.ts`)
+## Configuration (`portal.config.ts`)
 
 ```ts
 export default {
-  title: 'BookMD',        // opcionális cím
-  contentRoot: './content',  // kötelező; a motor csak olvassa
-  entrypoint: 'books.md',    // kötelező; a tartalommappához képest
-  basePath: ''               // opcionális, például '/konyvek', záró perjel nélkül
+  title: 'BookMD',           // optional title
+  contentRoot: './content',  // required; the engine only reads it
+  entrypoint: 'books.md',    // required; relative to the content folder
+  basePath: ''               // optional, for example '/books', no trailing slash
 };
 ```
 
-A `BASE_PATH` környezeti változó felülírja a `basePath` értékét, üres érték esetén is. A konfiguráció futtatható TypeScript, ezért ne tegyél bele titkot.
+The `BASE_PATH` environment variable overrides `basePath`, even when its value is empty. The configuration is executable TypeScript, so do not put secrets in it.
 
-## Telepítés egy gyűjteménybe
+## Installing into a collection
 
-A gyűjteménynek kell egy `package.json`, ami függ az `@atom-forge/bookmd` csomagtól, egy `portal.config.ts` és a `content/books.md` legalább egy könyvvel (lásd az [`examples/minimal`](https://github.com/atom-forge/bookmd/tree/main/examples/minimal) mappát):
+A collection needs a `package.json` that depends on the `@atom-forge/bookmd` package, a `portal.config.ts`, and `content/books.md` with at least one book (see the [`examples/minimal`](https://github.com/atom-forge/bookmd/tree/main/examples/minimal) folder):
 
 ```json
 { "private": true, "type": "module",
@@ -42,30 +42,30 @@ A gyűjteménynek kell egy `package.json`, ami függ az `@atom-forge/bookmd` cso
   "dependencies": { "@atom-forge/bookmd": "^0.1.2" } }
 ```
 
-- A `.bookmd/`, `build/` és `node_modules/` mappát ne commitold; a lockfile mehet.
-- Frissítés vagy visszalépés: verziócsere, lockfile-frissítés, majd `check` és `build`.
-- Az üres könyvlista hibát okoz: legalább egy könyv kell a `books.md`-ben.
+- Do not commit the `.bookmd/`, `build/` and `node_modules/` folders; the lockfile is fine to commit.
+- Upgrading or rolling back: change the version, update the lockfile, then `check` and `build`.
+- An empty book list is an error: `books.md` needs at least one book.
 
-## Helyi előnézet a böngészőben (`/@dev`)
+## Local preview in the browser (`/@dev`)
 
-A publikált oldalon (és a `dev` szerveren) a `/@dev` cím egy szerzői előnézetet ad: egy helyi mappát nyithatsz meg a böngészőben (`showDirectoryPicker`, asztali Chrome vagy Edge, HTTPS vagy localhost), és a tartalmat azonnal látod. A fájlokat csak a böngésző olvassa, semmi nem töltődik fel vagy íródik vissza.
+On a published site (and on the `dev` server) the `/@dev` address gives an author preview: you can open a local folder in the browser (`showDirectoryPicker`, desktop Chrome or Edge, HTTPS or localhost) and see the content immediately. The files are read by the browser only; nothing is uploaded or written back. This site's own preview is at [atom-forge.github.io/@dev/](https://atom-forge.github.io/@dev/).
 
-- Az indításkor kiválaszthatod a belépőfájlt. A `book.md`, `course.md`, `index.md` és `readme.md` nevűek kiemelve jelennek meg.
-- A rejtett mappák és a `node_modules` kimaradnak; legfeljebb 20 000 fájl listázódik, az 5 MB-nál nagyobb Markdown elutasítva.
-- A törött hivatkozások és képek diagnosztikaként jelennek meg, az előnézet nem áll le.
-- Újratöltés után a böngésző megjegyzi a mappát és az oldalt. Ha a Chrome már nem ad olvasási jogot, egy „Continue with this folder” gomb kéri újra.
+- On start you can choose the entry file. Files named `book.md`, `course.md`, `index.md` and `readme.md` are highlighted.
+- Hidden folders and `node_modules` are skipped; at most 20,000 files are listed, and Markdown files over 5 MB are rejected.
+- Broken links and images appear as diagnostics; the preview does not stop.
+- After a reload the browser remembers the folder and the page. If Chrome no longer grants read access, a "Continue with this folder" button asks again.
 
-## Változásellenőrzés: `bookmd plan`
+## Change detection: `bookmd plan`
 
-Ha a gyűjtemény beemelt könyveket tartalmaz, a `plan` megmondja, kell-e új build:
+If the collection contains included books, `plan` tells you whether a new build is needed:
 
 ```sh
 bookmd plan --instance-commit <sha> [--baseline plan.json] [--out plan.json] [--force]
 bookmd build --sources plan.json
 ```
 
-A `plan` feloldja az összes ref-et konkrét commitra (letöltés nélkül), és egy tervfájlt ír: a gyűjtemény commitját, a motor verzióját, a `bun.lock` és a könyvlista ujjlenyomatát, valamint a beemelt források commitjait. Összeveti a legutóbbi sikeres publikáció tervével, és kiírja, hogy `Changed: <okok>` vagy `Unchanged: nothing to publish`. GitHub Actionsben a `changed` és `reasons` kimenetet is beállítja.
+`plan` resolves every ref to a concrete commit (without downloading) and writes a plan file: the commit of the collection, the engine version, the fingerprints of `bun.lock` and the book list, and the commits of the included sources. It compares the plan with that of the last successful publication and prints `Changed: <reasons>` or `Unchanged: nothing to publish`. In GitHub Actions it also sets the `changed` and `reasons` outputs.
 
-- Hiányzó, sérült vagy hiányos alapterv mindig teljes buildet jelent; a `--force` is mindig újraépít.
-- A `build --sources plan.json` pontosan a tervezett commitokat tölti le, és nem old fel újra refet, így az ellenőrzött és az épített commit megegyezik akkor is, ha közben egy ág továbblépett.
-- Az alapterv tárolása a gyűjtemény dolga: a terv fájlját csak sikeres telepítés után szabad eltenni.
+- A missing, corrupt or incomplete baseline always means a full build; `--force` always rebuilds.
+- `build --sources plan.json` downloads exactly the planned commits and never resolves a ref again, so the commit that was checked is the commit that is built, even if a branch has moved on in the meantime.
+- Storing the baseline is the collection's job: keep the plan file only after a successful deployment.

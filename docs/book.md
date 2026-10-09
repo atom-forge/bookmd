@@ -1,10 +1,10 @@
 ---
 id: bookmd
 name: BookMD
-language: hu
+language: en
 author: AtomForge
 tags: [bookmd, documentation]
-intro: "Könyvgyűjtemény Markdownból: írás, publikálás GitHubon vagy saját szerveren, beemelt könyvek."
+intro: "A book collection from Markdown: writing, publishing on GitHub or your own server, included books."
 children:
   - "[[authoring.md]]"
   - "[[deploy-a-book.md]]"
@@ -14,10 +14,10 @@ children:
 ---
 # BookMD
 
-A BookMD Markdown fájlokból statikus webes könyvgyűjteményt épít. Ez a könyv a használatát írja le:
+BookMD turns Markdown files into a static book collection on the web. This book describes how to use it:
 
-- [Könyvek írása](authoring.md): szerkezet, metaadatok, támogatott tartalom.
-- [Könyvgyűjtemény feltöltése GitHubra](deploy-a-book.md): GitHub Pages, a sablonrepóval.
-- [Könyv beemelése másik GitHub-repóból](remote-books.md): külső és privát források.
-- [Saját szerveren](self-hosted.md): a build és a feltöltés.
-- [Parancsok és beállítások](cli.md): a `bookmd` parancssor, a `portal.config.ts`, a helyi előnézet.
+- [Writing books](authoring.md): structure, metadata, supported content.
+- [Publishing a collection on GitHub](deploy-a-book.md): GitHub Pages, with the template repository.
+- [Books from other GitHub repositories](remote-books.md): external and private sources.
+- [Self-hosting](self-hosted.md): the build and the upload.
+- [Commands and configuration](cli.md): the `bookmd` command line, `portal.config.ts`, the local preview.

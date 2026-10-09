@@ -1,44 +1,43 @@
-# Könyvek írása (BookMD)
+# Writing books
 
-A BookMD Markdown fájlokból statikus webes könyvgyűjteményt épít. Ez az útmutató a szerzőknek szól: hogyan épül fel egy gyűjtemény és egy könyv, milyen metaadatokat és tartalmat támogat a rendszer.
+BookMD turns Markdown files into a static book collection on the web. This guide is for authors: how a collection and a book are structured, and which metadata and content the system supports.
 
-- Első feltöltés GitHub Pages-re: [Könyvgyűjtemény feltöltése GitHubra](deploy-a-book.md)
-- Könyv beemelése másik repóból: [Könyv beemelése másik GitHub-repóból](remote-books.md)
-- Saját szerveren: [Saját szerveren: a build és a feltöltés](self-hosted.md)
-- Parancsok és beállítások: [A `bookmd` parancssor és a beállítások](cli.md)
+- First upload to GitHub Pages: [Publishing a collection on GitHub](deploy-a-book.md)
+- Including a book from another repository: [Books from other GitHub repositories](remote-books.md)
+- On your own server: [Self-hosting: build and upload](self-hosted.md)
+- Commands and settings: [The `bookmd` command line and configuration](cli.md)
 
-## Tartalom
+## Contents
 
-1. [Alapfogalmak](#alapfogalmak)
-2. [A legkisebb gyűjtemény](#a-legkisebb-gyűjtemény)
-3. [Szerkezet és hierarchia](#szerkezet-és-hierarchia)
-4. [Metaadatok](#metaadatok)
-5. [Támogatott tartalom](#támogatott-tartalom)
-6. [URL-ek és hibaoldal](#url-ek-és-hibaoldal)
+1. [Basic concepts](#basic-concepts)
+2. [The smallest collection](#the-smallest-collection)
+3. [Structure and hierarchy](#structure-and-hierarchy)
+4. [Metadata](#metadata)
+5. [Supported content](#supported-content)
+6. [URLs and the error page](#urls-and-the-error-page)
 
+## Basic concepts
 
-## Alapfogalmak
+BookMD turns Markdown files into a static website. Three concepts are worth knowing:
 
-A BookMD Markdown fájlokból statikus weboldalt épít. Három fogalmat érdemes ismerni:
+- **Collection**: the whole site. A GitHub repository with a front page and a list of books.
+- **Book**: a self-contained unit of the collection, with its own front page, chapters and pages. The menu on the left shows the structure of one book.
+- **Page**: a single Markdown file. It can be a chapter, a content page or auxiliary material.
 
-- **Gyűjtemény**: az egész oldal. Egy GitHub-repó, amelynek van nyitóoldala és könyvlistája.
-- **Könyv**: a gyűjtemény egy önálló egysége, saját nyitóoldallal, fejezetekkel és oldalakkal. A bal oldali menü egy könyv szerkezetét mutatja.
-- **Oldal**: egyetlen Markdown fájl. Lehet fejezet, tartalmi oldal vagy segédanyag.
-
-## A legkisebb gyűjtemény
+## The smallest collection
 
 ```text
 my-books/
   package.json
   portal.config.ts
   content/
-    books.md          # a gyűjtemény nyitóoldala és könyvlistája
+    books.md          # the front page and the list of books
     my-first-book/
-      book.md         # a könyv nyitóoldala
+      book.md         # the front page of the book
       01-intro.md
 ```
 
-A `portal.config.ts` megadja a tartalom helyét és a belépőfájlt:
+`portal.config.ts` gives the location of the content and the entry file:
 
 ```ts
 export default {
@@ -48,7 +47,7 @@ export default {
 };
 ```
 
-A `content/books.md` frontmatterében a `courses` lista sorolja fel a könyveket. A kulcs neve történeti okból maradt `courses`; a lista elemei a könyvek nyitóoldalai:
+In the frontmatter of `content/books.md` the `courses` list names the books. For historical reasons the key is still called `courses`; its items are the front pages of the books:
 
 ```md
 ---
@@ -61,21 +60,21 @@ courses:
 Welcome.
 ```
 
-A `courses` és a többi hivatkozáslista (`children`, `sources`) rendezett lista, idézőjelezett wikilinkekkel. Az idézőjel szükséges, különben a YAML beágyazott listaként értelmezné a szögletes zárójeleket. Az útvonalak a deklaráló dokumentumhoz képest értendők, és a `.md` elhagyható.
+`courses` and the other reference lists (`children`, `sources`) are ordered lists of quoted wikilinks. The quotes are required, otherwise YAML would read the square brackets as a nested list. Paths are relative to the declaring document, and the `.md` extension may be omitted.
 
-### Kész kiindulópont
+### A ready-made starting point
 
-A leggyorsabb indulás a [`bookmd-starter`](https://github.com/atom-forge/bookmd-starter) sablonrepó: egy működő gyűjtemény egy mintakönyvvel és a publikáló workflow-val. A lépései a [feltöltési útmutatóban](deploy-a-book.md) vannak.
+The quickest start is the [`bookmd-starter`](https://github.com/atom-forge/bookmd-starter) template repository: a working collection with a sample book and the publishing workflow. The steps are in the [publishing guide](deploy-a-book.md).
 
-### Hasznos tudni
+### Good to know
 
-- A gyűjtemény belépőfájlja (itt `books.md`) a `portal.config.ts`-ben állítható. A katalógus a `/` címen jelenik meg.
-- A tartalomgyökérben symlink is állhat, például külső jegyzetmappára. A gyökérből kilépő `../` útvonal továbbra is hiba.
-- A motor Bun 1.4+ és Node 22.12+ környezetet igényel, ha helyben futtatod. A GitHub Pages workflow ezt maga telepíti, ezért publikáláshoz a saját gépedre nem kell semmi.
+- The entry file of the collection (`books.md` here) is set in `portal.config.ts`. The catalogue is shown at `/`.
+- The content root may contain symlinks, for example to an external notes folder. A path that leaves the root with `../` is still an error.
+- Running the engine locally requires Bun 1.4+ and Node 22.12+. The GitHub Pages workflow installs them itself, so you need nothing on your own machine to publish.
 
-## Szerkezet és hierarchia
+## Structure and hierarchy
 
-Nincs központi fa, `tree` vagy `series` mező. Minden dokumentum saját, opcionális `children` listájával deklarálja közvetlen aloldalait. Az útvonal mindig a deklaráló fájlhoz képest relatív. Minden gyermeknek lehet saját `children` és `sources` listája.
+There is no central tree, and no `tree` or `series` field. Every document declares its direct subpages with its own optional `children` list. Paths are always relative to the declaring file. Every child can have its own `children` and `sources` lists.
 
 ```md
 ---
@@ -88,23 +87,23 @@ children:
 Weekly introduction.
 ```
 
-A cím nélküli wikilink az első H1-et használja; egyedi címhez Markdown-link adható meg. A `children` elemei idézőjelezett linkek, egyszerű útvonal nem használható. A listák sorrendje adja a menüsorrendet és az előző/következő navigációt a közvetlen testvérek között. A szülő nem része saját gyermeklistájának. A `children` nem fűzi össze a dokumentumok tartalmát.
+A wikilink without a title uses the first H1 of the target; for a custom title use a Markdown link. The items of `children` are quoted links; a plain path is not allowed. The order of the lists gives the menu order and the previous/next navigation between direct siblings. A parent is not part of its own child list. `children` does not concatenate the content of documents.
 
-Egy dokumentumnak egy hierarchikus szülője lehet. Ismételt gyermek, több szülő vagy hierarchikus kör buildhiba. A régi `series` és `tree` mezők hibát okoznak, át kell írni őket `children`-re. A `***` egyszerű Markdown-elválasztó, nincs navigációs szerepe.
+A document can have one hierarchical parent. A repeated child, several parents or a hierarchy cycle is a build error. The old `series` and `tree` fields are errors; rewrite them as `children`. `***` is a plain Markdown divider with no navigation role.
 
-### Fejezetek és számozás
+### Chapters and numbering
 
-A `type` mező szabja meg, hogyan számozódik az oldal:
+The `type` field determines how a page is numbered:
 
-- `type: chapter`: számozott fejezet; leszármazottai örökölik a számprefixet.
-- `type: content`: számozott tartalmi oldal a legközelebbi fejezetben.
-- Bármilyen más vagy hiányzó `type`: számozatlan segédanyag, nem fogyaszt számot.
+- `type: chapter`: a numbered chapter; its descendants inherit the number prefix.
+- `type: content`: a numbered content page within the nearest chapter.
+- Any other or missing `type`: unnumbered auxiliary material that consumes no number.
 
-A deklarált `children` sorrend határozza meg a bejárást és a számozást. Minden könyv saját számozást kezd; a beágyazott fejezetek meghosszabbítják a prefixet. A fájlnevekre nincs számozási elvárás, a `chapter` frontmatter figyelmen kívül marad.
+The declared `children` order determines traversal and numbering. Each book starts its own numbering; nested chapters extend the prefix. File names have no numbering requirement, and a `chapter` frontmatter field is ignored.
 
-### Források: oldal összeállítása több fájlból
+### Sources: composing a page from several files
 
-A dokumentum saját tartalma után a `sources` fájljai sorrendben jelennek meg:
+After the document's own content, the files in `sources` appear in order:
 
 ```md
 ---
@@ -112,26 +111,26 @@ sources:
   - "[[01/overview.md]]"
   - "[[02/overview.md]]"
 ---
-# Tematika
+# Syllabus
 
-A könyv bevezetője.
+Introduction of the book.
 ```
 
-A források további forrásokat fűzhetnek hozzá. Minden forrás hivatkozása és képe a saját fájljához képest értendő. Körkörös összefűzés buildhibát okoz; az ismétlődő címsorazonosítók egyedi utótagot kapnak. A `sources` önmagában nem hoz létre számozott oldalt.
+Sources can add further sources. Every link and image in a source is relative to its own file. Circular concatenation is a build error; repeated heading ids get a unique suffix. `sources` on its own does not create a numbered page.
 
-### Hivatkozások
+### Links
 
-A rendszer követi a helyi Markdown-hivatkozásokat, köröket egyszer dolgoz fel. A dokumentumok egyéb linkjei nem módosítják a breadcrumb-fát. A fában nem szereplő dokumentumok az utoljára látogatott könyvág breadcrumbját kapják, külön ikonnal jelölve saját címüket. Közvetlen megnyitáskor a könyv gyökeréből indulnak. A tartalomgyökéren kívülre mutató útvonal buildhibát okoz.
+The system follows local Markdown links and processes cycles once. Other links in documents do not change the breadcrumb tree. A document outside the tree gets the breadcrumb of the last visited branch of the book, with an icon marking its own title. Opened directly, it starts from the root of the book. A path that leaves the content root is a build error.
 
-### Hogyan jelenik meg
+### How it is displayed
 
-Egy könyvön belül 900 px-től balra rekurzív könyvfa látható, 1280 px-től jobbra az aktuális dokumentum címsoraiból épülő tartalomjegyzék („On this page”). Egyetlen ágútvonal nyitott: a teljes sor natív linkje navigál és megnyitja a kiválasztott útvonalat. A breadcrumb külön mutatja az ősöket, a közvetlen szülőt és az aktuális dokumentumot. 900 px alatt hamburger nyit navigációs panelt, a tartalomjegyzék rejtett marad.
+Inside a book, a recursive book tree is shown on the left from 900 px, and from 1280 px a table of contents built from the headings of the current document is shown on the right ("On this page"). Exactly one branch path is open: the whole row is a native link that navigates and opens the selected path. The breadcrumb shows the ancestors, the direct parent and the current document separately. Below 900 px a hamburger opens a navigation panel and the table of contents is hidden.
 
-## Metaadatok
+## Metadata
 
-### A könyv adatai
+### Book data
 
-A könyv nyitóoldalának (`book.md`) frontmatterében vannak a könyv adatai:
+The frontmatter of the front page of a book (`book.md`) holds the data of the book:
 
 ```md
 ---
@@ -151,51 +150,51 @@ children:
 Book introduction.
 ```
 
-A katalógus és a könyv nyitóoldala ugyanezeket az adatokat használja. A `language` kötelező; nem külön nyelvi belépőpont. A `name` az első H1-ből is következhet. A szerző (`author`), a címkék, a rövid bevezető (`intro`) és a kép opcionális. A katalógusban nyelvre és több címkére lehet szűrni; a kiválasztott címkéknek mind szerepelniük kell a könyvön.
+The catalogue and the front page of the book use the same data. `language` is required; it is not a separate language entry point. `name` can also follow from the first H1. The author (`author`), tags, short introduction (`intro`) and image are optional. The catalogue can be filtered by language and by several tags; all selected tags must be present on the book.
 
-A régi `instructor` és a könyv `year` mezője buildhibát okoz. A katalógus a saját címkék mellett minden, a könyvhöz tartozó oldal címkéit is mutatja és keresi, kis-/nagybetű-, ékezet- és whitespace-normalizált deduplikálással.
+The old `instructor` field and the book `year` field are build errors. Besides its own tags, the catalogue shows and searches the tags of every page belonging to the book, de-duplicated regardless of case, accents and whitespace.
 
-### Oldal szerzője és címkéi
+### Author and tags of a page
 
-Bármely oldal frontmatterében megadható opcionális `author` és `tags`:
+Any page can have the optional `author` and `tags` in its frontmatter:
 
 ```yaml
 ---
-author: Laborci Gergely
+author: Jane Doe
 tags:
   - usability
-  - saját címke
+  - my own tag
 ---
 ```
 
-A megadott szerző és címkék az oldal tartalma előtt jelennek meg. A címkék szabadon választhatók. Ezek az adatok nem öröklődnek a könyvtől, a szülőfejezettől vagy a `sources` fájlokból; hiányzó mezőhöz nem jelenik meg üres helyőrző.
+The author and tags appear before the content of the page. Tags are free-form. These values are not inherited from the book, the parent chapter or `sources` files; a missing field shows no empty placeholder.
 
-### Előfeltételek és tanított fogalmak
+### Prerequisites and taught concepts
 
-Bármely oldal frontmatterében megadható opcionális `requires` és `teaches` fogalomlista:
+Any page can have the optional `requires` and `teaches` concept lists in its frontmatter:
 
 ```yaml
 ---
 requires:
-  - kliens–szerver modell
+  - client–server model
 teaches:
   - HTTP
-  - HTTP-metódus
+  - HTTP method
 ---
 ```
 
-- `requires`: az oldal megértéséhez szükséges, ismertnek tekintett fogalmak.
-- `teaches`: az oldal által ténylegesen megtanított fogalmak.
+- `requires`: concepts assumed to be known for understanding the page.
+- `teaches`: concepts the page actually teaches.
 
-Az értékek nem üres szövegek listái; a build levágja a szóközöket és elhagyja az ismétlődéseket. Hibás típus buildhibát okoz, és `resources` alatt nem adhatók meg. Az oldal jobb oldali sávjának alján egy blokk mutatja őket („Prerequisites (n)” és „Teaches (n)” lista), keskeny nézetben a cikk végén. Ha egyik mező sincs megadva, a blokk nem jelenik meg. Ezek az adatok sem öröklődnek.
+The values are lists of non-empty strings; the build trims whitespace and drops duplicates. A wrong type is a build error, and the fields are not allowed under `resources`. A block at the bottom of the right-hand sidebar shows them ("Prerequisites (n)" and "Teaches (n)" lists); on narrow screens it appears at the end of the article. If neither field is set, the block is not shown. These values are not inherited either.
 
-## Támogatott tartalom
+## Supported content
 
-Támogatott: matematikai képletek, Mermaid-diagramok, színezett kódblokkok, beágyazott videók és interaktív matematikai ábrák, valamint Obsidian-calloutok. Nyers HTML nem kerül a kimenetbe.
+Supported: mathematical formulas, Mermaid diagrams, highlighted code blocks, embedded videos and interactive math figures, and Obsidian callouts. Raw HTML does not reach the output.
 
-### Képletek és diagramok
+### Formulas and diagrams
 
-A képletek LaTeX-szintaxisúak: `$x^2$` a szövegbe ágyazott, `$$E = mc^2$$` önálló sorú képletet ad. A diagramok `mermaid` nyelvű kódblokkban írhatók:
+Formulas use LaTeX syntax: `$x^2$` gives an inline formula, `$$E = mc^2$$` a display formula. Diagrams are written in a code block with the language `mermaid`:
 
 ````md
 ```mermaid
@@ -203,9 +202,9 @@ graph TD; A-->B
 ```
 ````
 
-### Videó és interaktív matematika beágyazása
+### Embedding video and interactive math
 
-Egy külső tartalom akkor jelenik meg az oldalba ágyazva (iframe), ha a címét **dupla szögletes zárójelbe** teszed. Érdemes külön bekezdésbe írni:
+External content is embedded in the page (as an iframe) when you put its address in **double square brackets**. Write it in a paragraph of its own:
 
 ```md
 [[https://youtu.be/dQw4w9WgXcQ]]
@@ -215,48 +214,48 @@ Egy külső tartalom akkor jelenik meg az oldalba ágyazva (iframe), ha a címé
 [[https://www.geogebra.org/m/RHYH3UQ8]]
 ```
 
-Támogatott szolgáltatások és címformák:
+Supported services and address forms:
 
-| Szolgáltatás | Elfogadott cím |
+| Service | Accepted address |
 |---|---|
-| YouTube | `https://youtu.be/<azonosító>`, `https://www.youtube.com/watch?v=<azonosító>`, `…/embed/<azonosító>`, `…/shorts/<azonosító>` (az azonosító 11 karakter) |
-| Desmos | `https://www.desmos.com/calculator/<azonosító>` |
-| Desmos 3D | `https://www.desmos.com/3d/<azonosító>` |
-| GeoGebra | `https://www.geogebra.org/m/<azonosító>` |
+| YouTube | `https://youtu.be/<id>`, `https://www.youtube.com/watch?v=<id>`, `…/embed/<id>`, `…/shorts/<id>` (the id is 11 characters) |
+| Desmos | `https://www.desmos.com/calculator/<id>` |
+| Desmos 3D | `https://www.desmos.com/3d/<id>` |
+| GeoGebra | `https://www.geogebra.org/m/<id>` |
 
-- A YouTube-videó a `youtube-nocookie.com` adatvédelmi változatán töltődik be.
-- Az ábrák a szolgáltató oldalán szerkeszthetők és oszthatók meg, a beágyazáshoz a megosztási címet másold be. A beágyazott Desmos- és GeoGebra-ábra interaktív.
-- **Csak a `[[…]]` forma ágyaz be.** A sima Markdown-link (`[Videó](https://youtu.be/…)`), a szövegközi link és a szövegben álló, csupasz cím közönséges link marad.
-- Más szolgáltatás, más címforma (például további útvonalrészek a GeoGebra-címen), hibás vagy a szolgáltatóra csak hasonlító gazdanév (például `desmos.com.evil.test`), valamint felhasználónevet tartalmazó cím nem ágyazódik be; ezek is közönséges linkként maradnak meg.
-- Az iframe lustán töltődik, és csak a fenti szolgáltatások tölthetők be így. Tetszőleges külső oldal beágyazása nem támogatott.
+- YouTube videos load from the privacy-enhanced `youtube-nocookie.com` domain.
+- Figures are edited and shared on the service's own site; paste the share address to embed them. Embedded Desmos and GeoGebra figures are interactive.
+- **Only the `[[…]]` form embeds.** A plain Markdown link (`[Video](https://youtu.be/…)`), an inline link and a bare address in text stay ordinary links.
+- Another service, another address form (for example extra path parts on a GeoGebra address), a malformed host or one that merely resembles the service (such as `desmos.com.evil.test`), and an address containing a user name are not embedded; they also stay ordinary links.
+- The iframe loads lazily, and only the services above can be loaded this way. Embedding arbitrary external pages is not supported.
 
-### Obsidian-calloutok
+### Obsidian callouts
 
 ```md
-> [!note] Megjegyzés
-> A tartalom támogatja a **Markdown** formázást és a helyi linkeket.
+> [!note] Note
+> The content supports **Markdown** formatting and local links.
 
-> [!tip]+ Alapból nyitva
-> Összecsukható tartalom.
+> [!tip]+ Open by default
+> Collapsible content.
 
-> [!warning]- Alapból csukva
-> Kattintással vagy billentyűzettel nyitható.
+> [!warning]- Closed by default
+> Can be opened by click or keyboard.
 ```
 
-Típusok: `note`, `abstract`, `info`, `todo`, `tip`, `success`, `question`, `warning`, `failure`, `danger`, `bug`, `example`, `quote`. Az Obsidian-aliasok is használhatók (`summary`, `tldr`, `hint`, `important`, `check`, `done`, `help`, `faq`, `caution`, `attention`, `fail`, `missing`, `error`, `cite`). A típus kis- és nagybetűtől független; az ismeretlen típus `note` megjelenítést kap.
+Types: `note`, `abstract`, `info`, `todo`, `tip`, `success`, `question`, `warning`, `failure`, `danger`, `bug`, `example`, `quote`. Obsidian aliases work too (`summary`, `tldr`, `hint`, `important`, `check`, `done`, `help`, `faq`, `caution`, `attention`, `fail`, `missing`, `error`, `cite`). The type is case-insensitive; an unknown type is shown as `note`.
 
-Egyedi cím, cím nélküli és csak címet tartalmazó callout, illetve beágyazott callout is támogatott. A belső Markdown, képek, képletek és kódblokkok a szokásos feldolgozást kapják. A `+` és `-` változat natív HTML `details` elemmel működik, JavaScript nélkül is. Szintaxis: [Obsidian callouts](https://obsidian.md/help/callouts).
+A custom title, no title, a title only, and nested callouts are supported. Inner Markdown, images, formulas and code blocks get the usual processing. The `+` and `-` variants use the native HTML `details` element and work without JavaScript. Syntax: [Obsidian callouts](https://obsidian.md/help/callouts).
 
-### Wikilinkek
+### Wikilinks
 
-A törzsben a `[[dokumentum.md]]`, `[[dokumentum]]` és `[[dokumentum#cimsor|Egyedi cím]]` wikilinkek követhetők és renderelhetők. Cím nélkül a dokumentum első H1-ét használjuk. A kódblokkok és az inline kód wikilinkjei szövegként maradnak meg. A törzs linkjei nem módosítják a navigációs fát. Az Obsidian `![[...]]` embed-szintaxisa nem támogatott.
+In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#heading|Custom title]]` are followed and rendered. Without a title, the first H1 of the document is used. Wikilinks in code blocks and inline code stay as text. Links in the body do not change the navigation tree. The Obsidian `![[...]]` embed syntax is not supported.
 
-## URL-ek és hibaoldal
+## URLs and the error page
 
-A katalógus a `/` címen érhető el. A `web-programming-1/book.md` (vagy `course.md`) a `/web-programming-1/` címen, a többi Markdown az elérési útjának megfelelő címen érhető el. Nincs globális nyelvi vagy `/portal` prefix.
+The catalogue is available at `/`. `web-programming-1/book.md` (or `course.md`) is served at `/web-programming-1/`, and other Markdown files at the address matching their path. There is no global language or `/portal` prefix.
 
-A `build/` könyvtár statikus kimenet. Az URL-ek a gyökérből indulnak; ha a gyűjtemény alkönyvtárban él (például GitHub projektoldalon), a `BASE_PATH` környezeti változó adja meg az előtagot, lásd a [feltöltési útmutatót](deploy-a-book.md).
+The `build/` folder is static output. URLs start from the root; if the collection lives in a subdirectory (for example on a GitHub project page), the `BASE_PATH` environment variable gives the prefix, see the [publishing guide](deploy-a-book.md).
 
-### Hibás URL-ek
+### Wrong URLs
 
-A hibás URL-ek a könyvlistát jelenítik meg rövid „Page not found. Choose a course below.” jelzéssel. A build előre rendereli a hibakatalógust, majd `build/404.html` néven is elmenti; a GitHub Pages ezt HTTP 404 válasszal szolgálja ki. A könyvkártyák JavaScript nélkül is benne vannak a HTML-ben. Az URL megmarad, nincs átirányítás.
+A wrong URL shows the list of books with a short "Page not found. Choose a course below." notice. The build prerenders the error catalogue and also saves it as `build/404.html`; GitHub Pages serves it with an HTTP 404 status. The book cards are in the HTML even without JavaScript. The URL stays as it is; there is no redirect.

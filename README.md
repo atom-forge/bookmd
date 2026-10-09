@@ -10,7 +10,7 @@ To run it locally (Bun 1.4.0+, Node 22.12+) see [docs/cli.md](docs/cli.md).
 
 ## Documentation
 
-User documentation (Hungarian), in [docs/](docs):
+User documentation, in [docs/](docs):
 
 - [Writing books](docs/authoring.md): structure, metadata, supported content.
 - [Publishing on GitHub Pages](docs/deploy-a-book.md).

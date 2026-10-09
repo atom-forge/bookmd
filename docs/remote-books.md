@@ -1,12 +1,12 @@
-# Könyv beemelése másik GitHub-repóból
+# Books from other GitHub repositories
 
-A gyűjteményedbe nemcsak saját mappából vehetsz fel könyvet: egy másik GitHub-repó könyvét is beemelheted, ha a szerzője a saját repójában tartja. A szerzőnek nincs dolga: nem kell workflow-t, tokent vagy BookMD-t telepítenie, elég a Markdown fájlokat a repóban tartania. A letöltés és a build a te gyűjteményed workflow-jában történik.
+A book in your collection does not have to live in your own folder: you can include a book from another GitHub repository, kept by its author in their own repository. The author has nothing to do: no workflow, token or BookMD installation is needed, only the Markdown files in the repository. The download and the build run in the workflow of your collection.
 
-Az útmutató a [könyvgyűjtemény feltöltését](deploy-a-book.md) feltételezi, vagyis már van működő gyűjteményed (például a sablonrepóból).
+This guide assumes that you already have a working collection (see [publishing a collection](deploy-a-book.md)), for example from the template repository.
 
-## 1. A szerző teendője: a belépőfájl
+## 1. The author's part: the entry file
 
-A beemelt könyv nyitóoldala a repóban egy Markdown fájl (például `book.md`), amelynek **a mappája a könyv tartalomgyökere**. Ebben a fájlban kötelező egy `id`, a könyv címe lesz a gyűjteményedben:
+The front page of an included book is a Markdown file in the repository (for example `book.md`), and **its folder is the content root of the book**. The file must have an `id`, which becomes the address of the book in your collection:
 
 ```md
 ---
@@ -19,70 +19,70 @@ children:
 # Web programming
 ```
 
-- Az `id` csak kisbetűt, számot és kötőjelet tartalmazhat (nem kezdődhet vagy végződhet kötőjellel, nem lehet két egymás utáni kötőjel), legfeljebb 64 karakter lehet.
-- Nem foglalt az `_app`, `404`, `@dev`, `content-assets`, `assets`, `static` és `favicon.ico`.
-- Az `id` nem ütközhet más beemelt könyv `id`-jával, sem a `content/` mappa valamelyik fájljának vagy mappájának nevével.
-- A többi metaadat (`name`, `language`, `author`, `tags`, `children`) ugyanaz, mint a helyi könyveknél, lásd a [szerzői útmutatót](authoring.md).
-- A könyv fájljai csak a **saját mappájukra** hivatkozhatnak. Másik könyvre, a te `content/` mappádra vagy a repó többi részére mutató hivatkozás nem működik.
+- The `id` may contain only lower-case letters, digits and single hyphens (it cannot start or end with a hyphen, and cannot contain two hyphens in a row), at most 64 characters.
+- `_app`, `404`, `@dev`, `content-assets`, `assets`, `static` and `favicon.ico` are reserved.
+- The `id` must not collide with the `id` of another included book, nor with the name of a file or folder in your `content/` folder.
+- The other metadata (`name`, `language`, `author`, `tags`, `children`) is the same as for local books, see the [authoring guide](authoring.md).
+- The files of the book can only refer to **their own folder**. A link to another book, to your `content/` folder or to the rest of the repository does not work.
 
-## 2. A te teendőd: egy sor a `books.md`-ben
+## 2. Your part: one line in `books.md`
 
-A `content/books.md` `courses` listájába a helyi `[[…]]` hivatkozások mellé egy sort veszel fel ebben a formában:
+In the `courses` list of `content/books.md`, next to the local `[[…]]` references, add a line in this form:
 
 ```text
-<ref>@github.com/<tulajdonos>/<repó>/<útvonal-a-belépőfájlhoz.md>
+<ref>@github.com/<owner>/<repository>/<path-to-the-entry-file.md>
 ```
 
 ```md
 ---
 courses:
   - "[[my-first-book/book.md]]"
-  - "main@github.com/kollega/web-notes/book.md"
-  - "v2.1@github.com/mas-kollega/algorithms/materials/book.md"
+  - "main@github.com/colleague/web-notes/book.md"
+  - "v2.1@github.com/other-colleague/algorithms/materials/book.md"
 ---
 ```
 
-- A **ref kötelező**: ágnév (`main`), címke (`v2.1`) vagy teljes commit SHA. Nincs alapértelmezett ág. Ha egy név ág is, címke is, a build hibát jelez, ilyenkor használj SHA-t.
-- A host egyelőre csak `github.com`.
-- A belépőfájl útvonala a repó gyökeréhez képest értendő, és `.md`-re kell végződnie.
-- Az idézőjel kötelező.
+- The **ref is required**: a branch name (`main`), a tag (`v2.1`) or a full commit SHA. There is no default branch. If a name is both a branch and a tag, the build reports an error; use a SHA then.
+- The only host for now is `github.com`.
+- The path of the entry file is relative to the repository root and must end in `.md`.
+- The quotes are required.
 
-Commitold és told fel. A következő futásnál a workflow letölti a könyvet, és a gyűjteményedben az `id` néven jelenik meg (például `/web-programming/`).
+Commit and push. On the next run the workflow downloads the book, and it appears in your collection under its `id` (for example `/web-programming/`).
 
-## Hogyan frissül a beemelt könyv?
+## How does an included book update?
 
-A build minden futáskor egy konkrét commitot tölt le, a ref feloldása után. Ezért:
+On every run the build downloads one specific commit, after resolving the ref. Therefore:
 
-- **Rögzített verzió**: ha SHA-t vagy címkét adsz meg, a könyv addig nem változik, amíg te át nem írod a sort.
-- **Követett ág**: ha `main`-t adsz meg, az oldal a könyv legfrissebb állapotát mutatja, **de csak akkor frissül, ha lefut a workflow-d**. A szerző pusholása a te workflow-dat nem indítja el.
+- **Pinned version**: if you give a SHA or a tag, the book does not change until you rewrite the line.
+- **Followed branch**: if you give `main`, the site shows the latest state of the book, **but it only updates when your workflow runs**. A push by the author does not start your workflow.
 
-Az ág automatikus követéséhez időzítsd a workflow-t. Az `on:` blokkba, a `push` mellé vedd fel:
+To follow a branch automatically, schedule the workflow. Add to the `on:` block, next to `push`:
 
 ```yaml
 on:
   push:
     branches: [main]
   schedule:
-    - cron: '17 4 * * *'   # naponta egyszer
+    - cron: '17 4 * * *'   # once a day
   workflow_dispatch:
 ```
 
-Kézzel is indíthatod az **Actions → Deploy book → Run workflow** gombbal.
+You can also start it by hand with **Actions → Deploy book → Run workflow**.
 
-## Privát repó
+## Private repositories
 
-Privát repóból csak akkor tud olvasni a build, ha az üzemeltető egy olvasási jogú GitHub App-ot hozott létre, és a szerző telepítette azt a repójára. A hozzáférés repónként, csak olvasásra szól.
+The build can read from a private repository only if the operator has created a read-only GitHub App and the author has installed it on their repository. Access is per repository and read-only.
 
-- **Szerző:** telepíti az App-ot a saját fiókjára (vagy szervezetére), és kiválasztja a könyv repóját („Only select repositories”, Contents: read). Token, titkos kulcs vagy workflow nem kell nála. A telepítés visszavonása a további olvasást szünteti meg, a már publikált oldalt nem veszi vissza.
-- **Jóváhagyás:** a privát repó **nem teszi privátá a kész oldalt**. Ezért a belépőfájlban ki kell mondani a jóváhagyást: `publish: true`. Enélkül a build hibával megáll.
-- **Üzemeltető:** létrehozza az App-ot (Contents: read-only, Metadata: read-only), és a gyűjtemény futtatási környezetében (vagy Actions secretjeként) megadja a `BOOKMD_APP_ID` és `BOOKMD_APP_PRIVATE_KEY` (PEM) értéket. A telepítések listája (`GET /app/installations`) a hozzáférési nyilvántartás. Több kulcs is lehet az App-hoz, így a kulcs forgatható kiesés nélkül.
-- **Működés:** a motor minden forrást először hitelesítés nélkül próbál letölteni, így a nyilvános forrásnak sosem kell kulcs. Csak ha ez nem sikerül, akkor írja alá egy rövid életű App-tokent, kikeresi a repó telepítését, és egyrepós, csak olvasási tokent kér. A token környezeten át jut a Gitnek, nem argumentumban vagy URL-ben, és sehová nem íródik ki. A hibaüzenet megmondja, hogy az App nincs telepítve (vagy a repó nem létezik), a hitelesítő adatot elutasították, vagy nincs beállítva hitelesítő adat.
-- **CI:** a titkos adatot csak a `plan` és `sources` lépés kapja; a `check` és a `build` nélküle fut, a letöltött, rögzített commitokból. Nyilvános repóban ne add meg a titkot, mert a naplók és az artifactok elárulnák a privát repók nevét.
+- **Author:** installs the App on their account (or organisation) and selects the book's repository ("Only select repositories", Contents: read). No token, secret or workflow is needed on their side. Removing the installation stops further reads; it does not take back what has already been published.
+- **Approval:** a private repository **does not make the finished site private**. So the entry file must state the approval: `publish: true`. Without it the build stops with an error.
+- **Operator:** creates the App (Contents: read-only, Metadata: read-only) and provides `BOOKMD_APP_ID` and `BOOKMD_APP_PRIVATE_KEY` (PEM) in the environment of the collection (or as Actions secrets). The list of installations (`GET /app/installations`) is the access register. The App can have several keys, so a key can be rotated without downtime.
+- **Behaviour:** the engine first tries to download every source anonymously, so a public source never needs a key. Only if that fails does it sign a short-lived App token, look up the installation of the repository and ask for a one-repository, read-only token. The token reaches Git through the environment, not through arguments or the URL, and is not written anywhere. The error message says whether the App is not installed (or the repository does not exist), the credentials were rejected, or no credentials are configured.
+- **CI:** give the secret only to the `plan` and `sources` steps; `check` and `build` run without it from the downloaded, pinned commits. In a public repository, remember that logs and artifacts can reveal the names of private repositories.
 
-## Gyakori hibák
+## Common errors
 
-- **„course id … is already used” / ütközés helyi tartalommal**: az `id` ismétlődik, vagy egy `content/` alatti mappa ugyanezt a nevet viseli. Nevezd át az egyiket.
-- **Hiányzó vagy érvénytelen `id`**: a belépőfájl frontmatterében nincs `id`, vagy nem a fenti szabályok szerinti.
-- **Ismeretlen ref**: elírt ág- vagy címkenév; ellenőrizd, hogy létezik a repóban.
-- **A repó nem olvasható**: elírt tulajdonos vagy repónév, vagy a repó privát, és nincs telepítve az App.
-- **A könyv egyik hivatkozása nem működik**: a hivatkozott fájl a könyv mappáján kívül van; a beemelt könyv zárt, csak a saját mappájára hivatkozhat.
+- **"course id … is already used" / collision with local content**: the `id` is repeated, or a folder under `content/` has the same name. Rename one of them.
+- **Missing or invalid `id`**: the frontmatter of the entry file has no `id`, or it does not follow the rules above.
+- **Unknown ref**: a mistyped branch or tag name; check that it exists in the repository.
+- **The repository is not readable**: a mistyped owner or repository name, or the repository is private and the App is not installed.
+- **A link in the book does not work**: the linked file is outside the folder of the book; an included book is sealed and can only refer to its own folder.
