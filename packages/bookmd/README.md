@@ -172,3 +172,13 @@ bookmd build --sources plan.json
 - A missing, corrupt, tampered, unknown-schema or incomplete baseline always means a full build. `--force` always rebuilds. An unresolvable ref or invalid registry fails the command (exit code 1).
 - `--sources plan.json` makes `build`, `check`, `content` and `sources` download exactly the planned commits and never resolve a ref again, so the commits that were checked are the commits that are built, even if a branch moved in between. A plan that does not match the registry is rejected.
 - The baseline is the instance's responsibility: the plan file of a deployment is stored only after that deployment succeeded.
+
+## Private course sources (GitHub App)
+
+A course author can keep the repository private and still have it published. Access is read-only and per repository, through a GitHub App owned by the instance operator.
+
+- **Author:** installs the app on their account and selects the course repository (Contents: read). No tokens, secrets or workflows. Removing the installation ends future reads; it does not unpublish what was published.
+- **Approval:** a private repository does not make the generated site private. A source that needed credentials is published only if its entry file has `publish: true` in the frontmatter; otherwise the build fails with an explanation.
+- **Operator:** creates the app (permissions: Contents read-only, Metadata read-only), then provides `BOOKMD_APP_ID` and `BOOKMD_APP_PRIVATE_KEY` (PEM) as environment variables or Actions secrets. The list of installations (`GET /app/installations`) is the access register; extra private keys allow rotation without downtime.
+- **Behaviour:** every source is tried anonymously first, so public sources never involve credentials. Only if that fails, the engine signs a short-lived app JWT, looks up the installation of that repository and asks for a one-repository, read-only installation token. The token reaches Git through the environment (`GIT_CONFIG_*` extra header), never through arguments or the URL, and is not written anywhere. Failures say whether the app is not installed (or the repository does not exist), the credentials were rejected, or no credentials are configured.
+- **CI:** credentials are given only to the `plan` and `sources` steps; `check` and `build` run without them from the downloaded, pinned commits. The reference workflow refuses credentials in a public repository, because its logs and artifacts would reveal private repository names.
