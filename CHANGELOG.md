@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-10
+
 ### Added
 - A folder named like a page (without `.md`) supplies that page's children when the page has no `children` field; they are ordered by file name (`2-` before `10-`). A `children` field, even an empty one, always wins.
 - An optional `title` page frontmatter field.
