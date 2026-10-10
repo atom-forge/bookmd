@@ -49,7 +49,7 @@ my-books/
     "build": "bookmd build"
   },
   "dependencies": {
-    "@atom-forge/bookmd": "^0.1.3"
+    "@atom-forge/bookmd": "^0.1.4"
   }
 }
 ```

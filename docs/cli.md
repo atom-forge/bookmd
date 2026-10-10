@@ -39,7 +39,7 @@ A collection needs a `package.json` that depends on the `@atom-forge/bookmd` pac
 ```json
 { "private": true, "type": "module",
   "scripts": { "dev": "bookmd dev", "build": "bookmd build", "check": "bookmd check" },
-  "dependencies": { "@atom-forge/bookmd": "^0.1.3" } }
+  "dependencies": { "@atom-forge/bookmd": "^0.1.4" } }
 ```
 
 - Do not commit the `.bookmd/`, `build/` and `node_modules/` folders; the lockfile is fine to commit.
