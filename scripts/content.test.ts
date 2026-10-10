@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, readdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { stringify } from 'yaml';
@@ -27,6 +27,9 @@ const build = async (root: string) => {
   const virtual = await processContent({
     async resolve(path) { await readFile(join(root, path)); return path; },
     async readText(path) { return readFile(join(root, path), 'utf8'); },
+    async list(path) {
+      try { return (await readdir(join(root, path), { withFileTypes: true })).filter(entry => !entry.isDirectory()).map(entry => entry.name); } catch { return []; }
+    },
     async assetUrl(path, base) {
       return `${base}/content-assets/${createHash('sha256').update(path.slice(1)).digest('hex').slice(0, 16)}${extname(path)}`;
     }
@@ -393,5 +396,44 @@ test('reads optional catalog branding as trimmed text', async () => {
   });
   await fixture({ 'courses.md': '# Courses' }, async root => {
     expect((await build(root)).branding).toBe('');
+  });
+});
+
+test('a folder named like a document supplies its children unless children is declared', async () => {
+  await fixture({
+    'courses.md': catalog,
+    'web/course.md': md({ language: 'en', children: ['[[part.md]]', '[[manual.md]]'] }, '# Web'),
+    'web/part.md': md({ type: 'chapter' }, '# Part'),
+    'web/part/10-last.md': md({ type: 'content' }, '# Last'),
+    'web/part/2-first.md': md({ type: 'content', children: [] }, '# First'),
+    'web/part/2-first/ignored.md': '# Ignored',
+    'web/part/image.png': 'x',
+    'web/part/resources/skipped.md': '# Skipped',
+    'web/manual.md': md({ children: ['[[only.md]]'] }, '# Manual'),
+    'web/manual/other.md': '# Other',
+    'web/only.md': md({ title: 'Only one' }, '## Section')
+  }, async root => {
+    const graph = await build(root);
+    const slug = (name: string) => graph.pages.find(page => page.slug === name)!;
+    expect(graph.navigation.filter(item => item.parent === 'web/part').map(item => item.slug)).toEqual(['web/part/2-first', 'web/part/10-last']);
+    expect(slug('web/part/2-first').chapter).toBe('1.1');
+    expect(slug('web/part/10-last').chapter).toBe('1.2');
+    expect(graph.pages.some(page => page.slug === 'web/part/2-first/ignored')).toBe(false);
+    expect(graph.pages.some(page => page.slug === 'web/part/resources/skipped')).toBe(false);
+    expect(graph.pages.some(page => page.slug === 'web/manual/other')).toBe(false);
+    expect(slug('web/only').title).toBe('Only one');
+  });
+});
+
+test('titles fall back from frontmatter to the shallowest heading', async () => {
+  await fixture({
+    'courses.md': catalog,
+    'web/course.md': md({ language: 'en', children: ['[[a.md]]', '[[b.md]]', '[[c.md]]'] }, '# Web'),
+    'web/a.md': '### Deep\n\n## Shallow\n\n## Later',
+    'web/b.md': md({ title: 'From frontmatter' }, '# Heading'),
+    'web/c.md': 'No headings'
+  }, async root => {
+    const graph = await build(root);
+    expect(['a', 'b', 'c'].map(name => graph.pages.find(page => page.slug === `web/${name}`)!.title)).toEqual(['Shallow', 'From frontmatter', 'c']);
   });
 });

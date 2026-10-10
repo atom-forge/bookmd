@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, copyFile, realpath, rm } from 'node:fs/promises';
+import { readFile, readdir, writeFile, mkdir, copyFile, realpath, rm } from 'node:fs/promises';
 import { resolve, relative, extname, sep, isAbsolute, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 import { processContent, type ContentGraph } from '../src/core/content';
@@ -19,6 +19,14 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
   return processContent({
     async resolve(path) { return '/' + (await physical(path)).rel.split(sep).join('/'); },
     async readText(path) { return readFile((await physical(path)).file, 'utf8'); },
+    async list(path) {
+      try {
+        return (await readdir((await physical(path)).file, { withFileTypes: true })).filter(entry => !entry.isDirectory()).map(entry => entry.name);
+      } catch (error) {
+        if ((error as { code?: string }).code === 'ENOENT' || (error as { code?: string }).code === 'ENOTDIR') return [];
+        throw error;
+      }
+    },
     async assetUrl(path, base) {
       const { file, rel } = await physical(path);
       const name = `${createHash('sha256').update(rel).digest('hex').slice(0, 16)}${extname(file)}`;

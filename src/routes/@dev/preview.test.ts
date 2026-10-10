@@ -89,3 +89,14 @@ describe('preview source through the shared core', () => {
     await expect(session.source.assetUrl('/course/img/p.png', '', 'embed')).rejects.toThrow();
   });
 });
+
+test('preview folders supply children like the build', async () => {
+  const { graph } = await preview({
+    'course.md': '---\nlanguage: en\nchildren: ["[[part.md]]"]\n---\n# Book',
+    'part.md': '# Part',
+    'part/2-b.md': '# B',
+    'part/10-c.md': '# C',
+    'part/deeper/x.md': '# X'
+  });
+  expect(graph.navigation.filter(item => item.parent === 'course/part' || item.parent === 'part').map(item => item.title)).toEqual(['B', 'C']);
+});

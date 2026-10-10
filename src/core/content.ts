@@ -21,6 +21,8 @@ import { resolve, relative, dirname, extname, basename, sep } from './paths';
 export interface ContentSource {
   resolve(path: string): Promise<string>;
   readText(path: string): Promise<string>;
+  /** File names directly inside a directory; empty when it does not exist. Without it, folders never supply children. */
+  list?(directory: string): Promise<string[]>;
   /** `embed` assets are used by images; `link` assets are opened as documents by the reader. */
   assetUrl(path: string, base: string, usage?: 'embed' | 'link'): Promise<string>;
 }
@@ -47,6 +49,13 @@ export type ContentGraph = { branding?: string; exportManifest?: { course: strin
 const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 const safeSchemes = new Set(['http', 'https', 'mailto', 'tel']);
 const external = /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i;
+
+/** First heading of the shallowest depth present, so a document starting at H2 still has a title. */
+function headingTitle(tree: MarkdownRoot): string {
+  let best: { depth: number; text: string } | undefined;
+  visit(tree, 'heading', node => { if (!best || node.depth < best.depth) best = { depth: node.depth, text: toString(node) }; });
+  return best?.text.trim() ?? '';
+}
 
 export function youtubeId(url: string): string | null {
   try {
@@ -175,6 +184,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     if (metadata.series !== undefined || metadata.tree !== undefined) throw new Error(`Use children instead of series or tree in ${file}`);
     const children = metadata.children ?? [];
     if (!Array.isArray(children)) throw new Error(`Invalid children in ${file}`);
+    if (metadata.title !== undefined && typeof metadata.title !== 'string') throw new Error(`Invalid title in ${file}`);
     const childLinks = children.map(value => {
       if (typeof value !== 'string' || !value.trim()) throw new Error(`Invalid children in ${file}`);
       const wiki = value.trim().match(/^\[\[([^\[\]\n|]+)\]\]$/);
@@ -234,7 +244,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       parent.children.splice(index, 1, ...parts);
       return index + parts.length;
     });
-    return { tree, sources, children: childLinks, metadata };
+    return { tree, sources, children: childLinks, declaredChildren: metadata.children !== undefined, metadata };
   }
   // A sealed directory is one course's own territory: its files may only reference files inside it.
   const sealed = (options.sealed ?? []).map(directory => resolve(root, directory));
@@ -320,7 +330,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       return trimmed;
     }
     let name = text('name');
-    visit(tree, 'heading', node => { if (!name && node.depth === 1) name = toString(node); });
+    name ||= (typeof metadata.title === 'string' ? metadata.title.trim() : '') || headingTitle(tree);
     name ||= slug.split('/').at(-1)!;
     const tags = metadata.tags ?? [];
     if (!Array.isArray(tags) || tags.some(tag => typeof tag !== 'string' || !tag.trim())) throw new Error(`Invalid tags in ${file}`);
@@ -329,6 +339,15 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     const imageUrl = image ? await asset(await target(file, image), 'embed') : null;
     graph.courses.push({ slug, name, author: text('author') || null, language: text('language', true), tags: [...new Set(tags.map(tag => tag.trim()))], contentTags: [], intro: text('intro'), image: imageUrl });
     titles.set(slug, name);
+  }
+  /** Pages in the folder named like the document (without `.md`) are its children, in natural file-name order. */
+  async function folderChildren(file: string) {
+    if (!source.list || extname(file).toLowerCase() !== '.md') return [];
+    const directory = file.slice(0, -extname(file).length);
+    const names = (await source.list(directory)).filter(name => extname(name).toLowerCase() === '.md' && !name.startsWith('.'));
+    names.sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+    const prefix = directory.split('/').map(encodeURIComponent).join('/');
+    return names.map(name => ({ path: `${prefix}/${encodeURIComponent(name)}`, title: '' }));
   }
   const processedChildren = new Set<string>();
   const membership = new Map<string, string>();
@@ -365,8 +384,9 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       let teaches: string[] = [];
       async function append(file: string, ancestors: string[]) {
         if (ancestors.includes(file)) throw new Error(`Circular sources: ${[...ancestors, file].join(' -> ')}`);
-        const { tree, sources, children, metadata } = await document(file);
+        const { tree, sources, children, declaredChildren, metadata } = await document(file);
         if (!ancestors.length) {
+          if (!title && typeof metadata.title === 'string') title = metadata.title.trim();
           if (metadata.type !== undefined && typeof metadata.type !== 'string') throw new Error(`Invalid type in ${file}`);
           type = typeof metadata.type === 'string' ? metadata.type : undefined;
           if (relative(root, file).split(sep).includes('resources') && 'tags' in metadata) throw new Error(`Resources cannot have tags: ${file}`);
@@ -383,8 +403,8 @@ export async function processContent(source: ContentSource, entrypoint: string, 
             if (key === 'requires') requires = unique; else teaches = unique;
           }
         }
-        await registerChildren(file, children);
-        visit(tree, 'heading', node => { if (!title && node.depth === 1) title = toString(node); });
+        await registerChildren(file, declaredChildren || file === start ? children : await folderChildren(file));
+        title ||= headingTitle(tree);
         texts.push(toString(tree));
         // Content is untrusted: only inert link schemes may reach generated markup.
         visit(tree, 'link', (node, index, parent) => {
@@ -421,7 +441,8 @@ export async function processContent(source: ContentSource, entrypoint: string, 
                 if (label || seen.has(sourceFile)) return;
                 seen.add(sourceFile);
                 const source = await document(sourceFile);
-                visit(source.tree, 'heading', heading => { if (!label && heading.depth === 1) label = toString(heading); });
+                if (seen.size === 1 && typeof source.metadata.title === 'string') label = source.metadata.title.trim();
+                label ||= headingTitle(source.tree);
                 for (const path of source.sources) await findTitle(await markdownTarget(sourceFile, path), seen);
               }
               await findTitle(fileTarget, new Set());

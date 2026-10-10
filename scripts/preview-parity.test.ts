@@ -23,7 +23,7 @@ function handleFor(root: string, name: string, entries: Map<string, string | Buf
     const names = new Set([...prefix(base)].map(key => key.slice(base.length).split('/')[0]));
     for (const entry of names) {
       const full = base + entry;
-      if (entries.has(full)) yield { kind: 'file' as const, name: entry, getFile: async () => new File([entries.get(full)!], entry) };
+      if (entries.has(full)) yield { kind: 'file' as const, name: entry, getFile: async () => { const data = entries.get(full)!; return new File([typeof data === 'string' ? data : new Uint8Array(data)], entry); } };
       else yield { kind: 'directory' as const, name: entry, values: level(full + '/') } as DirectoryHandle;
     }
   };

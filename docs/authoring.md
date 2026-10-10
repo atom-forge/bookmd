@@ -109,9 +109,27 @@ children:
 Weekly introduction.
 ```
 
-A wikilink without a title uses the first H1 of the target; for a custom title use a Markdown link. The items of `children` are quoted links; a plain path is not allowed. The order of the lists gives the menu order and the previous/next navigation between direct siblings. A parent is not part of its own child list. `children` does not concatenate the content of documents.
+A wikilink without a title uses the title of the target (see below); for a custom title use a Markdown link. The items of `children` are quoted links; a plain path is not allowed. The order of the lists gives the menu order and the previous/next navigation between direct siblings. A parent is not part of its own child list. `children` does not concatenate the content of documents.
 
 A document can have one hierarchical parent. A repeated child, several parents or a hierarchy cycle is a build error. The old `series` and `tree` fields are errors; rewrite them as `children`. `***` is a plain Markdown divider with no navigation role.
+
+### Children from a folder
+
+Instead of listing `children`, put the subpages in a folder next to the document, named like the document without `.md`:
+
+```text
+algebra.md           # the parent
+algebra/
+  01-sets.md         # children, in natural file-name order
+  02-functions.md
+  10-limits.md
+```
+
+Only the `.md` files directly inside the folder are children. A subfolder contributes its pages only through a document with the same name (`algebra/02-functions.md` + `algebra/02-functions/...`). If the document has a `children` field in its frontmatter, even an empty one, the folder is ignored completely. A file claimed both by a folder and by another document's `children` is a repeated child, which is a build error. Files that are not claimed stay outside the tree, reachable only by links.
+
+### Page titles
+
+The title of a page comes from, in this order: the title in the parent's `children` link, the `title` frontmatter field, the first heading of the shallowest level in the document (an H2 is used when there is no H1), and finally the file name. A book's name works the same way with `name` instead of `title`.
 
 ### Chapters and numbering
 
@@ -270,7 +288,7 @@ A custom title, no title, a title only, and nested callouts are supported. Inner
 
 ### Wikilinks
 
-In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#heading|Custom title]]` are followed and rendered. Without a title, the first H1 of the document is used. Wikilinks in code blocks and inline code stay as text. Links in the body do not change the navigation tree. The Obsidian `![[...]]` embed syntax is not supported.
+In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#heading|Custom title]]` are followed and rendered. Without a title, the title of the document is used (see page titles). Wikilinks in code blocks and inline code stay as text. Links in the body do not change the navigation tree. The Obsidian `![[...]]` embed syntax is not supported.
 
 ## URLs and the error page
 

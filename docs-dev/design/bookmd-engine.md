@@ -167,6 +167,13 @@ error with `code: 'ENOENT'` for the optional Obsidian vault-root fallback
 lifetimes belong to the adapter. The build adapter keeps realpath/symlink
 containment, asset hashing/copying and generated JSON in `scripts/content.ts`.
 
+- A source may implement the optional `list(directory)` (file names directly in
+  a directory, empty when missing). A document without a `children` field gets
+  the `.md` files of the folder named like it (without `.md`) as children in
+  natural file-name order; a declared `children` field, even empty, disables
+  this. The entrypoint document never takes folder children.
+- Page title: parent link title, frontmatter `title`, first heading of the
+  shallowest depth, then the file name.
 - `type: chapter`: numbered container; descendants inherit its number prefix.
 - `type: content`: numbered material within the nearest chapter context.
 - Any other or missing type: unnumbered auxiliary material; consumes no number.
