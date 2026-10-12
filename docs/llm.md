@@ -8,7 +8,7 @@ BookMD turns Markdown files into a static website: a **collection** (the site) w
 
 ## Files and the collection
 
-```text
+```tree
 content/
   books.md              # entry file of the collection: lists the books
   my-book/

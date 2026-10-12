@@ -43,7 +43,7 @@ The command serves the existing `build/` folder locally.
 
 ## What is in `build/`?
 
-```text
+```tree
 build/
   index.html            # the front page of the collection
   404.html              # error page (shows the list of books)

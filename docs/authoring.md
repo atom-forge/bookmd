@@ -118,7 +118,7 @@ A document can have one hierarchical parent. A repeated child, several parents o
 
 Instead of listing `children`, put the subpages in a folder next to the document, named like the document without `.md`:
 
-```text
+```tree
 algebra.md           # the parent
 algebra/
   01-sets.md         # children, in natural file-name order

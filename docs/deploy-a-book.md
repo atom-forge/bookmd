@@ -26,7 +26,7 @@ The build runs on GitHub's servers; you do not need to install anything on your 
 
 A collection is a plain folder with a few files and a `content/` directory:
 
-```text
+```tree
 my-books/
   package.json
   portal.config.ts
