@@ -79,3 +79,9 @@ test('a missing attachment fails the build, or becomes a diagnostic for tolerant
   expect(diagnostics.map(item => item.target).sort()).toEqual(['gone.md', 'gone.pdf']);
   expect(graph.pages.find(page => page.slug === 'demo/help')!.attachments).toEqual([]);
 });
+
+test('the books list is `books`; the older `courses` still works, both together do not', async () => {
+  const withKey = (key: string) => memory({ ...files, '/courses.md': `---\n${key}: ["[[demo/course.md]]"]\n---\n# Catalog` });
+  for (const key of ['books', 'courses']) expect((await processContent(withKey(key), 'courses.md')).courses.map(course => course.slug)).toEqual(['demo']);
+  await expect(processContent(memory({ ...files, '/courses.md': '---\nbooks: ["[[demo/course.md]]"]\ncourses: ["[[demo/course.md]]"]\n---\n# C' }), 'courses.md')).rejects.toThrow('not both');
+});

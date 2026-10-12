@@ -13,6 +13,7 @@ import type { Root as MarkdownRoot, Link, Image } from 'mdast';
 import type { Root as HtmlRoot, Element } from 'hast';
 
 import { parse as parseYaml } from 'yaml';
+import { bookListKey } from './book-list';
 import { remarkCallouts, rehypeCalloutIcons } from './callouts';
 
 import { resolve, relative, dirname, extname, basename, sep } from './paths';
@@ -323,7 +324,8 @@ export async function processContent(source: ContentSource, entrypoint: string, 
   const catalog = await document(start);
   if (catalog.metadata.branding !== undefined && typeof catalog.metadata.branding !== 'string') throw new Error(`Invalid branding in ${start}: expected text`);
   graph.branding = typeof catalog.metadata.branding === 'string' ? catalog.metadata.branding.trim() : '';
-  const coursePaths = referencePaths(catalog.metadata.courses, 'courses', start);
+  const bookKey = bookListKey(catalog.metadata, start);
+  const coursePaths = referencePaths(catalog.metadata[bookKey], bookKey, start);
   for (const path of coursePaths) {
     const file = await markdownTarget(start, path);
     if (aliases.has(file)) throw new Error(`Repeated course: ${path}`);

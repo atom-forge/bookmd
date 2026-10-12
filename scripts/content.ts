@@ -46,7 +46,7 @@ function bookValidator(config: { title?: string }, workRoot: string, base: strin
     const directory = await mkdtemp(resolve(workRoot, 'validate-'));
     try {
       await cp(checked.contentRoot, resolve(directory, 'book', id), { recursive: true, filter: path => !basename(path).startsWith('.') });
-      await writeFile(resolve(directory, 'book', 'courses.md'), `---\ncourses:\n  - "[[${id}/${checked.entrypoint}]]"\n---\n# Catalog\n`);
+      await writeFile(resolve(directory, 'book', 'courses.md'), `---\nbooks:\n  - "[[${id}/${checked.entrypoint}]]"\n---\n# Catalog\n`);
       await buildGraph(resolve(directory, 'book'), 'courses.md', base, resolve(directory, 'assets'), config.title, ['/' + id]);
     } finally { await rm(directory, { recursive: true, force: true }); }
   };

@@ -1,5 +1,5 @@
 ---
-courses:
+books:
   - "[[demo/course.md]]"
 ---
 # Courses

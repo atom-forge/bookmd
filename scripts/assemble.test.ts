@@ -152,3 +152,15 @@ describe('a book that does not build', () => {
     expect(assembly.skipped.map(item => item.source)).toEqual([key]);
   });
 });
+
+describe('the books key of the registry', () => {
+  test('an external book is assembled under `books` as well, and the key is kept', async () => {
+    const dir = await local('books-key', '', { 'mine/course.md': '---\nlanguage: en\n---\n# Mine' });
+    await writeFile(join(dir, 'courses.md'), '---\nbooks:\n  - "[[mine/course.md]]"\n  - "main@github.com/o/ext/site/course.md"\n---\n# Catalog\n');
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'wbooks'), await gitEntries(dir, 'courses.md'), { transport });
+    expect(assembly.sources.map(s => s.id)).toEqual(['web-programming-1']);
+    const text = await readFile(join(assembly.contentRoot, 'courses.md'), 'utf8');
+    expect(text).toContain('books:');
+    expect(text).toContain('web-programming-1/course.md');
+  });
+});

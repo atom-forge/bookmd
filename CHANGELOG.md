@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- The list of books in the collection's entry file is now called `books`. The older `courses` still works; both in one file is an error.
 - `[[!file]]` attaches a file as it is, even a Markdown file (`[[!docs/llm.md|notes for LLMs]]`), instead of linking to a page. The page frontmatter `attachments` list adds a "Downloads" block with file names and sizes, in the build and in the local preview.
 - A build warns about files of 25 MB or more, and about books whose files add up to 500 MB.
 

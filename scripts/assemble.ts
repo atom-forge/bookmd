@@ -1,6 +1,7 @@
 import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+import { bookListKey } from '../src/core/book-list';
 import { isSourceRef } from '../src/core/source-ref';
 import { checkout, defaultTransport, fallbackVariant, syncSources, type CheckedOut, type GitTransport, type Pins } from './git-source';
 
@@ -114,9 +115,10 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   const registry = resolve(output, config.entrypoint);
   const text = await readFile(registry, 'utf8');
   const match = text.match(frontmatter)!;
-  const metadata = parseYaml(match[1]) as { courses: string[] };
+  const metadata = parseYaml(match[1]) as Record<string, string[]>;
+  const key = bookListKey(metadata, config.entrypoint);
   let next = 0, nextReady = 0;
-  metadata.courses = metadata.courses.flatMap(entry => {
+  metadata[key] = metadata[key].flatMap(entry => {
     if (!isSourceRef(entry)) return [entry];
     const checked = included[next++];
     return checked ? [`${sources[nextReady++].id}/${checked.entrypoint}`] : [];

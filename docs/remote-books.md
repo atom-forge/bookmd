@@ -27,7 +27,7 @@ children:
 
 ## 2. Your part: one line in `books.md`
 
-In the `courses` list of `content/books.md`, next to the local `[[…]]` references, add a line in this form:
+In the `books` list of `content/books.md`, next to the local `[[…]]` references, add a line in this form:
 
 ```text
 <ref>@github.com/<owner>/<repository>/<path-to-the-entry-file.md>
@@ -35,7 +35,7 @@ In the `courses` list of `content/books.md`, next to the local `[[…]]` referen
 
 ```md
 ---
-courses:
+books:
   - "[[my-first-book/book.md]]"
   - "main@github.com/colleague/web-notes/book.md"
   - "v2.1@github.com/other-colleague/algorithms/materials/book.md"

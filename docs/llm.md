@@ -23,7 +23,7 @@ content/
 ```md
 ---
 branding: My School
-courses:                       # the key is "courses" for historical reasons; items are books
+books:                         # the older key name "courses" is still accepted
   - "[[my-book/book.md]]"
   - "main@github.com/owner/repo/path/book.md"   # a book from another GitHub repository
 ---
@@ -36,7 +36,7 @@ Every list below holds **quoted** wikilinks or Markdown links, because unquoted 
 
 | Field | Where | Meaning |
 |---|---|---|
-| `courses` | collection entry file | Ordered list of books: `"[[dir/book.md]]"` or a Git source. |
+| `books` | collection entry file | Ordered list of books: `"[[dir/book.md]]"` or a Git source. (`courses` is the older name; never use both.) |
 | `branding` | collection entry file | Text in the site header. |
 | `name` | book front page | Book name; else `title`, else the first heading. |
 | `language` | book front page | **Required.** e.g. `en`, `hu`. |
@@ -77,7 +77,7 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 
 ## Included books (another GitHub repository)
 
-A line in `courses`: `<ref>@github.com/<owner>/<repo>/<path-to-entry.md>`, where `<ref>` is a branch, a tag or a full commit SHA. The entry file's folder is the book's root and the file needs an `id`. A private repository additionally needs `publish: true` in the entry file's frontmatter.
+A line in `books`: `<ref>@github.com/<owner>/<repo>/<path-to-entry.md>`, where `<ref>` is a branch, a tag or a full commit SHA. The entry file's folder is the book's root and the file needs an `id`. A private repository additionally needs `publish: true` in the entry file's frontmatter.
 
 If an included book does not build, the site still builds: the book's last published version is used, or the book is left out, with a warning.
 
@@ -118,7 +118,7 @@ See [[02-next]] and the notes: [[!files/notes.md|notes for LLMs]].
 ## Checklist before you finish
 
 1. The book front page has `language`; an included book also has `id` (and `publish: true` if its repository is private).
-2. Every list item in `courses`, `children`, `sources` and `attachments` is quoted.
+2. Every list item in `books`, `children`, `sources` and `attachments` is quoted.
 3. Every path is relative to the file it is written in, and stays inside the book's folder.
 4. Each page is listed under exactly one parent, and the `children` order is the reading order.
 5. Chapters have `type: chapter`; their pages have `type: content`.

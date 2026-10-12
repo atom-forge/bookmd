@@ -50,11 +50,11 @@ export default {
 };
 ```
 
-In the frontmatter of `content/books.md` the `courses` list names the books. For historical reasons the key is still called `courses`; its items are the front pages of the books:
+In the frontmatter of `content/books.md` the `books` list names the books; its items are the front pages of the books. (The older name `courses` is still accepted; using both in one file is an error.)
 
 ```md
 ---
-courses:
+books:
   - "[[my-first-book/book.md]]"
   - "[[another-book/book.md]]"
 ---
@@ -63,7 +63,7 @@ courses:
 Welcome.
 ```
 
-`courses` and the other reference lists (`children`, `sources`) are ordered lists of quoted wikilinks. The quotes are required, otherwise YAML would read the square brackets as a nested list. Paths are relative to the declaring document, and the `.md` extension may be omitted.
+`books` and the other reference lists (`children`, `sources`) are ordered lists of quoted wikilinks. The quotes are required, otherwise YAML would read the square brackets as a nested list. Paths are relative to the declaring document, and the `.md` extension may be omitted.
 
 ### A ready-made starting point
 

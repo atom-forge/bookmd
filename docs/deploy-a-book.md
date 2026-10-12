@@ -77,7 +77,7 @@ build/
 
 ```md
 ---
-courses:
+books:
   - "[[my-first-book/book.md]]"
 ---
 # My books

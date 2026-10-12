@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
+import { bookListKey } from '../src/core/book-list';
 import { isSourceRef, parseSourceRef } from '../src/core/source-ref';
 import { resolveRef, type GitTransport } from './git-source';
 
@@ -37,13 +38,15 @@ export function makePlan(inputs: PlanInputs, sources: PlanSource[]): Plan {
   return { schemaVersion: planSchemaVersion, fingerprint: fingerprintOf(inputs, sources), inputs, sources: [...sources].sort((a, b) => a.source.localeCompare(b.source)) };
 }
 
-/** Registry `courses` in order, with Git entries in their normalized form. */
+/** Registry `books` (or older `courses`) in order, with Git entries in their normalized form. */
 export async function registryCourses(contentRoot: string, entrypoint: string): Promise<string[]> {
   const text = await readFile(resolve(contentRoot, entrypoint), 'utf8');
   const match = text.match(frontmatter);
-  const courses = (match ? parseYaml(match[1]) : null)?.courses;
+  const metadata = match ? parseYaml(match[1]) : null;
+  const key = bookListKey(metadata, entrypoint);
+  const courses = metadata?.[key];
   if (courses === undefined || courses === null) return [];
-  if (!Array.isArray(courses) || courses.some(item => typeof item !== 'string')) throw new Error(`Invalid courses in ${entrypoint}`);
+  if (!Array.isArray(courses) || courses.some(item => typeof item !== 'string')) throw new Error(`Invalid ${key} in ${entrypoint}`);
   return courses.map(entry => isSourceRef(entry) ? parseSourceRef(entry).normalized : entry.trim());
 }
 

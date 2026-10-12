@@ -28,7 +28,7 @@ export function visibleMessage(message: string): string {
 }
 
 export function catalogFor(entry: string): string {
-  return `---\ncourses:\n  - ${JSON.stringify(`${mount}/${entry}`)}\n---\n`;
+  return `---\nbooks:\n  - ${JSON.stringify(`${mount}/${entry}`)}\n---\n`;
 }
 
 /** Maps a virtual path to its file path inside the chosen folder. */
