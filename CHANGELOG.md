@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- An "← All Books" link at the top of the book navigation panel.
+
+### Changed
+- The BookMD logo and name in the header are one link back to all books, with an "All Books" tooltip.
+
 ## [0.1.4] - 2026-10-10
 
 ### Added

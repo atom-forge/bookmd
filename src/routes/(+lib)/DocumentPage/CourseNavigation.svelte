@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
   import { usePageHref } from '../page-href';
-  import { Menu, X } from 'lucide-svelte';
+  import { Icon } from '@atom-forge/ui';
+  import { ArrowLeft, Menu, X } from 'lucide-svelte';
   import type { NavItem } from '../../../core/content';
   import { courseMenu, courseOpenPath } from '$lib/course-menu';
   import Tree from './CourseNavigation/Tree.svelte';
@@ -47,6 +48,7 @@
 
 {#snippet navigation(mobile: boolean)}
   <nav class="mx-3 my-6 min-w-0" aria-label="Kurzusnavigáció">
+    <a class="mx-0 mb-3 flex min-w-0 items-center gap-1.5 rounded px-2 py-2 text-xs text-muted-contrast hover:text-canvas-contrast focus-visible:outline-2 focus-visible:outline-accent" href={href('')}><Icon icon={ArrowLeft} size="4"/>All Books</a>
     {#if root}
       <a class="mb-3 flex min-w-0 items-baseline gap-1.5 rounded px-2 py-2 text-[13px] leading-relaxed font-semibold text-canvas-contrast [overflow-wrap:anywhere] hover:text-accent focus-visible:outline-2 focus-visible:outline-accent aria-[current=page]:bg-surface aria-[current=page]:text-accent" href={href(courseSlug)} aria-current={activeSlug === courseSlug ? 'page' : undefined} onclick={() => select(courseSlug, mobile)}>
         {#if root.chapter !== undefined}
