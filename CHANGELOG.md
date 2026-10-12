@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-10-12
+
 ### Changed
 - A private source without `publish: true` no longer stops the build: it is skipped with a warning and left out of the catalog, so a book that is not ready yet can already be listed.
 
