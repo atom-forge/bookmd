@@ -50,3 +50,32 @@ test('non-tree content and unknown roles do not receive numbers', async () => {
   expect(graph.pages.find(page => page.slug === 'demo/extra')).not.toHaveProperty('chapter');
   expect(graph.exportManifest).toHaveLength(1);
 });
+
+test('[[!file]] attaches a file as it is, even Markdown, and `attachments` lists downloads', async () => {
+  const source = { ...memory({ ...files,
+    '/demo/lesson.md': '---\ntype: content\nattachments: ["[[docs/llm.md]]", "data.csv"]\n---\n# Lesson\n\nGet [[!docs/llm.md]], [[!docs/llm.md|the LLM notes]] or [help](help.md).',
+    '/demo/docs/llm.md': '# For LLMs', '/demo/data.csv': 'a,b'
+  }), async assetSize() { return 1536; } } satisfies ContentSource;
+  const graph = await processContent(source, 'courses.md', { base: '/b' });
+  const lesson = graph.pages.find(page => page.slug === 'demo/lesson')!;
+  expect(graph.pages.map(page => page.slug)).not.toContain('demo/docs/llm');
+  expect(lesson.html).toContain('href="/b/assets/demo/docs/llm.md"');
+  expect(lesson.html).toContain('download="llm.md"');
+  expect(lesson.html).toContain('>llm.md</a>');
+  expect(lesson.html).toContain('>the LLM notes</a>');
+  expect(lesson.html).toContain('/b/demo/help/');
+  expect(lesson.attachments).toEqual([
+    { name: 'llm.md', url: '/b/assets/demo/docs/llm.md', size: 1536 },
+    { name: 'data.csv', url: '/b/assets/demo/data.csv', size: 1536 }
+  ]);
+  expect(graph.pages.find(page => page.slug === 'demo/help')!.attachments).toEqual([]);
+});
+
+test('a missing attachment fails the build, or becomes a diagnostic for tolerant callers', async () => {
+  const broken = memory({ ...files, '/demo/help.md': '---\nattachments: ["[[gone.pdf]]"]\n---\n# Help', '/demo/lesson.md': '# Lesson\n\n[[!gone.md]]' });
+  await expect(processContent(broken, 'courses.md')).rejects.toThrow('Missing');
+  const diagnostics: { target: string }[] = [];
+  const graph = await processContent(broken, 'courses.md', { diagnostics });
+  expect(diagnostics.map(item => item.target).sort()).toEqual(['gone.md', 'gone.pdf']);
+  expect(graph.pages.find(page => page.slug === 'demo/help')!.attachments).toEqual([]);
+});

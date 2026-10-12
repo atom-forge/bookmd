@@ -10,6 +10,7 @@
   import DocumentBreadcrumb from './DocumentPage/DocumentBreadcrumb.svelte';
   import ReadingNavigation from './DocumentPage/ReadingNavigation.svelte';
   import DocumentMetadata from './DocumentPage/DocumentMetadata.svelte';
+  import PageAttachments from './DocumentPage/PageAttachments.svelte';
   import PageConcepts from './DocumentPage/PageConcepts.svelte';
   import TableOfContents from './DocumentPage/TableOfContents.svelte';
   let { data }: { data: PortalPageData } = $props();
@@ -60,6 +61,7 @@
       <article class="w-full min-w-0 [&_.prose]:max-w-none" lang={data.course?.language}>
         <Article html={data.articleHtml} dark={theme.dark}/>
       </article>
+      <PageAttachments attachments={data.page.attachments} class="mt-10"/>
       {#if data.page.slug !== ''}<PageConcepts requires={data.page.requires} teaches={data.page.teaches} class="mt-10 min-[1280px]:hidden"/>{/if}
       {#if data.page.slug === ''}
         <CourseCatalog courses={data.courses}/>

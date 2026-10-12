@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `[[!file]]` attaches a file as it is, even a Markdown file (`[[!docs/llm.md|notes for LLMs]]`), instead of linking to a page. The page frontmatter `attachments` list adds a "Downloads" block with file names and sizes, in the build and in the local preview.
+- A build warns about files of 25 MB or more, and about books whose files add up to 500 MB.
+
+### Changed
+- Copied images and files keep their file name (`/content-assets/<hash>/<name>`) instead of a bare hash, so downloads are saved under their own name.
+
 ## [0.1.7] - 2026-10-12
 
 ### Added

@@ -1,4 +1,4 @@
-import { readFile, readdir, writeFile, mkdir, copyFile, realpath, rm, cp, mkdtemp, appendFile } from 'node:fs/promises';
+import { readFile, readdir, writeFile, mkdir, copyFile, realpath, rm, cp, mkdtemp, appendFile, stat } from 'node:fs/promises';
 import { resolve, relative, extname, sep, isAbsolute, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 import { processContent, type ContentGraph } from '../src/core/content';
@@ -27,12 +27,16 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
         throw error;
       }
     },
+    // Each file keeps its own name, in a folder named by the hash of its place, so equal names cannot collide.
     async assetUrl(path, base) {
       const { file, rel } = await physical(path);
-      const name = `${createHash('sha256').update(rel).digest('hex').slice(0, 16)}${extname(file)}`;
-      await copyFile(file, resolve(assetDir, name));
-      return `${base}/content-assets/${name}`;
-    }
+      const folder = createHash('sha256').update(rel).digest('hex').slice(0, 16);
+      const name = basename(file);
+      await mkdir(resolve(assetDir, folder), { recursive: true });
+      await copyFile(file, resolve(assetDir, folder, name));
+      return `${base}/content-assets/${folder}/${encodeURIComponent(name)}`;
+    },
+    async assetSize(path) { return (await stat((await physical(path)).file)).size; }
   }, entrypoint, { base, title: titleFallback, rootName: basename(root), sealed });
 }
 
@@ -48,9 +52,25 @@ function bookValidator(config: { title?: string }, workRoot: string, base: strin
   };
 }
 
+const largeFile = 25 * 1024 * 1024, largeSite = 500 * 1024 * 1024;
+/** Warns about assets that are heavy for a static host (GitHub Pages: 1 GB per site, 100 MB per file). */
+export async function largeAssetWarnings(assetDir: string): Promise<string[]> {
+  const files: { path: string; size: number }[] = [];
+  for (const folder of await readdir(assetDir).catch(() => [])) {
+    for (const name of await readdir(resolve(assetDir, folder)).catch(() => [])) files.push({ path: `${folder}/${name}`, size: (await stat(resolve(assetDir, folder, name))).size });
+  }
+  const mb = (bytes: number) => `${Math.round(bytes / 1048576)} MB`;
+  const total = files.reduce((sum, file) => sum + file.size, 0);
+  return [
+    ...files.filter(file => file.size >= largeFile).map(file => `Large file ${mb(file.size)}: content-assets/${file.path}`),
+    ...(total >= largeSite ? [`The files of the books add up to ${mb(total)}; GitHub Pages allows 1 GB per site`] : [])
+  ];
+}
+
 /** Tells the author, in the log and (on GitHub Actions) as annotations and in the job summary, what was left out. */
-export async function reportAssembly(assembly: Pick<Assembly, 'skipped' | 'fallbacks'>): Promise<void> {
+export async function reportAssembly(assembly: Pick<Assembly, 'skipped' | 'fallbacks'>, extra: string[] = []): Promise<void> {
   const lines = [
+    ...extra,
     ...assembly.fallbacks.map(item => `${item.source}: the new version does not build, the last good version ${item.used.slice(0, 12)} is published instead. ${item.reason}`),
     ...assembly.skipped.map(item => `${item.source}: left out of the site. ${item.reason}`)
   ];
@@ -64,8 +84,8 @@ export async function generate(config: { contentRoot: string; entrypoint: string
   // Git course sources are downloaded and combined with the local content first. A book that does not build is
   // replaced by its last good version, or left out, so it cannot hold back the others.
   const assembly = await assemble(config, workRoot, await gitEntries(config.contentRoot, config.entrypoint), { ...options, validate: bookValidator(config, workRoot, base) });
-  await reportAssembly(assembly);
   const graph = await buildGraph(resolve(assembly.contentRoot), assembly.entrypoint, base, output('static/content-assets'), config.title, assembly.sealed);
+  await reportAssembly(assembly, await largeAssetWarnings(output('static/content-assets')));
   await mkdir(output('src/lib/generated'), { recursive: true });
   await writeFile(output('src/lib/generated/content.json'), JSON.stringify(graph));
   await writeFile(output('src/lib/generated/catalog.json'), JSON.stringify({ branding: graph.branding || '', page: graph.pages.find(page => page.slug === '')!, courses: graph.courses }));

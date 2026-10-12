@@ -15,6 +15,8 @@ const embeddable: Record<string, string> = {
 };
 const linkable: Record<string, string> = { ...embeddable, '.pdf': 'application/pdf', '.txt': 'text/plain' };
 delete linkable['.svg'];
+// Attachments are downloaded, not opened; the types stay inert in the portal origin.
+const attachable: Record<string, string> = { ...linkable, '.md': 'text/markdown', '.csv': 'text/csv', '.json': 'application/json', '.zip': 'application/zip' };
 
 function enoent(path: string) {
   return Object.assign(new Error(`File not found: ${path.startsWith(mount + '/') ? path.slice(mount.length + 1) : path}`), { code: 'ENOENT' });
@@ -63,20 +65,27 @@ export function createPreviewSource(index: DirectoryIndex, entry: string) {
       const prefix = inner + '/';
       return [...index.files.keys()].filter(key => key.startsWith(prefix) && !key.includes('/', prefix.length)).map(key => key.slice(prefix.length));
     },
+    async assetSize(path) {
+      const inner = folderPath(path);
+      const handle = inner === null ? undefined : index.files.get(inner);
+      if (!handle) throw enoent(path);
+      return (await handle.file()).size;
+    },
     async assetUrl(path, _base, usage = 'link') {
       const inner = folderPath(path);
       const handle = inner === null ? undefined : index.files.get(inner);
       if (!handle) throw enoent(path);
       const extension = inner!.slice(inner!.lastIndexOf('.')).toLowerCase();
-      const type = (usage === 'embed' ? embeddable : linkable)[extension];
-      if (!type) throw new Error(`Asset type is not available in the preview${usage === 'link' ? ' as a link' : ''}: ${inner}`);
-      const cached = urls.get(path);
+      const type = (usage === 'embed' ? embeddable : usage === 'attachment' ? attachable : linkable)[extension];
+      if (!type) throw new Error(`Asset type is not available in the preview${usage === 'embed' ? '' : usage === 'attachment' ? ' as an attachment' : ' as a link'}: ${inner}`);
+      const key = `${usage}:${path}`;
+      const cached = urls.get(key);
       if (cached) return cached;
       try {
         const file = await handle.file();
         if (disposed) throw new Error('Preview session closed');
         const url = URL.createObjectURL(file.type === type ? file : file.slice(0, file.size, type));
-        urls.set(path, url);
+        urls.set(key, url);
         return url;
       } catch (error) {
         throw new Error(describeFileError(error, inner!), { cause: error });

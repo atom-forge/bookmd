@@ -23,8 +23,10 @@ export interface ContentSource {
   readText(path: string): Promise<string>;
   /** File names directly inside a directory; empty when it does not exist. Without it, folders never supply children. */
   list?(directory: string): Promise<string[]>;
-  /** `embed` assets are used by images; `link` assets are opened as documents by the reader. */
-  assetUrl(path: string, base: string, usage?: 'embed' | 'link'): Promise<string>;
+  /** `embed` assets are used by images; `link` assets are opened as documents by the reader; `attachment` files are downloaded as they are. */
+  assetUrl(path: string, base: string, usage?: 'embed' | 'link' | 'attachment'): Promise<string>;
+  /** Size of a file in bytes, shown next to attachments. */
+  assetSize?(path: string): Promise<number>;
 }
 
 export type ContentDiagnostic = { file: string; target: string; message: string };
@@ -36,6 +38,8 @@ export type ContentPage = NavItem & {
   author: string | null; tags: string[];
   requires: string[]; teaches: string[];
   headings: { id: string; title: string; depth: number }[];
+  /** Files offered for download below the page; `size` is in bytes, or null when the source cannot tell. */
+  attachments: { name: string; url: string; size: number | null }[];
 };
 export type Course = {
   slug: string; name: string; author: string | null;
@@ -49,6 +53,11 @@ export type ContentGraph = { branding?: string; exportManifest?: { course: strin
 const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 const safeSchemes = new Set(['http', 'https', 'mailto', 'tel']);
 const external = /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i;
+/** The file name of a link target, decoded for display. */
+function fileName(url: string): string {
+  const name = url.split(/[?#]/)[0].split('/').at(-1) ?? url;
+  try { return decodeURIComponent(name); } catch { return name; }
+}
 
 /** First heading of the shallowest depth present, so a document starting at H2 still has a title. */
 function headingTitle(tree: MarkdownRoot): string {
@@ -158,6 +167,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     return target;
   }
   const wikiLinks = new WeakSet<Link>();
+  const attachmentLinks = new WeakSet<Link>();
   function referencePaths(value: unknown, key: string, file: string): string[] {
     if (value === undefined || value === null) return [];
     if (!Array.isArray(value)) throw new Error(`Invalid ${key} in ${file}`);
@@ -224,16 +234,22 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     visit(tree, 'text', (node, index, parent) => {
       if (!parent || index === undefined || parent.type === 'link' || parent.type === 'linkReference') return;
       const parts: (typeof node | Link)[] = [];
-      const pattern = /(?<!!)\[\[([^\[\]\n|]+)(?:\|([^\[\]\n]+))?\]\]/g;
+      const pattern = /(?<!!)\[\[(!?)([^\[\]\n|]+)(?:\|([^\[\]\n]+))?\]\]/g;
       let cursor = 0;
       for (const match of node.value.matchAll(pattern)) {
-        const url = match[1].trim();
+        const url = match[2].trim();
         if (!url) continue;
         if (match.index! > cursor) parts.push({ type: 'text', value: node.value.slice(cursor, match.index) });
-        const link: Link = { type: 'link', url, children: match[2] ? [{ type: 'text', value: match[2].trim() }] : [] };
+        const link: Link = { type: 'link', url, children: match[3] ? [{ type: 'text', value: match[3].trim() }] : [] };
         if (external.test(url)) {
           if (!link.children.length) link.children = [{ type: 'text', value: url }];
           link.data = { hProperties: { 'data-embed': 'true' } };
+        } else if (match[1]) {
+          // [[!file]] attaches the file as it is, even a Markdown file, instead of linking to a page.
+          const name = fileName(url);
+          if (!link.children.length) link.children = [{ type: 'text', value: name }];
+          link.data = { hProperties: { download: name, 'data-attachment': 'true' } };
+          attachmentLinks.add(link);
         }
         wikiLinks.add(link);
         parts.push(link);
@@ -277,7 +293,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     if (extname(result).toLowerCase() !== '.md') throw new Error(`Expected Markdown file: ${result}`);
     return result;
   }
-  const asset = (file: string, usage: 'embed' | 'link' = 'link') => source.assetUrl(file, base, usage);
+  const asset = (file: string, usage: 'embed' | 'link' | 'attachment' = 'link') => source.assetUrl(file, base, usage);
   const start = await contained(resolve(root, entrypoint));
   const files = new Map<string, string>([['', start]]);
   const parents = new Map<string, string | null>([['', null]]);
@@ -382,6 +398,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       let tags: string[] = [];
       let requires: string[] = [];
       let teaches: string[] = [];
+      const attachments: ContentPage['attachments'] = [];
       async function append(file: string, ancestors: string[]) {
         if (ancestors.includes(file)) throw new Error(`Circular sources: ${[...ancestors, file].join(' -> ')}`);
         const { tree, sources, children, declaredChildren, metadata } = await document(file);
@@ -401,6 +418,16 @@ export async function processContent(source: ContentSource, entrypoint: string, 
             if (!Array.isArray(concepts) || concepts.some(concept => typeof concept !== 'string' || !concept.trim())) throw new Error(`Invalid ${key} in ${file}`);
             const unique = [...new Set<string>(concepts.map(concept => concept.trim()))];
             if (key === 'requires') requires = unique; else teaches = unique;
+          }
+          for (const path of referencePaths(metadata.attachments, 'attachments', file)) {
+            try {
+              const found = await target(file, path);
+              attachments.push({ name: basename(found), url: await asset(found, 'attachment'), size: (await source.assetSize?.(found)) ?? null });
+            } catch (error) {
+              // Tolerant callers collect broken references; builds keep failing.
+              if (!options.diagnostics) throw error;
+              options.diagnostics.push({ file, target: path, message: error instanceof Error ? error.message : String(error) });
+            }
           }
         }
         await registerChildren(file, declaredChildren || file === start ? children : await folderChildren(file));
@@ -422,10 +449,11 @@ export async function processContent(source: ContentSource, entrypoint: string, 
           if (!match[1]) continue;
           let fileTarget: string;
           let assetUrl: string | undefined;
+          const attachment = node.type === 'link' && attachmentLinks.has(node);
           try {
-            fileTarget = node.type === 'link' && wikiLinks.has(node)
+            fileTarget = node.type === 'link' && wikiLinks.has(node) && !attachment
               ? await markdownTarget(file, node.url) : await target(file, node.url);
-            if (!(node.type === 'link' && extname(fileTarget).toLowerCase() === '.md')) assetUrl = await asset(fileTarget, node.type === 'image' ? 'embed' : 'link');
+            if (attachment || !(node.type === 'link' && extname(fileTarget).toLowerCase() === '.md')) assetUrl = await asset(fileTarget, attachment ? 'attachment' : node.type === 'image' ? 'embed' : 'link');
           } catch (error) {
             // Tolerant callers collect broken references; builds keep failing.
             if (!options.diagnostics) throw error;
@@ -433,7 +461,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
             if (node.type === 'link') node.url = '#';
             continue;
           }
-          if (node.type === 'link' && extname(fileTarget).toLowerCase() === '.md') {
+          if (node.type === 'link' && !attachment && extname(fileTarget).toLowerCase() === '.md') {
             const targetSlug = register(fileTarget);
             if (!toString(node).trim()) {
               let label = titles.get(targetSlug) || '';
@@ -462,7 +490,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       title ||= slug.split('/').at(-1) || titleFallback;
       const parent = parents.get(slug) ?? null;
       const inTree = parents.has(slug);
-      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, author, tags, requires, teaches, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
+      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, author, tags, requires, teaches, attachments, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
       if (inTree) graph.navigation.push({ slug, title, parent });
     }
 
