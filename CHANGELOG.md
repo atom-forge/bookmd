@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `![[note]]` embeds another Markdown file where it is written, `![[note#Heading]]` one section of it, and `![[picture.png|300]]` inserts an image (width or alt text after the bar). A more flexible alternative to `sources`.
 - The list of books in the collection's entry file is now called `books`. The older `courses` still works; both in one file is an error.
-- `[[!file]]` attaches a file as it is, even a Markdown file (`[[!docs/llm.md|notes for LLMs]]`), instead of linking to a page. The page frontmatter `attachments` list adds a "Downloads" block with file names and sizes, in the build and in the local preview.
+- The page frontmatter `attachments` list (quoted wikilinks) adds a "Downloads" block with file names and sizes, in the build and in the local preview. It also offers Markdown files as they are, without making pages of them.
 - A build warns about files of 25 MB or more, and about books whose files add up to 500 MB.
 
 ### Changed

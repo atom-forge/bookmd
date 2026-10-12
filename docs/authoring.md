@@ -1,3 +1,7 @@
+---
+attachments:
+  - "[[llm.md]]"
+---
 # Writing books
 
 BookMD turns Markdown files into a static book collection on the web. This guide is for authors: how a collection and a book are structured, and which metadata and content the system supports.
@@ -7,7 +11,7 @@ BookMD turns Markdown files into a static book collection on the web. This guide
 - Including a book from another repository: [Books from other GitHub repositories](remote-books.md)
 - On your own server: [Self-hosting: build and upload](self-hosted.md)
 - Commands and settings: [The `bookmd` command line and configuration](cli.md)
-- Writing with an AI assistant: give it [[!llm.md|llm.md]], a compact reference of these rules
+- Writing with an AI assistant: give it `llm.md`, a compact reference of these rules (download it at the end of this page)
 
 ## Contents
 
@@ -289,7 +293,7 @@ A custom title, no title, a title only, and nested callouts are supported. Inner
 
 ### Wikilinks
 
-In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#heading|Custom title]]` are followed and rendered. Without a title, the title of the document is used (see page titles). Wikilinks in code blocks and inline code stay as text. Links in the body do not change the navigation tree. `![[...]]` embeds content, see [Embedding pages and images](#embedding-pages-and-images); `[[!file]]` is something else: an [attachment](#images-files-and-attachments).
+In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#heading|Custom title]]` are followed and rendered. Without a title, the title of the document is used (see page titles). Wikilinks in code blocks and inline code stay as text. Links in the body do not change the navigation tree. `![[...]]` embeds content, see [Embedding pages and images](#embedding-pages-and-images).
 
 ### Embedding pages and images
 
@@ -314,15 +318,7 @@ In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#hea
 
 Images and files that a page links to (`![alt](img/chart.png)`, `[slides](slides.pdf)`) are copied into the site; the link is rewritten, so the original location does not matter. A file must be inside the book's folder. The copy keeps its file name (`/content-assets/<hash>/slides.pdf`), so a download is saved under the name you gave it.
 
-A link to a `.md` file is always a page of the book. To offer a Markdown file (or any file) **as it is**, mark the wikilink with `!`:
-
-```md
-Download the notes: [[!docs/llm.md]] or [[!docs/llm.md|notes for LLMs]].
-```
-
-Without a title the link text is the file name. The `!` form never creates a page: the file is not rendered, searched or added to the navigation.
-
-To list downloads below a page, use the `attachments` field of the page (a list of quoted wikilinks, paths relative to the page):
+A link to a `.md` file is always a page of the book. To offer a Markdown file (or any file) **as it is**, list it in the `attachments` field of the page (a list of quoted wikilinks, paths relative to the page); a file with another extension (`slides.pdf`, `llms.txt`) can also simply be linked:
 
 ```yaml
 ---

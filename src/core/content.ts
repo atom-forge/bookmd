@@ -54,11 +54,6 @@ export type ContentGraph = { branding?: string; exportManifest?: { course: strin
 const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 const safeSchemes = new Set(['http', 'https', 'mailto', 'tel']);
 const external = /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i;
-/** The file name of a link target, decoded for display. */
-function fileName(url: string): string {
-  const name = url.split(/[?#]/)[0].split('/').at(-1) ?? url;
-  try { return decodeURIComponent(name); } catch { return name; }
-}
 
 /** First heading of the shallowest depth present, so a document starting at H2 still has a title. */
 function headingTitle(tree: MarkdownRoot): string {
@@ -168,7 +163,6 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     return target;
   }
   const wikiLinks = new WeakSet<Link>();
-  const attachmentLinks = new WeakSet<Link>();
   const embeds = new WeakMap<Paragraph, string>();
   function referencePaths(value: unknown, key: string, file: string): string[] {
     if (value === undefined || value === null) return [];
@@ -262,22 +256,16 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     visit(tree, 'text', (node, index, parent) => {
       if (!parent || index === undefined || parent.type === 'link' || parent.type === 'linkReference') return;
       const parts: (typeof node | Link)[] = [];
-      const pattern = /(?<!!)\[\[(!?)([^\[\]\n|]+)(?:\|([^\[\]\n]+))?\]\]/g;
+      const pattern = /(?<!!)\[\[([^\[\]\n|]+)(?:\|([^\[\]\n]+))?\]\]/g;
       let cursor = 0;
       for (const match of node.value.matchAll(pattern)) {
-        const url = match[2].trim();
+        const url = match[1].trim();
         if (!url) continue;
         if (match.index! > cursor) parts.push({ type: 'text', value: node.value.slice(cursor, match.index) });
-        const link: Link = { type: 'link', url, children: match[3] ? [{ type: 'text', value: match[3].trim() }] : [] };
+        const link: Link = { type: 'link', url, children: match[2] ? [{ type: 'text', value: match[2].trim() }] : [] };
         if (external.test(url)) {
           if (!link.children.length) link.children = [{ type: 'text', value: url }];
           link.data = { hProperties: { 'data-embed': 'true' } };
-        } else if (match[1]) {
-          // [[!file]] attaches the file as it is, even a Markdown file, instead of linking to a page.
-          const name = fileName(url);
-          if (!link.children.length) link.children = [{ type: 'text', value: name }];
-          link.data = { hProperties: { download: name, 'data-attachment': 'true' } };
-          attachmentLinks.add(link);
         }
         wikiLinks.add(link);
         parts.push(link);
@@ -436,11 +424,10 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       if (!match[1]) continue;
       let fileTarget: string;
       let assetUrl: string | undefined;
-      const attachment = node.type === 'link' && attachmentLinks.has(node);
       try {
-        fileTarget = node.type === 'link' && wikiLinks.has(node) && !attachment
+        fileTarget = node.type === 'link' && wikiLinks.has(node)
           ? await markdownTarget(file, node.url) : await target(file, node.url);
-        if (attachment || !(node.type === 'link' && extname(fileTarget).toLowerCase() === '.md')) assetUrl = await asset(fileTarget, attachment ? 'attachment' : node.type === 'image' ? 'embed' : 'link');
+        if (!(node.type === 'link' && extname(fileTarget).toLowerCase() === '.md')) assetUrl = await asset(fileTarget, node.type === 'image' ? 'embed' : 'link');
       } catch (error) {
         // Tolerant callers collect broken references; builds keep failing.
         if (!options.diagnostics) throw error;
@@ -448,7 +435,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
         if (node.type === 'link') node.url = '#';
         continue;
       }
-      if (node.type === 'link' && !attachment && extname(fileTarget).toLowerCase() === '.md') {
+      if (node.type === 'link' && extname(fileTarget).toLowerCase() === '.md') {
         const targetSlug = register(fileTarget);
         if (!toString(node).trim()) {
           let label = titles.get(targetSlug) || '';

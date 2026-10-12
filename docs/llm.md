@@ -72,9 +72,9 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 - Callouts (Obsidian syntax): `> [!tip] Title`, with `+` (open) or `-` (closed) after the type for collapsible ones. Types: note, abstract, info, todo, tip, success, question, warning, failure, danger, bug, example, quote.
 - Links to other pages: `[[page]]`, `[[page#heading|Custom text]]` or `[text](page.md)`. Links in the body do not change the navigation tree.
 - Images: `![alt](img/diagram.png)`. Other files: `[slides](slides.pdf)`. They are copied into the site and keep their file name.
-- **Attachments:** `[[!docs/llm.md]]` or `[[!docs/llm.md|notes]]` offers the file for download **as it is**, even if it is a `.md` file. A plain link to a `.md` file is always a page.
+- **Downloads:** list files in the page's `attachments` frontmatter to offer them as they are, even `.md` files; they show up as a "Downloads" block below the page. A plain link to a `.md` file is always a page; a link to any other file type (`[slides](slides.pdf)`) is a download.
 - Embeds: a paragraph containing only `[[https://youtu.be/<11-char-id>]]`, a Desmos (`https://www.desmos.com/calculator/<id>`, `…/3d/<id>`) or GeoGebra (`https://www.geogebra.org/m/<id>`) address. Other addresses are plain links.
-- **Embeds of other files:** a paragraph containing only `![[path/to/note]]` inserts that Markdown file's body at that place; `![[note#Heading]]` inserts only that section. `![[img.png]]`, `![[img.png|300]]` (width) and `![[img.png|alt text]]` are images. Paths are relative to the current file; links inside the embedded file are relative to it. Do not confuse `![[file]]` (embed) with `[[!file]]` (download link).
+- **Embeds of other files:** a paragraph containing only `![[path/to/note]]` inserts that Markdown file's body at that place; `![[note#Heading]]` inserts only that section. `![[img.png]]`, `![[img.png|300]]` (width) and `![[img.png|alt text]]` are images. Paths are relative to the current file; links inside the embedded file are relative to it.
 
 ## Included books (another GitHub repository)
 
@@ -110,7 +110,7 @@ attachments:
 ---
 # Introduction
 
-See [[02-next]] and the notes: [[!files/notes.md|notes for LLMs]].
+See [[02-next]].
 
 > [!tip] Hint
 > Formulas work: $a^2 + b^2 = c^2$.
@@ -123,4 +123,4 @@ See [[02-next]] and the notes: [[!files/notes.md|notes for LLMs]].
 3. Every path is relative to the file it is written in, and stays inside the book's folder.
 4. Each page is listed under exactly one parent, and the `children` order is the reading order.
 5. Chapters have `type: chapter`; their pages have `type: content`.
-6. Files you want downloaded use `[[!file]]` or `attachments`, not a plain link to a `.md` file.
+6. Files you want downloaded are in `attachments` (a plain link to a `.md` file makes a page, not a download).
