@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { assemble } from './assemble';
 import type { GitTransport } from './git-source';
-import { compare, createPlan, makePlan, parsePlan, type PlanInputs } from './plan';
+import { compare, createPlan, goodCommits, makePlan, parsePlan, withOutcomes, type PlanInputs } from './plan';
 import { gitEntries } from './registry';
 
 const sha = (c: string) => c.repeat(40);
@@ -95,5 +95,25 @@ describe('plan against Git repositories', () => {
   test('an unknown ref fails the plan without a result', async () => {
     await writeFile(join(work, 'site', 'courses.md'), '---\ncourses:\n  - "nope@github.com/o/ext/course.md"\n---\n');
     await expect(createPlan(config(), options, transport)).rejects.toThrow('was not found');
+  });
+});
+
+describe('what a publication really used', () => {
+  const [a, b] = sources.map(source => source.source);
+  const plan = makePlan(inputs, sources);
+  test('records a replaced and a left-out book without changing the fingerprint', () => {
+    const recorded = withOutcomes(plan, [{ source: a, used: sha('9') }, { source: b, used: null }]);
+    expect(recorded.fingerprint).toBe(plan.fingerprint);
+    expect(compare(recorded, plan)).toEqual({ changed: false, reasons: [] });
+    expect(parsePlan(JSON.stringify(recorded))).toEqual(recorded);
+    expect(goodCommits(recorded)).toEqual(new Map([[a.toLowerCase(), sha('9')]]));
+  });
+  test('a plan without outcomes published the planned commits', () => {
+    expect(goodCommits(plan)).toEqual(new Map(sources.map(source => [source.source.toLowerCase(), source.commit])));
+    expect(goodCommits(null).size).toBe(0);
+  });
+  test('rejects a malformed used commit', () => {
+    const broken = { ...plan, sources: [{ ...sources[0], used: 'nope' }, sources[1]] };
+    expect(parsePlan(JSON.stringify(broken))).toBeNull();
   });
 });

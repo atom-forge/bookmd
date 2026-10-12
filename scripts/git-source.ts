@@ -107,8 +107,8 @@ export type CheckedOut = ResolvedSource & {
 };
 
 /** Content of one commit in `<root>/<hash of repository+ref>/`, without Git metadata, hooks, symlinks or LFS. */
-export async function checkout(source: ResolvedSource, root: string, transport: GitTransport = defaultTransport()): Promise<CheckedOut> {
-  const hash = createHash('sha256').update(source.checkoutKey).digest('hex');
+export async function checkout(source: ResolvedSource, root: string, transport: GitTransport = defaultTransport(), variant = ''): Promise<CheckedOut> {
+  const hash = createHash('sha256').update(variant ? `${source.checkoutKey}\n${variant}` : source.checkoutKey).digest('hex');
   const directory = resolve(root, 'repos', hash);
   const marker = `${directory}.commit`;
   // The marker holds the commit and how it was reached, so a reused checkout still knows whether it is private.
@@ -162,4 +162,24 @@ export async function syncSources(entries: string[], root: string, transport: Gi
   const result: CheckedOut[] = [];
   for (const source of resolved) result.push(await checkout(source, root, transport));
   return result;
+}
+
+/** Directory variant of the checkouts that hold the last known good commit of a source. */
+export const fallbackVariant = 'fallback';
+
+/**
+ * Downloads the last known good commit of every source whose planned commit differs from it, so a book that
+ * fails to build can be replaced by it later without network access. Best effort: a failed download only means
+ * that this book cannot fall back.
+ */
+export async function syncFallbacks(entries: string[], root: string, fallbacks: Pins, planned: Pins, transport: GitTransport = defaultTransport()): Promise<string[]> {
+  const warnings: string[] = [];
+  for (const source of entries.map(parseSourceRef)) {
+    const key = source.normalized.toLowerCase();
+    const commit = fallbacks.get(key);
+    if (!commit || commit === planned.get(key)) continue;
+    try { await checkout({ ...source, commit, refKind: 'commit' }, root, transport, fallbackVariant); }
+    catch (error) { warnings.push(`${source.normalized}: the last good version ${commit.slice(0, 12)} cannot be downloaded: ${error instanceof Error ? error.message : error}`); }
+  }
+  return warnings;
 }

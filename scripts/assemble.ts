@@ -2,7 +2,7 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { isSourceRef } from '../src/core/source-ref';
-import { syncSources, type CheckedOut, type GitTransport, type Pins } from './git-source';
+import { checkout, defaultTransport, fallbackVariant, syncSources, type CheckedOut, type GitTransport, type Pins } from './git-source';
 
 const frontmatter = /^﻿?---\r?\n((?:[^\n]*\n)*?)---(?:\r?\n|$)/;
 /** URL-safe course identifier: lower-case words joined by single hyphens. */
@@ -17,9 +17,13 @@ export type Assembly = {
   /** Virtual directories that are sealed per external course. */
   sealed: string[];
   sources: AssembledSource[];
-  /** Private sources left out because their author has not approved publication (yet). */
-  skipped: string[];
+  /** Books left out of the site: not approved for publication (yet), or broken with no earlier good version. */
+  skipped: { source: string; reason: string }[];
+  /** Books whose planned commit is broken and that were built from their last good commit instead. */
+  fallbacks: { source: string; planned: string; used: string; reason: string }[];
 };
+/** Checks that one book builds on its own; throws a description of the first problem. */
+export type BookValidator = (checked: CheckedOut, id: string) => Promise<void>;
 
 export function validateCourseId(id: unknown, source: string): string {
   if (typeof id !== 'string' || !id) throw new Error(`${source}: the entry file must declare a stable course "id" in its frontmatter`);
@@ -51,29 +55,53 @@ const synced = new Map<string, CheckedOut[]>();
  * `<work>/content`, with each external course under its own id. Registries without Git
  * entries are processed in place. The versioned local content is never written.
  */
-export async function assemble(config: { contentRoot: string; entrypoint: string }, work: string, entries: string[], options: { transport?: GitTransport; refresh?: boolean; pins?: Pins } = {}): Promise<Assembly> {
-  if (!entries.length) return { contentRoot: config.contentRoot, entrypoint: config.entrypoint, sealed: [], sources: [], skipped: [] };
+export async function assemble(config: { contentRoot: string; entrypoint: string }, work: string, entries: string[], options: { transport?: GitTransport; refresh?: boolean; pins?: Pins; fallbacks?: Pins; validate?: BookValidator } = {}): Promise<Assembly> {
+  if (!entries.length) return { contentRoot: config.contentRoot, entrypoint: config.entrypoint, sealed: [], sources: [], skipped: [], fallbacks: [] };
   let checkouts = options.refresh === false ? synced.get(work) : undefined;
   if (!checkouts) { checkouts = await syncSources(entries, work, options.transport, options.pins); synced.set(work, checkouts); }
   const ids = new Map<string, string>();
   const sources: AssembledSource[] = [];
-  const skipped: string[] = [];
+  const skipped: Assembly['skipped'] = [];
+  const fallbacks: Assembly['fallbacks'] = [];
   const included: (CheckedOut | null)[] = [];
   const local = new Set((await readdir(config.contentRoot)).map(name => name.toLowerCase().replace(/\.md$/, '')));
-  for (const checked of checkouts) {
+
+  /** The id of a book that builds on its own; null when its author has not approved publication. */
+  async function prepare(checked: CheckedOut): Promise<string | null> {
     const metadata = await entryMetadata(checked);
-    if (!isApproved(checked, metadata)) {
-      skipped.push(checked.normalized);
+    if (!isApproved(checked, metadata)) return null;
+    const id = validateCourseId(metadata.id, checked.normalized);
+    await options.validate?.(checked, id);
+    return id;
+  }
+  const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+
+  for (const planned of checkouts) {
+    let chosen: CheckedOut | null = planned, id: string | null = null, failure: string | null = null;
+    try { id = await prepare(planned); }
+    catch (error) {
+      failure = message(error);
+      chosen = null;
+      const commit = options.fallbacks?.get(planned.normalized.toLowerCase());
+      if (commit && commit !== planned.commit) {
+        try {
+          const earlier = await checkout({ ...planned, commit, refKind: 'commit' }, work, options.transport ?? defaultTransport(), fallbackVariant);
+          id = await prepare(earlier);
+          if (id) { chosen = earlier; fallbacks.push({ source: planned.normalized, planned: planned.commit, used: commit, reason: failure }); }
+        } catch { /* no usable earlier version */ }
+      }
+    }
+    if (!chosen || !id) {
+      const reason = failure ?? 'private source without "publish: true" in the entry file\'s frontmatter';
+      skipped.push({ source: planned.normalized, reason });
       included.push(null);
-      console.warn(`Skipped ${checked.normalized}: private source without "publish: true" in the entry file's frontmatter`);
       continue;
     }
-    included.push(checked);
-    const id = validateCourseId(metadata.id, checked.normalized);
-    if (ids.has(id)) throw new Error(`${checked.normalized}: course id "${id}" is already used by ${ids.get(id)}`);
-    if (local.has(id)) throw new Error(`${checked.normalized}: course id "${id}" collides with local content "${id}"`);
-    ids.set(id, checked.normalized);
-    sources.push({ id, source: checked.normalized, commit: checked.commit });
+    if (ids.has(id)) throw new Error(`${planned.normalized}: course id "${id}" is already used by ${ids.get(id)}`);
+    if (local.has(id)) throw new Error(`${planned.normalized}: course id "${id}" collides with local content "${id}"`);
+    ids.set(id, planned.normalized);
+    included.push(chosen);
+    sources.push({ id, source: planned.normalized, commit: chosen.commit });
   }
   const output = resolve(work, 'content');
   await rm(output, { recursive: true, force: true });
@@ -95,5 +123,5 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   });
   await writeFile(registry, `---\n${stringifyYaml(metadata)}---\n${text.slice(match[0].length)}`);
   await writeFile(resolve(work, 'course-sources.json'), JSON.stringify({ schemaVersion: 1, sources }, null, 2) + '\n');
-  return { contentRoot: output, entrypoint: config.entrypoint, sealed: sources.map(source => '/' + source.id), sources, skipped };
+  return { contentRoot: output, entrypoint: config.entrypoint, sealed: sources.map(source => '/' + source.id), sources, skipped, fallbacks };
 }

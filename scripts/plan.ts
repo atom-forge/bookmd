@@ -18,7 +18,11 @@ export type PlanInputs = {
   /** SHA-256 of the normalized course registry. */
   registry: string;
 };
-export type PlanSource = { source: string; commit: string };
+/**
+ * `used` is only set when the build did not use the planned commit: the commit that was used instead (the last
+ * good version of a book that failed to build), or null when the book was left out.
+ */
+export type PlanSource = { source: string; commit: string; used?: string | null };
 /** What one publication is built from. After a successful deploy it becomes the baseline. */
 export type Plan = { schemaVersion: typeof planSchemaVersion; fingerprint: string; inputs: PlanInputs; sources: PlanSource[] };
 
@@ -65,7 +69,7 @@ export function parsePlan(text: string): Plan | null {
     const { inputs } = plan;
     if (plan.schemaVersion !== planSchemaVersion || typeof plan.fingerprint !== 'string' || !Array.isArray(plan.sources) || !inputs) return null;
     if (!isSha(inputs.instanceCommit) || (inputs.engineCommit !== '' && !isSha(inputs.engineCommit)) || typeof inputs.engineVersion !== 'string' || typeof inputs.lockfile !== 'string' || typeof inputs.registry !== 'string') return null;
-    if (!plan.sources.every(s => typeof s?.source === 'string' && isSha(s.commit))) return null;
+    if (!plan.sources.every(s => typeof s?.source === 'string' && isSha(s.commit) && (s.used === undefined || s.used === null || isSha(s.used)))) return null;
     return fingerprintOf(inputs, plan.sources) === plan.fingerprint ? plan : null;
   } catch { return null; }
 }
@@ -86,4 +90,21 @@ export function compare(baseline: Plan | null, plan: Plan, force = false): Decis
   }
   for (const source of before.keys()) if (!after.has(source)) reasons.push(`removed source ${source}`);
   return { changed: true, reasons: reasons.length ? reasons : ['fingerprint changed'] };
+}
+
+/** Commits that were really published by a plan, per lower-cased source; books that were left out have none. */
+export function goodCommits(plan: Plan | null): Map<string, string> {
+  const good = new Map<string, string>();
+  for (const source of plan?.sources ?? []) {
+    const commit = source.used === undefined ? source.commit : source.used;
+    if (commit) good.set(source.source.toLowerCase(), commit);
+  }
+  return good;
+}
+
+export type BookOutcome = { source: string; used: string | null };
+/** Records what a build used instead of the planned commits. The fingerprint (the planned inputs) does not change. */
+export function withOutcomes(plan: Plan, outcomes: BookOutcome[]): Plan {
+  const byName = new Map(outcomes.map(outcome => [outcome.source.toLowerCase(), outcome.used]));
+  return { ...plan, sources: plan.sources.map(({ used: _previous, ...source }) => byName.has(source.source.toLowerCase()) ? { ...source, used: byName.get(source.source.toLowerCase())! } : source) };
 }

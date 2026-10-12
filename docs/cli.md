@@ -64,3 +64,19 @@ bookmd build --sources plan.json
 - A missing, corrupt or incomplete baseline always means a full build; `--force` always rebuilds.
 - `build --sources plan.json` downloads exactly the planned commits and never resolves a ref again, so the commit that was checked is the commit that is built, even if a branch has moved on in the meantime.
 - Storing the baseline is the collection's job: keep the plan file only after a successful deployment.
+
+## A book that does not build
+
+An included book that fails (a broken link, a missing file, a missing or invalid `id`) does not stop the build of the others. Each included book is built on its own first, and then:
+
+- With `--baseline plan.json` (the plan of the last successful publication), the engine uses the book's **last good commit** instead. `sources --sources plan.json --baseline baseline/plan.json` downloads it in advance, because the later steps have no credentials.
+- Without a good earlier version (a new book, or no baseline) the book is left out of the site.
+- Either way a warning names the book and the problem: on stderr, as a GitHub Actions annotation and in the job summary.
+- The plan file passed with `--sources` is updated with what was really built (`used` per source), so the next run knows which commits are good. A book that is left out has `used: null`. The change detection is not affected.
+- Local content, the book list, id collisions and download or access errors still stop the build. A private book whose `publish: true` was removed is left out; it does not fall back to an older, approved version.
+
+```sh
+bookmd sources --sources plan.json --baseline baseline/plan.json
+bookmd check   --sources plan.json --baseline baseline/plan.json
+bookmd build   --sources plan.json --baseline baseline/plan.json
+```

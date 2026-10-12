@@ -82,7 +82,7 @@ The build can read from a private repository only if the operator has created a 
 ## Common errors
 
 - **"course id … is already used" / collision with local content**: the `id` is repeated, or a folder under `content/` has the same name. Rename one of them.
-- **Missing or invalid `id`**: the frontmatter of the entry file has no `id`, or it does not follow the rules above.
+- **Missing or invalid `id`**: the frontmatter of the entry file has no `id`, or it does not follow the rules above. The book is left out (or replaced by its last good version) with a warning, see [a book that does not build](cli.md#a-book-that-does-not-build).
 - **Unknown ref**: a mistyped branch or tag name; check that it exists in the repository.
 - **The repository is not readable**: a mistyped owner or repository name, or the repository is private and the App is not installed.
 - **A link in the book does not work**: the linked file is outside the folder of the book; an included book is sealed and can only refer to its own folder.

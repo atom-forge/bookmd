@@ -1,8 +1,8 @@
-import { readFile, readdir, writeFile, mkdir, copyFile, realpath, rm } from 'node:fs/promises';
+import { readFile, readdir, writeFile, mkdir, copyFile, realpath, rm, cp, mkdtemp, appendFile } from 'node:fs/promises';
 import { resolve, relative, extname, sep, isAbsolute, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 import { processContent, type ContentGraph } from '../src/core/content';
-import { assemble } from './assemble';
+import { assemble, type Assembly, type BookValidator } from './assemble';
 import type { Pins } from './git-source';
 import { gitEntries } from './registry';
 export * from '../src/core/content';
@@ -36,16 +36,40 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
   }, entrypoint, { base, title: titleFallback, rootName: basename(root), sealed });
 }
 
-export async function generate(config: { contentRoot: string; entrypoint: string; title?: string }, workRoot = process.cwd(), base = process.env.BASE_PATH || '', options: { refresh?: boolean; pins?: Pins } = {}) {
+/** Builds one book on its own, in a throw-away catalog; a problem inside the book is thrown. */
+function bookValidator(config: { title?: string }, workRoot: string, base: string): BookValidator {
+  return async (checked, id) => {
+    const directory = await mkdtemp(resolve(workRoot, 'validate-'));
+    try {
+      await cp(checked.contentRoot, resolve(directory, 'book', id), { recursive: true, filter: path => !basename(path).startsWith('.') });
+      await writeFile(resolve(directory, 'book', 'courses.md'), `---\ncourses:\n  - "[[${id}/${checked.entrypoint}]]"\n---\n# Catalog\n`);
+      await buildGraph(resolve(directory, 'book'), 'courses.md', base, resolve(directory, 'assets'), config.title, ['/' + id]);
+    } finally { await rm(directory, { recursive: true, force: true }); }
+  };
+}
+
+/** Tells the author, in the log and (on GitHub Actions) as annotations and in the job summary, what was left out. */
+export async function reportAssembly(assembly: Pick<Assembly, 'skipped' | 'fallbacks'>): Promise<void> {
+  const lines = [
+    ...assembly.fallbacks.map(item => `${item.source}: the new version does not build, the last good version ${item.used.slice(0, 12)} is published instead. ${item.reason}`),
+    ...assembly.skipped.map(item => `${item.source}: left out of the site. ${item.reason}`)
+  ];
+  for (const line of lines) console.warn(process.env.GITHUB_ACTIONS ? `::warning::${line.replace(/\r?\n/g, ' ')}` : `Warning: ${line}`);
+  if (lines.length && process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY, `**Books that need attention:**\n\n${lines.map(line => `- ${line.replace(/\r?\n/g, ' ')}`).join('\n')}\n\n`).catch(() => {});
+}
+
+export async function generate(config: { contentRoot: string; entrypoint: string; title?: string }, workRoot = process.cwd(), base = process.env.BASE_PATH || '', options: { refresh?: boolean; pins?: Pins; fallbacks?: Pins } = {}) {
   const output = (path: string) => resolve(workRoot, path);
   await rm(output('static/content-assets'), { recursive: true, force: true });
-  // Git course sources are downloaded and combined with the local content first.
-  const assembly = await assemble(config, workRoot, await gitEntries(config.contentRoot, config.entrypoint), options);
+  // Git course sources are downloaded and combined with the local content first. A book that does not build is
+  // replaced by its last good version, or left out, so it cannot hold back the others.
+  const assembly = await assemble(config, workRoot, await gitEntries(config.contentRoot, config.entrypoint), { ...options, validate: bookValidator(config, workRoot, base) });
+  await reportAssembly(assembly);
   const graph = await buildGraph(resolve(assembly.contentRoot), assembly.entrypoint, base, output('static/content-assets'), config.title, assembly.sealed);
   await mkdir(output('src/lib/generated'), { recursive: true });
   await writeFile(output('src/lib/generated/content.json'), JSON.stringify(graph));
   await writeFile(output('src/lib/generated/catalog.json'), JSON.stringify({ branding: graph.branding || '', page: graph.pages.find(page => page.slug === '')!, courses: graph.courses }));
   await writeFile(output('static/.nojekyll'), '');
   console.log(`Generated ${graph.pages.length} pages in ${graph.courses.length} courses${assembly.sources.length ? ` (${assembly.sources.length} from Git)` : ''}.`);
-  return graph;
+  return { graph, assembly };
 }

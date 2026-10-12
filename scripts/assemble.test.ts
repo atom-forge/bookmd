@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { assemble, isApproved, validateCourseId } from './assemble';
+import { assemble, isApproved, validateCourseId, type BookValidator } from './assemble';
 import { buildGraph } from './content';
 import { gitEntries } from './registry';
 import type { GitTransport } from './git-source';
@@ -63,7 +63,13 @@ describe('assembly of local and Git courses', () => {
     expect(graph.pages.find(p => p.slug === 'web-programming-1/lesson')!.html).toMatch(/src="\/content-assets\//);
     expect(JSON.parse(await readFile(join(work, 'w1', 'course-sources.json'), 'utf8')).sources[0].id).toBe('web-programming-1');
   });
-  test.each([['noid', 'must declare a stable course'], ['bad', 'invalid course id'], ['collide', 'collides with local content']])('%s blocks the assembly', async (repo, message) => {
+  test.each([['noid', 'must declare a stable course'], ['bad', 'invalid course id']])('%s is left out with the reason', async (repo, message) => {
+    const dir = await local(`reg-${repo}`, registry(`main@github.com/o/${repo}/course.md`), { 'mine/course.md': '# x' });
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, `w-${repo}`), await gitEntries(dir, 'courses.md'), { transport });
+    expect(assembly.sources).toEqual([]);
+    expect(assembly.skipped).toEqual([{ source: `main@github.com/o/${repo}/course.md`, reason: expect.stringContaining(message) }]);
+  });
+  test.each([['collide', 'collides with local content']])('%s blocks the assembly', async (repo, message) => {
     const dir = await local(`reg-${repo}`, registry(`main@github.com/o/${repo}/course.md`), { 'mine/course.md': '# x' });
     await expect(assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, `w-${repo}`), await gitEntries(dir, 'courses.md'), { transport })).rejects.toThrow(message);
   });
@@ -93,9 +99,56 @@ describe('publication approval for private sources', () => {
     const dir = await local('priv-site', registry('main@github.com/o/priv-no/course.md', 'main@github.com/o/priv-yes/course.md'), { 'mine/course.md': '# m' });
     const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'wp'), await gitEntries(dir, 'courses.md'), { transport: gated });
     expect(assembly.sources.map(s => s.id)).toEqual(['priv-yes']);
-    expect(assembly.skipped).toEqual(['main@github.com/o/priv-no/course.md']);
+    expect(assembly.skipped.map(item => item.source)).toEqual(['main@github.com/o/priv-no/course.md']);
     const text = await readFile(join(assembly.contentRoot, 'courses.md'), 'utf8');
     expect(text).toContain('priv-yes/course.md');
     expect(text).not.toContain('priv-no');
+  });
+});
+
+describe('a book that does not build', () => {
+  const entry = 'main@github.com/o/evolving/course.md';
+  const noBrokenMarker: BookValidator = async checked => {
+    if ((await readFile(join(checked.contentRoot, 'lesson.md'), 'utf8')).includes('BROKEN')) throw new Error('lesson.md: broken link');
+  };
+  let good: string, bad: string;
+  beforeAll(async () => {
+    await remote('evolving', { 'course.md': course('evolving'), 'lesson.md': '# Good' });
+    const dir = join(work, 'remote', 'evolving');
+    good = git(dir, 'rev-parse', 'HEAD');
+    await writeFile(join(dir, 'lesson.md'), '# BROKEN');
+    git(dir, 'commit', '-qam', 'break');
+    bad = git(dir, 'rev-parse', 'HEAD');
+  });
+  const run = async (name: string, fallbacks?: Map<string, string>) => {
+    const dir = await local(name, registry('[[mine/course.md]]', entry), { 'mine/course.md': '---\nlanguage: en\n---\n# Mine' });
+    return { dir, assembly: await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, `w-${name}`), await gitEntries(dir, 'courses.md'), { transport, pins: new Map([[entry, bad]]), fallbacks, validate: noBrokenMarker }) };
+  };
+  test('is replaced by its last good commit', async () => {
+    const { assembly } = await run('fb-good', new Map([[entry, good]]));
+    expect(assembly.sources).toEqual([{ id: 'evolving', source: entry, commit: good }]);
+    expect(assembly.fallbacks).toEqual([{ source: entry, planned: bad, used: good, reason: expect.stringContaining('broken link') }]);
+    expect(assembly.skipped).toEqual([]);
+    expect(await readFile(join(assembly.contentRoot, 'evolving', 'lesson.md'), 'utf8')).toBe('# Good');
+  });
+  test('is left out when there is no good version, and the catalog drops it', async () => {
+    const { assembly } = await run('fb-none');
+    expect(assembly.sources).toEqual([]);
+    expect(assembly.skipped).toEqual([{ source: entry, reason: expect.stringContaining('broken link') }]);
+    expect(await readFile(join(assembly.contentRoot, 'courses.md'), 'utf8')).not.toContain('evolving');
+  });
+  test('is left out when the last good commit is broken as well', async () => {
+    const { assembly } = await run('fb-bad', new Map([[entry, bad]]));
+    expect(assembly.skipped).toHaveLength(1);
+  });
+  test('does not fall back from a withdrawn publication approval', async () => {
+    await remote('withdrawn', { 'course.md': course('withdrawn') });
+    const gated: GitTransport = { url: ({ repo }) => `file://${join(work, 'nowhere', repo)}`, authenticate: async ({ repo }) => ({ url: `file://${join(work, 'remote', repo)}` }) };
+    const key = 'main@github.com/o/withdrawn/course.md';
+    const sha = git(join(work, 'remote', 'withdrawn'), 'rev-parse', 'HEAD');
+    const dir = await local('fb-withdrawn', registry('[[mine/course.md]]', key), { 'mine/course.md': '# m' });
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w-withdrawn'), await gitEntries(dir, 'courses.md'), { transport: gated, fallbacks: new Map([[key, sha]]) });
+    expect(assembly.fallbacks).toEqual([]);
+    expect(assembly.skipped.map(item => item.source)).toEqual([key]);
   });
 });

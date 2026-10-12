@@ -3,8 +3,8 @@ import { cp, mkdir, rm, writeFile, copyFile, access, readFile, symlink, appendFi
 import { dirname, resolve, relative, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { generate } from './scripts/content';
-import { syncSources, type Pins } from './scripts/git-source';
-import { compare, createPlan, parsePlan } from './scripts/plan';
+import { syncFallbacks, syncSources, type Pins } from './scripts/git-source';
+import { compare, createPlan, goodCommits, parsePlan, withOutcomes } from './scripts/plan';
 import { gitEntries } from './scripts/registry';
 
 const engine = dirname(fileURLToPath(import.meta.url));
@@ -68,6 +68,8 @@ if (given['--sources']) {
   if (!plan) { console.error('Error: --sources is not a valid plan file.'); process.exit(1); }
   pins = new Map(plan.sources.map(source => [source.source.toLowerCase(), source.commit]));
 }
+// The last good version of every book comes from the baseline: the plan of the last successful publication.
+const fallbacks: Pins | undefined = given['--baseline'] && command !== 'plan' ? goodCommits(parsePlan(await readFile(resolve(given['--baseline']), 'utf8').catch(() => ''))) : undefined;
 if (command === 'sources') {
   // Resolves and downloads the Git course sources of the registry; any failure aborts without a partial result.
   const entries = await gitEntries(contentRoot, config.entrypoint);
@@ -76,6 +78,8 @@ if (command === 'sources') {
   try { sources = await syncSources(entries, work, undefined, pins); }
   catch (error) { console.error(`Error: ${error instanceof Error ? error.message : error}`); process.exit(1); }
   for (const source of sources) console.log(`${source.commit}  ${source.normalized}  (${source.refKind})`);
+  // Also fetch the last good versions: the later steps have no credentials and may need them.
+  if (fallbacks) for (const warning of await syncFallbacks(entries, work, fallbacks, pins ?? new Map(sources.map(source => [source.normalized.toLowerCase(), source.commit])))) console.warn(`Warning: ${warning}`);
   await writeFile(resolve(work, 'course-sources.json'), JSON.stringify({ schemaVersion: 1, sources: sources.map(source => ({ source: source.normalized, commit: source.commit })) }, null, 2) + '\n');
   process.exit(0);
 }
@@ -123,7 +127,14 @@ export default defineConfig({ ssr: { noExternal: ['@atom-forge/ui', 'lucide-svel
   }
 }] });
 `);
-await generate(settings, work, base, { pins });
+const { assembly } = await generate(settings, work, base, { pins, fallbacks });
+if (given['--sources'] && (assembly.fallbacks.length || assembly.skipped.length)) {
+  // The published plan must say what was really built, so that the next run knows the last good commits.
+  const file = resolve(given['--sources']);
+  const plan = parsePlan(await readFile(file, 'utf8'))!;
+  const outcomes = [...assembly.fallbacks.map(item => ({ source: item.source, used: item.used })), ...assembly.skipped.map(item => ({ source: item.source, used: null }))];
+  await writeFile(file, JSON.stringify(withOutcomes(plan, outcomes), null, 2) + '\n');
+}
 async function run(bin: string, arguments_: string[]) {
   const packageName = bin.startsWith('@') ? bin.split('/').slice(0, 2).join('/') : bin.split('/')[0];
     let root = dirname(fileURLToPath(import.meta.resolve(packageName)));
