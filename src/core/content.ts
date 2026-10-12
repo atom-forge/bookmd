@@ -484,8 +484,8 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       if (!match[1]) continue;
       let fileTarget: string;
       let assetUrl: string | undefined;
-      // A link ending in #:download offers the file as it is (even a Markdown file) instead of linking to a page.
-      const download = node.type === 'link' && match[3]?.toLowerCase() === '#:download';
+      // A link ending in #!download offers the file as it is (even a Markdown file) instead of linking to a page.
+      const download = node.type === 'link' && match[3]?.toLowerCase() === '#!download';
       try {
         fileTarget = node.type === 'link' && wikiLinks.has(node)
           ? await markdownTarget(file, node.url) : await target(file, node.url);

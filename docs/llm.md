@@ -72,7 +72,7 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 - Callouts (Obsidian syntax): `> [!tip] Title`, with `+` (open) or `-` (closed) after the type for collapsible ones. Types: note, abstract, info, todo, tip, success, question, warning, failure, danger, bug, example, quote.
 - Links to other pages: `[[page]]`, `[[page#heading|Custom text]]` or `[text](page.md)`. Links in the body do not change the navigation tree.
 - Images: `![alt](img/diagram.png)`. Other files: `[slides](slides.pdf)`. They are copied into the site and keep their file name.
-- **Downloads:** end a link with `#:download` to offer the file as it is, even a `.md` file: `[notes](docs/llm.md#:download)` or `[[docs/llm#:download|notes]]`. A plain link to a `.md` file is a page; a link to any other file type (`[slides](slides.pdf)`) is copied and linked.
+- **Downloads:** end a link with `#!download` to offer the file as it is, even a `.md` file: `[notes](docs/llm.md#!download)` or `[[docs/llm#!download|notes]]`. A plain link to a `.md` file is a page; a link to any other file type (`[slides](slides.pdf)`) is copied and linked.
 - Embeds: a paragraph containing only `[[https://youtu.be/<11-char-id>]]`, a Desmos (`https://www.desmos.com/calculator/<id>`, `…/3d/<id>`) or GeoGebra (`https://www.geogebra.org/m/<id>`) address. Other addresses are plain links.
 - **Embeds of other files:** a paragraph containing only `![[path/to/note]]` inserts that Markdown file's body at that place; `![[note#Heading]]` inserts only that section. `![[img.png]]`, `![[img.png|300]]` (width) and `![[img.png|alt text]]` are images. Paths are relative to the current file; links inside the embedded file are relative to it.
 
@@ -108,7 +108,7 @@ type: chapter
 ---
 # Introduction
 
-See [[02-next]] and the [exercises](files/exercises.zip#:download).
+See [[02-next]] and the [exercises](files/exercises.zip#!download).
 
 > [!tip] Hint
 > Formulas work: $a^2 + b^2 = c^2$.
@@ -121,4 +121,4 @@ See [[02-next]] and the [exercises](files/exercises.zip#:download).
 3. Every path is relative to the file it is written in, and stays inside the book's folder.
 4. Each page is listed under exactly one parent, and the `children` order is the reading order.
 5. Chapters have `type: chapter`; their pages have `type: content`.
-6. A `.md` file you want downloaded is linked with `#:download` (a plain link to a `.md` file makes a page).
+6. A `.md` file you want downloaded is linked with `#!download` (a plain link to a `.md` file makes a page).

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The download marker of a link is now `#!download` (`[notes](llm.md#!download)`) instead of `#:download`, because GitHub drops links whose fragment contains a colon. Links written with `#:download` become ordinary links again.
+
 ## [0.1.8] - 2026-10-12
 
 ### Added

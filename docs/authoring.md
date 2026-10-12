@@ -7,7 +7,7 @@ BookMD turns Markdown files into a static book collection on the web. This guide
 - Including a book from another repository: [Books from other GitHub repositories](remote-books.md)
 - On your own server: [Self-hosting: build and upload](self-hosted.md)
 - Commands and settings: [The `bookmd` command line and configuration](cli.md)
-- Writing with an AI assistant: give it [llm.md](llm.md#:download), a compact reference of these rules
+- Writing with an AI assistant: give it [llm.md](llm.md#!download), a compact reference of these rules
 
 ## Contents
 
@@ -379,17 +379,17 @@ In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#hea
 
 Images and files that a page links to (`![alt](img/chart.png)`, `[slides](slides.pdf)`) are copied into the site; the link is rewritten, so the original location does not matter. A file must be inside the book's folder. The copy keeps its file name (`/content-assets/<hash>/slides.pdf`), so a download is saved under the name you gave it.
 
-A link to a `.md` file is a page of the book. To offer a Markdown file (or any file) **as it is**, end the link with `#:download`. It works in both link forms:
+A link to a `.md` file is a page of the book. To offer a Markdown file (or any file) **as it is**, end the link with `#!download`. It works in both link forms:
 
 ```md
-[LLM notes](docs/llm.md#:download)
+[LLM notes](docs/llm.md#!download)
 
-[[docs/llm#:download|LLM notes]]
+[[docs/llm#!download|LLM notes]]
 ```
 
-- The file is not rendered, searched or added to the navigation, and the browser saves it under its own name. Without a link text (`[[docs/llm#:download]]`) the file name is the text.
-- The fragment `#:download` cannot clash with a heading: heading ids never contain a colon. On GitHub and in Obsidian the same links still open the file.
-- A file with another extension (`slides.pdf`, `llms.txt`) is copied and linked even without it; `#:download` makes the browser save it instead of opening it.
+- The file is not rendered, searched or added to the navigation, and the browser saves it under its own name. Without a link text (`[[docs/llm#!download]]`) the file name is the text.
+- The fragment `#!download` cannot clash with a heading: heading ids never contain `!`. On GitHub and in Obsidian the same links still open the file.
+- A file with another extension (`slides.pdf`, `llms.txt`) is copied and linked even without it; `#!download` makes the browser save it instead of opening it.
 
 A build warns about a file of 25 MB or more, and when all the files together reach 500 MB (GitHub Pages: 100 MB per file, 1 GB per site).
 

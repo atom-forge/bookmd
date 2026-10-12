@@ -9,7 +9,7 @@ import { loadPreview } from '../src/routes/@dev/load-preview';
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 const course: Record<string, string | Buffer> = {
   'course.md': '---\nname: Parity\nlanguage: en\nauthor: A\ntags: [x]\nimage: img/p.png\nchildren:\n  - "[[ch1.md]]"\n  - "[Second](part/ch2.md)"\n---\n# Parity\n\nIntro [[ch1.md#sub-heading]].',
-  'ch1.md': '---\ntype: chapter\ntags: [y]\nchildren: ["[[lesson.md]]"]\n---\n# One\n\n![p](img/p.png)\n\n> [!warning]- Careful\n> nested\n> > [!tip] Inner\n> > text\n\n```ts\nconst a = 1;\n```\n\n```mermaid\ngraph TD; A-->B\n```\n\n$$E=mc^2$$ and $x$\n\n## Sub heading\n\n[ref](part/ch2.md) [file](doc.pdf) [notes](notes.md#:download)',
+  'ch1.md': '---\ntype: chapter\ntags: [y]\nchildren: ["[[lesson.md]]"]\n---\n# One\n\n![p](img/p.png)\n\n> [!warning]- Careful\n> nested\n> > [!tip] Inner\n> > text\n\n```ts\nconst a = 1;\n```\n\n```mermaid\ngraph TD; A-->B\n```\n\n$$E=mc^2$$ and $x$\n\n## Sub heading\n\n[ref](part/ch2.md) [file](doc.pdf) [notes](notes.md#!download)',
   'lesson.md': '---\ntype: content\n---\n# Lesson\n\nSee [[ch1.md]].',
   'part/ch2.md': '---\ntype: chapter\nsources: ["[[extra.md]]"]\n---\n# Two\n\nBack to [one](../ch1.md#sub-heading).',
   'part/extra.md': '## Extra\n\nbody', 'notes.md': '# Notes for LLMs',

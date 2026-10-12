@@ -51,9 +51,9 @@ test('non-tree content and unknown roles do not receive numbers', async () => {
   expect(graph.exportManifest).toHaveLength(1);
 });
 
-test('a link ending in #:download offers the file as it is; a Markdown file does not become a page', async () => {
+test('a link ending in #!download offers the file as it is; a Markdown file does not become a page', async () => {
   const graph = await processContent(memory({ ...files,
-    '/demo/lesson.md': '# Lesson\n\n[Notes](docs/llm.md#:download), [[docs/llm#:download|the LLM notes]], [[docs/llm#:download]], [Data](data.csv#:DOWNLOAD) and [help](help.md).',
+    '/demo/lesson.md': '# Lesson\n\n[Notes](docs/llm.md#!download), [[docs/llm#!download|the LLM notes]], [[docs/llm#!download]], [Data](data.csv#!DOWNLOAD), and [help](help.md).',
     '/demo/docs/llm.md': '# For LLMs', '/demo/data.csv': 'a,b'
   }), 'courses.md', { base: '/b' });
   const html = graph.pages.find(page => page.slug === 'demo/lesson')!.html;
@@ -65,12 +65,12 @@ test('a link ending in #:download offers the file as it is; a Markdown file does
   expect(html).toContain('/b/demo/help/');
 });
 
-test('a missing file behind #:download fails the build, or becomes a diagnostic for tolerant callers', async () => {
-  const broken = memory({ ...files, '/demo/lesson.md': '# Lesson\n\n[x](gone.md#:download)' });
+test('a missing file behind #!download fails the build, or becomes a diagnostic for tolerant callers', async () => {
+  const broken = memory({ ...files, '/demo/lesson.md': '# Lesson\n\n[x](gone.md#!download)' });
   await expect(processContent(broken, 'courses.md')).rejects.toThrow('Missing');
   const diagnostics: { target: string }[] = [];
   await processContent(broken, 'courses.md', { diagnostics });
-  expect(diagnostics.map(item => item.target)).toEqual(['gone.md#:download']);
+  expect(diagnostics.map(item => item.target)).toEqual(['gone.md#!download']);
 });
 
 test('the books list is `books`; the older `courses` still works, both together do not', async () => {
