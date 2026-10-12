@@ -19,6 +19,13 @@ Write it for readers of the package, not as a commit log. Do not wait to be
 asked, and do not add entries for internal-only changes such as refactors or
 test-only work.
 
+Commit the entry together with the code it describes, and never add it to a
+released section (`## [x.y.z]`). Releasing (`bun run pub`, `ship-it`) moves
+`[Unreleased]` into a new version and fails when it is empty, so a release made
+before the code and its entry are committed ships a version without the change
+and mislabels the changelog. Before a release, check that `[Unreleased]` lists
+exactly the committed changes since the last release.
+
 ## AtomForge UI
 
 Before implementing UI with `@atom-forge/ui`, read:
