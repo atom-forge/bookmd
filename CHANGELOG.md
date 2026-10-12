@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-10-12
+
 ### Added
 - A book that does not build (broken link, missing file, missing or invalid `id`) no longer stops the whole site. It is built on its own first; if it fails, its last good commit from the baseline plan is used (`--baseline plan.json` on `sources`, `check` and `build`), or the book is left out. A warning names the book. The plan file records what was really built (`used`).
 
