@@ -67,6 +67,7 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 - Standard Markdown with GitHub extensions (tables, task lists, strikethrough).
 - Formulas: `$x^2$` inline, `$$E=mc^2$$` display (LaTeX). Chemistry: `$\ce{2H2 + O2 -> 2H2O}$`, `$\pu{12.5 kJ mol-1}$` (mhchem).
 - Diagrams: a fenced code block with the language `mermaid`.
+- File structures: a fenced block with the language `tree` (nesting by indentation, trailing `/` for folders, `# comment`, `**highlight**`, `...` for more); pasted `tree` command output works.
 - Code blocks are syntax highlighted. A block can show a file's text: ```` ```ts file=examples/server.ts lines=10-20 ```` (empty body; `lines` optional, `5-` means to the end; the path is relative to the page and stays inside the book). The Obsidian plugin forms also work: an `embed-ts` block with `PATH:` / `LINES:` lines (`vault://` paths start at the book root) and `` ```codefile path:10-20 ``.
 - Callouts (Obsidian syntax): `> [!tip] Title`, with `+` (open) or `-` (closed) after the type for collapsible ones. Types: note, abstract, info, todo, tip, success, question, warning, failure, danger, bug, example, quote.
 - Links to other pages: `[[page]]`, `[[page#heading|Custom text]]` or `[text](page.md)`. Links in the body do not change the navigation tree.

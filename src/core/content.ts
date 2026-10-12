@@ -17,6 +17,7 @@ import type { Root as HtmlRoot, Element } from 'hast';
 import { parse as parseYaml } from 'yaml';
 import { bookListKey } from './book-list';
 import { remarkCallouts, rehypeCalloutIcons } from './callouts';
+import { rehypeFileTree } from './file-tree';
 
 import { resolve, relative, dirname, extname, basename, sep } from './paths';
 
@@ -97,7 +98,7 @@ export function interactiveEmbed(url: string): { src: string; title: string; cla
 async function renderSource(tree: MarkdownRoot, usedIds: Set<string>) {
   const headings: ContentPage['headings'] = [];
   const remap = new Map<string, string>();
-      const processor = unified().use(remarkCallouts).use(remarkRehype).use(rehypeCalloutIcons).use(rehypeSlug).use(() => (htmlTree: HtmlRoot) => {
+      const processor = unified().use(remarkCallouts).use(remarkRehype).use(rehypeCalloutIcons).use(rehypeFileTree).use(rehypeSlug).use(() => (htmlTree: HtmlRoot) => {
     visit(htmlTree, 'element', node => {
       if (!node.properties.id) return;
       const original = String(node.properties.id);

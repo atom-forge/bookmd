@@ -29,7 +29,7 @@ BookMD turns Markdown files into a static website. Three concepts are worth know
 
 ## The smallest collection
 
-```text
+```tree
 my-books/
   package.json
   portal.config.ts
@@ -286,6 +286,27 @@ TITLE: "Server"
 - `embed-<language>` is the syntax of [Embed Code File](https://github.com/almariah/embed-code-file): `PATH:` is required, `LINES:` is optional (`10-20`, `5` or `5-`), and `TITLE:` is accepted and ignored. A `vault://` path starts at the root of the book (the Obsidian vault of the book), not at the page. A remote address is not supported.
 - `codefile <path>[:lines]` is the syntax of [Code File Embed](https://www.obsidianstats.com/plugins/codefile); the language comes from the file extension.
 - All three spellings have the same rules: the file stays inside the book, the size limit is 200 KB, and a block that does not name a file is left as it is.
+
+### File structures
+
+A code block with the language `tree` is shown as a file structure with folder and file icons:
+
+````md
+```tree
+my-books/
+  package.json     # the project
+  content/
+    books.md
+    **01-intro.md**  # the file to look at
+    ...
+```
+````
+
+- The nesting follows the **indentation**. A trailing `/` marks a folder (a line with children is a folder anyway).
+- `# text` after the name is a comment. `**name**` highlights an entry, and `...` stands for more files.
+- The output of the `tree` command, with its `├──` and `│` lines, can be pasted as it is.
+- Icons follow the file extension (code, text, image, archive, data and configuration files; anything else gets a plain file icon).
+- On GitHub and in Obsidian the block is an ordinary code block, which reads just as well. The structure is hand-written: it does not read the real folder.
 
 ### Embedding video and interactive math
 
