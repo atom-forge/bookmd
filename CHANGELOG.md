@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An "← All Books" link at the top of the book navigation panel.
 
 ### Changed
+- A private source without `publish: true` no longer stops the build: it is skipped with a warning and left out of the catalog, so a book that is not ready yet can already be listed.
 - The BookMD logo and name in the header are one link back to all books, with an "All Books" tooltip.
 
 ## [0.1.4] - 2026-10-10

@@ -17,6 +17,8 @@ export type Assembly = {
   /** Virtual directories that are sealed per external course. */
   sealed: string[];
   sources: AssembledSource[];
+  /** Private sources left out because their author has not approved publication (yet). */
+  skipped: string[];
 };
 
 export function validateCourseId(id: unknown, source: string): string {
@@ -35,11 +37,10 @@ async function entryMetadata(checked: CheckedOut): Promise<Record<string, unknow
 /**
  * A private repository does not make the generated site private. Its author must therefore approve
  * publication explicitly, in the course itself: `publish: true` in the entry file's frontmatter.
+ * A private source without the approval is not ready to be published, so it is left out of the build.
  */
-export function requireApproval(checked: Pick<CheckedOut, 'normalized' | 'access'>, metadata: Record<string, unknown>): void {
-  if (checked.access === 'private' && metadata.publish !== true) {
-    throw new Error(`${checked.normalized}: this source is a private repository, and a private source does not make the published site private. The author must approve publication by adding "publish: true" to the entry file's frontmatter`);
-  }
+export function isApproved(checked: Pick<CheckedOut, 'access'>, metadata: Record<string, unknown>): boolean {
+  return checked.access !== 'private' || metadata.publish === true;
 }
 
 // Synced sources are reused while a dev server regenerates after local edits; a new process syncs again.
@@ -51,15 +52,23 @@ const synced = new Map<string, CheckedOut[]>();
  * entries are processed in place. The versioned local content is never written.
  */
 export async function assemble(config: { contentRoot: string; entrypoint: string }, work: string, entries: string[], options: { transport?: GitTransport; refresh?: boolean; pins?: Pins } = {}): Promise<Assembly> {
-  if (!entries.length) return { contentRoot: config.contentRoot, entrypoint: config.entrypoint, sealed: [], sources: [] };
+  if (!entries.length) return { contentRoot: config.contentRoot, entrypoint: config.entrypoint, sealed: [], sources: [], skipped: [] };
   let checkouts = options.refresh === false ? synced.get(work) : undefined;
   if (!checkouts) { checkouts = await syncSources(entries, work, options.transport, options.pins); synced.set(work, checkouts); }
   const ids = new Map<string, string>();
   const sources: AssembledSource[] = [];
+  const skipped: string[] = [];
+  const included: (CheckedOut | null)[] = [];
   const local = new Set((await readdir(config.contentRoot)).map(name => name.toLowerCase().replace(/\.md$/, '')));
   for (const checked of checkouts) {
     const metadata = await entryMetadata(checked);
-    requireApproval(checked, metadata);
+    if (!isApproved(checked, metadata)) {
+      skipped.push(checked.normalized);
+      included.push(null);
+      console.warn(`Skipped ${checked.normalized}: private source without "publish: true" in the entry file's frontmatter`);
+      continue;
+    }
+    included.push(checked);
     const id = validateCourseId(metadata.id, checked.normalized);
     if (ids.has(id)) throw new Error(`${checked.normalized}: course id "${id}" is already used by ${ids.get(id)}`);
     if (local.has(id)) throw new Error(`${checked.normalized}: course id "${id}" collides with local content "${id}"`);
@@ -71,19 +80,20 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   await mkdir(output, { recursive: true });
   const visible = (path: string) => !basename(path).startsWith('.');
   await cp(config.contentRoot, output, { recursive: true, dereference: true, filter: visible });
-  for (const [index, checked] of checkouts.entries()) await cp(checked.contentRoot, resolve(output, sources[index].id), { recursive: true, filter: visible });
+  const ready = included.filter((checked): checked is CheckedOut => checked !== null);
+  for (const [index, checked] of ready.entries()) await cp(checked.contentRoot, resolve(output, sources[index].id), { recursive: true, filter: visible });
 
   const registry = resolve(output, config.entrypoint);
   const text = await readFile(registry, 'utf8');
   const match = text.match(frontmatter)!;
   const metadata = parseYaml(match[1]) as { courses: string[] };
-  let next = 0;
-  metadata.courses = metadata.courses.map(entry => {
-    if (!isSourceRef(entry)) return entry;
-    const source = sources[next], checked = checkouts![next++];
-    return `${source.id}/${checked.entrypoint}`;
+  let next = 0, nextReady = 0;
+  metadata.courses = metadata.courses.flatMap(entry => {
+    if (!isSourceRef(entry)) return [entry];
+    const checked = included[next++];
+    return checked ? [`${sources[nextReady++].id}/${checked.entrypoint}`] : [];
   });
   await writeFile(registry, `---\n${stringifyYaml(metadata)}---\n${text.slice(match[0].length)}`);
   await writeFile(resolve(work, 'course-sources.json'), JSON.stringify({ schemaVersion: 1, sources }, null, 2) + '\n');
-  return { contentRoot: output, entrypoint: config.entrypoint, sealed: sources.map(source => '/' + source.id), sources };
+  return { contentRoot: output, entrypoint: config.entrypoint, sealed: sources.map(source => '/' + source.id), sources, skipped };
 }

@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { assemble, requireApproval, validateCourseId } from './assemble';
+import { assemble, isApproved, validateCourseId } from './assemble';
 import { buildGraph } from './content';
 import { gitEntries } from './registry';
 import type { GitTransport } from './git-source';
@@ -80,21 +80,22 @@ describe('assembly of local and Git courses', () => {
 
 describe('publication approval for private sources', () => {
   test('a private source needs publish: true; public sources do not', () => {
-    const source = { normalized: 'main@github.com/o/r/course.md' };
-    expect(() => requireApproval({ ...source, access: 'public' }, {})).not.toThrow();
-    expect(() => requireApproval({ ...source, access: 'private' }, {})).toThrow('publish: true');
-    expect(() => requireApproval({ ...source, access: 'private' }, { publish: 'yes' })).toThrow('publish: true');
-    expect(() => requireApproval({ ...source, access: 'private' }, { publish: false })).toThrow('publish: true');
-    expect(() => requireApproval({ ...source, access: 'private' }, { publish: true })).not.toThrow();
+    expect(isApproved({ access: 'public' }, {})).toBe(true);
+    expect(isApproved({ access: 'private' }, {})).toBe(false);
+    expect(isApproved({ access: 'private' }, { publish: 'yes' })).toBe(false);
+    expect(isApproved({ access: 'private' }, { publish: false })).toBe(false);
+    expect(isApproved({ access: 'private' }, { publish: true })).toBe(true);
   });
-  test('the assembly blocks an unapproved private source and accepts an approved one', async () => {
+  test('the assembly skips an unapproved private source and keeps an approved one', async () => {
     await remote('priv-no', { 'course.md': course('priv-no') });
     await remote('priv-yes', { 'course.md': course('priv-yes').replace('name: Ext', 'publish: true\nname: Ext'), 'lesson.md': '# L' });
     const gated: GitTransport = { url: ({ repo }) => `file://${join(work, 'nowhere', repo)}`, authenticate: async ({ repo }) => ({ url: `file://${join(work, 'remote', repo)}` }) };
-    const no = await local('priv-no-site', registry('main@github.com/o/priv-no/course.md'), { 'mine/course.md': '# m' });
-    await expect(assemble({ contentRoot: no, entrypoint: 'courses.md' }, join(work, 'wpn'), await gitEntries(no, 'courses.md'), { transport: gated })).rejects.toThrow('publish: true');
-    const yes = await local('priv-yes-site', registry('main@github.com/o/priv-yes/course.md'), { 'mine/course.md': '# m' });
-    const assembly = await assemble({ contentRoot: yes, entrypoint: 'courses.md' }, join(work, 'wpy'), await gitEntries(yes, 'courses.md'), { transport: gated });
+    const dir = await local('priv-site', registry('main@github.com/o/priv-no/course.md', 'main@github.com/o/priv-yes/course.md'), { 'mine/course.md': '# m' });
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'wp'), await gitEntries(dir, 'courses.md'), { transport: gated });
     expect(assembly.sources.map(s => s.id)).toEqual(['priv-yes']);
+    expect(assembly.skipped).toEqual(['main@github.com/o/priv-no/course.md']);
+    const text = await readFile(join(assembly.contentRoot, 'courses.md'), 'utf8');
+    expect(text).toContain('priv-yes/course.md');
+    expect(text).not.toContain('priv-no');
   });
 });
