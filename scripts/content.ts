@@ -35,8 +35,7 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       await mkdir(resolve(assetDir, folder), { recursive: true });
       await copyFile(file, resolve(assetDir, folder, name));
       return `${base}/content-assets/${folder}/${encodeURIComponent(name)}`;
-    },
-    async assetSize(path) { return (await stat((await physical(path)).file)).size; }
+    }
   }, entrypoint, { base, title: titleFallback, rootName: basename(root), sealed });
 }
 

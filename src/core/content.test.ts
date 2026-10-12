@@ -51,29 +51,26 @@ test('non-tree content and unknown roles do not receive numbers', async () => {
   expect(graph.exportManifest).toHaveLength(1);
 });
 
-test('`attachments` lists downloads, even Markdown files, which do not become pages', async () => {
-  const source = { ...memory({ ...files,
-    '/demo/lesson.md': '---\ntype: content\nattachments: ["[[docs/llm.md]]", "data.csv"]\n---\n# Lesson\n\nSee [help](help.md).',
+test('a link ending in #:download offers the file as it is; a Markdown file does not become a page', async () => {
+  const graph = await processContent(memory({ ...files,
+    '/demo/lesson.md': '# Lesson\n\n[Notes](docs/llm.md#:download), [[docs/llm#:download|the LLM notes]], [[docs/llm#:download]], [Data](data.csv#:DOWNLOAD) and [help](help.md).',
     '/demo/docs/llm.md': '# For LLMs', '/demo/data.csv': 'a,b'
-  }), async assetSize() { return 1536; } } satisfies ContentSource;
-  const graph = await processContent(source, 'courses.md', { base: '/b' });
-  const lesson = graph.pages.find(page => page.slug === 'demo/lesson')!;
+  }), 'courses.md', { base: '/b' });
+  const html = graph.pages.find(page => page.slug === 'demo/lesson')!.html;
   expect(graph.pages.map(page => page.slug)).not.toContain('demo/docs/llm');
-  expect(lesson.html).toContain('/b/demo/help/');
-  expect(lesson.attachments).toEqual([
-    { name: 'llm.md', url: '/b/assets/demo/docs/llm.md', size: 1536 },
-    { name: 'data.csv', url: '/b/assets/demo/data.csv', size: 1536 }
-  ]);
-  expect(graph.pages.find(page => page.slug === 'demo/help')!.attachments).toEqual([]);
+  expect(html).toContain('<a href="/b/assets/demo/docs/llm.md" download="llm.md">Notes</a>');
+  expect(html).toContain('>the LLM notes</a>');
+  expect(html).toContain('>llm.md</a>');
+  expect(html).toContain('href="/b/assets/demo/data.csv" download="data.csv"');
+  expect(html).toContain('/b/demo/help/');
 });
 
-test('a missing attachment fails the build, or becomes a diagnostic for tolerant callers', async () => {
-  const broken = memory({ ...files, '/demo/help.md': '---\nattachments: ["[[gone.pdf]]"]\n---\n# Help' });
+test('a missing file behind #:download fails the build, or becomes a diagnostic for tolerant callers', async () => {
+  const broken = memory({ ...files, '/demo/lesson.md': '# Lesson\n\n[x](gone.md#:download)' });
   await expect(processContent(broken, 'courses.md')).rejects.toThrow('Missing');
   const diagnostics: { target: string }[] = [];
-  const graph = await processContent(broken, 'courses.md', { diagnostics });
-  expect(diagnostics.map(item => item.target)).toEqual(['gone.pdf']);
-  expect(graph.pages.find(page => page.slug === 'demo/help')!.attachments).toEqual([]);
+  await processContent(broken, 'courses.md', { diagnostics });
+  expect(diagnostics.map(item => item.target)).toEqual(['gone.md#:download']);
 });
 
 test('the books list is `books`; the older `courses` still works, both together do not', async () => {

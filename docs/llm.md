@@ -47,14 +47,13 @@ Every list below holds **quoted** wikilinks or Markdown links, because unquoted 
 | `type` | page | `chapter` (numbered, children inherit the prefix), `content` (numbered inside the nearest chapter); anything else or missing is unnumbered. |
 | `children` | page | Ordered direct subpages: `"[[page.md]]"` or `"[Custom title](page.md)"`. |
 | `sources` | page | Files whose content is appended to this page, in order: `"[[part.md]]"`. |
-| `attachments` | page | Files offered for download below the page: `"[[docs/llm.md]]"`. |
 | `requires`, `teaches` | page | Lists of concept strings, shown in the sidebar. |
 
 Title order: the title in the parent's `children` link, then `title`, then the first heading of the shallowest level, then the file name.
 
 ## Rules that are easy to get wrong
 
-- **All paths are relative to the file that contains them**, in `children`, `sources`, `attachments` and in the body. From `part/b.md`, a sibling is `[[c.md]]`, the parent folder is `[[../a.md]]`. A book-root-relative path such as `[[resources/x.md]]` written inside `resources/y.md` points to `resources/resources/x.md` and fails.
+- **All paths are relative to the file that contains them**, in `children`, `sources` and in the body. From `part/b.md`, a sibling is `[[c.md]]`, the parent folder is `[[../a.md]]`. A book-root-relative path such as `[[resources/x.md]]` written inside `resources/y.md` points to `resources/resources/x.md` and fails.
 - The `.md` extension may be omitted in wikilinks. A Markdown link needs it.
 - A page can have **one** parent. A page listed in two `children` lists, a cycle, or the old `series`/`tree` fields are errors. `chapter` in frontmatter is ignored: numbering comes from `type` and the `children` order.
 - Instead of `children`, put the subpages in a folder named like the page without `.md` (`algebra.md` + `algebra/01-sets.md`, `algebra/02-functions.md`); they are ordered by file name with numbers compared as numbers. A `children` field, even an empty one, turns this off.
@@ -72,7 +71,7 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 - Callouts (Obsidian syntax): `> [!tip] Title`, with `+` (open) or `-` (closed) after the type for collapsible ones. Types: note, abstract, info, todo, tip, success, question, warning, failure, danger, bug, example, quote.
 - Links to other pages: `[[page]]`, `[[page#heading|Custom text]]` or `[text](page.md)`. Links in the body do not change the navigation tree.
 - Images: `![alt](img/diagram.png)`. Other files: `[slides](slides.pdf)`. They are copied into the site and keep their file name.
-- **Downloads:** list files in the page's `attachments` frontmatter to offer them as they are, even `.md` files; they show up as a "Downloads" block below the page. A plain link to a `.md` file is always a page; a link to any other file type (`[slides](slides.pdf)`) is a download.
+- **Downloads:** end a link with `#:download` to offer the file as it is, even a `.md` file: `[notes](docs/llm.md#:download)` or `[[docs/llm#:download|notes]]`. A plain link to a `.md` file is a page; a link to any other file type (`[slides](slides.pdf)`) is copied and linked.
 - Embeds: a paragraph containing only `[[https://youtu.be/<11-char-id>]]`, a Desmos (`https://www.desmos.com/calculator/<id>`, `…/3d/<id>`) or GeoGebra (`https://www.geogebra.org/m/<id>`) address. Other addresses are plain links.
 - **Embeds of other files:** a paragraph containing only `![[path/to/note]]` inserts that Markdown file's body at that place; `![[note#Heading]]` inserts only that section. `![[img.png]]`, `![[img.png|300]]` (width) and `![[img.png|alt text]]` are images. Paths are relative to the current file; links inside the embedded file are relative to it.
 
@@ -105,12 +104,10 @@ A chapter with a download:
 ```md
 ---
 type: chapter
-attachments:
-  - "[[files/exercises.zip]]"
 ---
 # Introduction
 
-See [[02-next]].
+See [[02-next]] and the [exercises](files/exercises.zip#:download).
 
 > [!tip] Hint
 > Formulas work: $a^2 + b^2 = c^2$.
@@ -119,8 +116,8 @@ See [[02-next]].
 ## Checklist before you finish
 
 1. The book front page has `language`; an included book also has `id` (and `publish: true` if its repository is private).
-2. Every list item in `books`, `children`, `sources` and `attachments` is quoted.
+2. Every list item in `books`, `children` and `sources` is quoted.
 3. Every path is relative to the file it is written in, and stays inside the book's folder.
 4. Each page is listed under exactly one parent, and the `children` order is the reading order.
 5. Chapters have `type: chapter`; their pages have `type: content`.
-6. Files you want downloaded are in `attachments` (a plain link to a `.md` file makes a page, not a download).
+6. A `.md` file you want downloaded is linked with `#:download` (a plain link to a `.md` file makes a page).

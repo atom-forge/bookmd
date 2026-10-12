@@ -65,12 +65,6 @@ export function createPreviewSource(index: DirectoryIndex, entry: string) {
       const prefix = inner + '/';
       return [...index.files.keys()].filter(key => key.startsWith(prefix) && !key.includes('/', prefix.length)).map(key => key.slice(prefix.length));
     },
-    async assetSize(path) {
-      const inner = folderPath(path);
-      const handle = inner === null ? undefined : index.files.get(inner);
-      if (!handle) throw enoent(path);
-      return (await handle.file()).size;
-    },
     async assetUrl(path, _base, usage = 'link') {
       const inner = folderPath(path);
       const handle = inner === null ? undefined : index.files.get(inner);

@@ -26,8 +26,6 @@ export interface ContentSource {
   list?(directory: string): Promise<string[]>;
   /** `embed` assets are used by images; `link` assets are opened as documents by the reader; `attachment` files are downloaded as they are. */
   assetUrl(path: string, base: string, usage?: 'embed' | 'link' | 'attachment'): Promise<string>;
-  /** Size of a file in bytes, shown next to attachments. */
-  assetSize?(path: string): Promise<number>;
 }
 
 export type ContentDiagnostic = { file: string; target: string; message: string };
@@ -39,8 +37,6 @@ export type ContentPage = NavItem & {
   author: string | null; tags: string[];
   requires: string[]; teaches: string[];
   headings: { id: string; title: string; depth: number }[];
-  /** Files offered for download below the page; `size` is in bytes, or null when the source cannot tell. */
-  attachments: { name: string; url: string; size: number | null }[];
 };
 export type Course = {
   slug: string; name: string; author: string | null;
@@ -424,10 +420,12 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       if (!match[1]) continue;
       let fileTarget: string;
       let assetUrl: string | undefined;
+      // A link ending in #:download offers the file as it is (even a Markdown file) instead of linking to a page.
+      const download = node.type === 'link' && match[3]?.toLowerCase() === '#:download';
       try {
         fileTarget = node.type === 'link' && wikiLinks.has(node)
           ? await markdownTarget(file, node.url) : await target(file, node.url);
-        if (!(node.type === 'link' && extname(fileTarget).toLowerCase() === '.md')) assetUrl = await asset(fileTarget, node.type === 'image' ? 'embed' : 'link');
+        if (download || !(node.type === 'link' && extname(fileTarget).toLowerCase() === '.md')) assetUrl = await asset(fileTarget, download ? 'attachment' : node.type === 'image' ? 'embed' : 'link');
       } catch (error) {
         // Tolerant callers collect broken references; builds keep failing.
         if (!options.diagnostics) throw error;
@@ -435,7 +433,13 @@ export async function processContent(source: ContentSource, entrypoint: string, 
         if (node.type === 'link') node.url = '#';
         continue;
       }
-      if (node.type === 'link' && extname(fileTarget).toLowerCase() === '.md') {
+      if (download) {
+        const name = basename(fileTarget);
+        if (!toString(node).trim()) node.children = [{ type: 'text', value: name }];
+        node.data = { ...node.data, hProperties: { ...(node.data as { hProperties?: object } | undefined)?.hProperties, download: name } };
+        node.url = `${assetUrl}${match[2] || ''}`;
+      }
+      else if (node.type === 'link' && extname(fileTarget).toLowerCase() === '.md') {
         const targetSlug = register(fileTarget);
         if (!toString(node).trim()) {
           let label = titles.get(targetSlug) || '';
@@ -510,7 +514,6 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       let tags: string[] = [];
       let requires: string[] = [];
       let teaches: string[] = [];
-      const attachments: ContentPage['attachments'] = [];
       async function append(file: string, ancestors: string[]) {
         if (ancestors.includes(file)) throw new Error(`Circular sources: ${[...ancestors, file].join(' -> ')}`);
         const { tree, sources, children, declaredChildren, metadata } = await document(file);
@@ -531,16 +534,6 @@ export async function processContent(source: ContentSource, entrypoint: string, 
             const unique = [...new Set<string>(concepts.map(concept => concept.trim()))];
             if (key === 'requires') requires = unique; else teaches = unique;
           }
-          for (const path of referencePaths(metadata.attachments, 'attachments', file)) {
-            try {
-              const found = await target(file, path);
-              attachments.push({ name: basename(found), url: await asset(found, 'attachment'), size: (await source.assetSize?.(found)) ?? null });
-            } catch (error) {
-              // Tolerant callers collect broken references; builds keep failing.
-              if (!options.diagnostics) throw error;
-              options.diagnostics.push({ file, target: path, message: error instanceof Error ? error.message : String(error) });
-            }
-          }
         }
         await registerChildren(file, declaredChildren || file === start ? children : await folderChildren(file));
         title ||= headingTitle(tree);
@@ -555,7 +548,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       title ||= slug.split('/').at(-1) || titleFallback;
       const parent = parents.get(slug) ?? null;
       const inTree = parents.has(slug);
-      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, author, tags, requires, teaches, attachments, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
+      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, author, tags, requires, teaches, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
       if (inTree) graph.navigation.push({ slug, title, parent });
     }
 

@@ -1,7 +1,3 @@
----
-attachments:
-  - "[[llm.md]]"
----
 # Writing books
 
 BookMD turns Markdown files into a static book collection on the web. This guide is for authors: how a collection and a book are structured, and which metadata and content the system supports.
@@ -11,7 +7,7 @@ BookMD turns Markdown files into a static book collection on the web. This guide
 - Including a book from another repository: [Books from other GitHub repositories](remote-books.md)
 - On your own server: [Self-hosting: build and upload](self-hosted.md)
 - Commands and settings: [The `bookmd` command line and configuration](cli.md)
-- Writing with an AI assistant: give it `llm.md`, a compact reference of these rules (download it at the end of this page)
+- Writing with an AI assistant: give it [llm.md](llm.md#:download), a compact reference of these rules
 
 ## Contents
 
@@ -314,21 +310,21 @@ In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#hea
 - **A picture**, anywhere in a paragraph: `![[img.png]]` is an image; after the bar come a width in pixels (`|300`, or `|300x200`) or an alt text (`|The architecture`).
 - An embedded file does not become a page of its own, unless it is also listed in `children` or linked.
 
-### Images, files and attachments
+### Images and downloads
 
 Images and files that a page links to (`![alt](img/chart.png)`, `[slides](slides.pdf)`) are copied into the site; the link is rewritten, so the original location does not matter. A file must be inside the book's folder. The copy keeps its file name (`/content-assets/<hash>/slides.pdf`), so a download is saved under the name you gave it.
 
-A link to a `.md` file is always a page of the book. To offer a Markdown file (or any file) **as it is**, list it in the `attachments` field of the page (a list of quoted wikilinks, paths relative to the page); a file with another extension (`slides.pdf`, `llms.txt`) can also simply be linked:
+A link to a `.md` file is a page of the book. To offer a Markdown file (or any file) **as it is**, end the link with `#:download`. It works in both link forms:
 
-```yaml
----
-attachments:
-  - "[[docs/llm.md]]"
-  - "[[slides.pdf]]"
----
+```md
+[LLM notes](docs/llm.md#:download)
+
+[[docs/llm#:download|LLM notes]]
 ```
 
-The page shows a "Downloads" block with the file names and sizes. Attachments of files that are included with `sources` are not listed; put the field on the page itself.
+- The file is not rendered, searched or added to the navigation, and the browser saves it under its own name. Without a link text (`[[docs/llm#:download]]`) the file name is the text.
+- The fragment `#:download` cannot clash with a heading: heading ids never contain a colon. On GitHub and in Obsidian the same links still open the file.
+- A file with another extension (`slides.pdf`, `llms.txt`) is copied and linked even without it; `#:download` makes the browser save it instead of opening it.
 
 A build warns about a file of 25 MB or more, and when all the files together reach 500 MB (GitHub Pages: 100 MB per file, 1 GB per site).
 
