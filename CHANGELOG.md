@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-10-12
+
 ### Added
 - Chemical formulas, equations and units in formulas: `$\ce{2H2 + O2 -> 2H2O}$`, `$\pu{12.5 kJ mol-1}$` (mhchem).
 - A fenced code block with `file=path` (and optionally `lines=10-20`) shows the text of a source file instead of its own, highlighted by the block's language or the file extension. The syntax of the Obsidian plugins Embed Code File (`embed-ts` with `PATH:`/`LINES:`) and Code File Embed (`codefile path:10-25`) works too.
