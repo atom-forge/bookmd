@@ -243,6 +243,27 @@ graph TD; A-->B
 ```
 ````
 
+### Code from a file
+
+A fenced code block shows the text of a source file when its first line names it with `file=`. The code lives in a real file, where it can be run and tested, and the book never drifts away from it:
+
+````md
+```ts file=examples/server.ts
+```
+
+```ts file=examples/server.ts lines=10-20
+```
+
+```file=examples/server.ts lines=5-
+```
+````
+
+- The path is relative to the Markdown file, and the file must be inside the book's folder. Quote a path with spaces: `file="my example.ts"`.
+- `lines=` is optional: `10-20` (inclusive, counting from 1), `5` (one line) or `5-` (to the end). A range outside the file is a build error.
+- The language after the backticks sets the highlighting. Without one, the file extension is used (`.ts` → `ts`).
+- Anything written inside the block is replaced by the file. On GitHub the block appears empty.
+- The text is shown as code and is also searched. A file over 200 KB, or a missing file, is a build error (a diagnostic in the local preview).
+
 ### Embedding video and interactive math
 
 External content is embedded in the page (as an iframe) when you put its address in **double square brackets**. Write it in a paragraph of its own:

@@ -9,7 +9,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
-import type { Root as MarkdownRoot, Link, Image, Heading, Paragraph, Parent } from 'mdast';
+import type { Root as MarkdownRoot, Link, Image, Heading, Paragraph, Parent, Code } from 'mdast';
 import type { Root as HtmlRoot, Element } from 'hast';
 
 import { parse as parseYaml } from 'yaml';
@@ -172,6 +172,44 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       return path;
     });
   }
+  const maxImportedCode = 200_000;
+  /** A fenced block with `file=path` (and optionally `lines=10-20`) shows that file's text instead of its own. */
+  async function importCode(tree: MarkdownRoot, file: string) {
+    const blocks: Code[] = [];
+    // Without a language, the first word of the info string is the `file=` option itself.
+    visit(tree, 'code', node => {
+      if (node.lang?.startsWith('file=')) { node.meta = [node.lang, node.meta].filter(Boolean).join(' '); node.lang = null; }
+      if (node.meta && /(?:^|\s)file=/.test(node.meta)) blocks.push(node);
+    });
+    for (const block of blocks) {
+      const options_: Record<string, string> = {};
+      const rest = block.meta!.replace(/(\w+)=("[^"]*"|\S+)/g, (_all, key: string, value: string) => {
+        if (key !== 'file' && key !== 'lines') return _all;
+        options_[key] = value.replace(/^"|"$/g, '');
+        return '';
+      }).trim();
+      try {
+        const found = await target(file, options_.file);
+        let text = (await source.readText(found)).replace(/\r\n?/g, '\n');
+        if (text.length > maxImportedCode) throw new Error(`File is too large to show as code (more than ${maxImportedCode / 1000} KB): ${options_.file}`);
+        if (options_.lines !== undefined) {
+          const range = options_.lines.match(/^(\d+)(?:(-)(\d*))?$/);
+          const all = text.replace(/\n$/, '').split('\n');
+          const from = range ? Number(range[1]) : 0;
+          const to = range ? (range[2] ? (range[3] ? Number(range[3]) : all.length) : from) : 0;
+          if (!range || from < 1 || to < from || from > all.length) throw new Error(`Invalid lines="${options_.lines}" for ${options_.file} (${all.length} lines)`);
+          text = all.slice(from - 1, to).join('\n');
+        }
+        block.value = text.replace(/\n$/, '');
+        block.lang ||= extname(found).slice(1).toLowerCase() || null;
+        block.meta = rest || null;
+      } catch (error) {
+        // Tolerant callers collect broken references; builds keep failing.
+        if (!options.diagnostics) throw error;
+        options.diagnostics.push({ file, target: options_.file ?? '', message: error instanceof Error ? error.message : String(error) });
+      }
+    }
+  }
   async function document(file: string) {
     let body = await source.readText(file);
     let metadata: Record<string, unknown> = {};
@@ -198,6 +236,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       return { path: link.url, title: toString(link).trim() };
     });
     const tree = parser.parse(body) as MarkdownRoot;
+    await importCode(tree, file);
     // GFM autolinks split [[https://...]] into text + link + text.
     // Rejoin those nodes before processing regular wiki links.
     visit(tree, 'paragraph', paragraph => {

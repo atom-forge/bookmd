@@ -121,3 +121,32 @@ test('embeds report circles, missing documents and headings', async () => {
   expect(diagnostics.map(item => item.target)).toEqual(['nowhere']);
   expect(graph.pages.find(page => page.slug === 'demo/lesson')!.html).toContain('![[nowhere]]');
 });
+
+test('a fenced block with file= shows that file, optionally only some lines', async () => {
+  const code = 'const a = 1;\nconst b = 2;\nconst c = <b>3</b>;\n';
+  const build = (fence: string, extra: Record<string, string> = {}, options = {}) => processContent(memory({ ...files,
+    '/demo/lesson.md': `# Lesson\n\n${fence}`, '/demo/src/app.ts': code, ...extra }), 'courses.md', options);
+  const html = async (fence: string) => (await build(fence)).pages.find(page => page.slug === 'demo/lesson')!.html;
+  const whole = await html('```ts file=src/app.ts\nignored\n```');
+  expect(whole).toContain('const');
+  expect(whole).toContain('&#x3C;');
+  expect(whole).not.toContain('<b>3');
+  expect(whole).not.toContain('ignored');
+  expect(whole).toContain('language-ts');
+  const some = await html('```ts file="src/app.ts" lines=2-3\n```');
+  expect(some).not.toContain('a = 1');
+  expect(some).toContain('b');
+  expect(await html('```file=src/app.ts lines=1\n```')).toContain('language-ts');
+  expect(await html('```ts file=src/app.ts lines=3-\n```')).not.toContain('b = 2');
+  expect((await build('```ts file=src/app.ts\n```')).pages.find(page => page.slug === 'demo/lesson')!.text).toContain('const a = 1;');
+  for (const bad of ['lines=0', 'lines=5', 'lines=3-2', 'lines=x']) await expect(html(`\`\`\`ts file=src/app.ts ${bad}\n\`\`\``)).rejects.toThrow('Invalid lines');
+  await expect(html('```ts file=src/none.ts\n```')).rejects.toThrow('Missing');
+  await expect(build('```ts file=src/big.ts\n```', { '/demo/src/big.ts': 'x'.repeat(200_001) })).rejects.toThrow('too large');
+  const diagnostics: { target: string }[] = [];
+  await build('```ts file=src/none.ts\n```', {}, { diagnostics });
+  expect(diagnostics.map(item => item.target)).toEqual(['src/none.ts']);
+});
+
+test('an imported file cannot leave the sealed book', async () => {
+  await expect(processContent(memory({ ...files, '/other/secret.ts': 'x', '/demo/lesson.md': '# L\n\n```ts file=../other/secret.ts\n```' }), 'courses.md', { sealed: ['/demo'] })).rejects.toThrow('leaves the course root');
+});

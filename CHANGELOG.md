@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- A fenced code block with `file=path` (and optionally `lines=10-20`) shows the text of a source file instead of its own, highlighted by the block's language or the file extension.
 - `![[note]]` embeds another Markdown file where it is written, `![[note#Heading]]` one section of it, and `![[picture.png|300]]` inserts an image (width or alt text after the bar). A more flexible alternative to `sources`.
 - The list of books in the collection's entry file is now called `books`. The older `courses` still works; both in one file is an error.
 - A link ending in `#:download` (`[notes](llm.md#:download)` or `[[llm#:download|notes]]`) offers the file as it is, even a Markdown file, instead of linking to a page; the browser saves it under its own name. Works in the build and in the local preview.
