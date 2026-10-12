@@ -235,7 +235,13 @@ Supported: mathematical formulas, Mermaid diagrams, highlighted code blocks, emb
 
 ### Formulas and diagrams
 
-Formulas use LaTeX syntax: `$x^2$` gives an inline formula, `$$E = mc^2$$` a display formula. Diagrams are written in a code block with the language `mermaid`:
+Formulas use LaTeX syntax: `$x^2$` gives an inline formula, `$$E = mc^2$$` a display formula. Chemical formulas, equations and units use `\ce{…}` and `\pu{…}` inside a formula (the [mhchem](https://mhchem.github.io/MathJax-mhchem/) notation):
+
+```md
+$\ce{H2O}$   $\ce{Fe^{3+}}$   $\ce{2H2 + O2 -> 2H2O}$   $$\ce{CO2 + H2O <=> H2CO3}$$   $\pu{12.5 kJ mol-1}$
+```
+
+Diagrams are written in a code block with the language `mermaid`:
 
 ````md
 ```mermaid

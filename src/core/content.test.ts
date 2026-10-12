@@ -169,3 +169,11 @@ test('the Obsidian plugin spellings import files too', async () => {
   // A block that merely looks similar stays as it is.
   expect((await page('```embed-ts\nno path here\n```')).html).toContain('no path here');
 });
+
+test('chemical formulas with \\ce render through KaTeX', async () => {
+  const graph = await processContent(memory({ ...files, '/demo/lesson.md': '# L\n\n$\\ce{2H2 + O2 -> 2H2O}$ and $\\ce{Fe^{3+}}$ and $$\\ce{CO2 + H2O <=> H2CO3}$$ and $\\pu{12.5 kJ mol-1}$' }), 'courses.md');
+  const html = graph.pages.find(page => page.slug === 'demo/lesson')!.html;
+  expect(html).not.toContain('katex-error');
+  expect(html).toContain('x-arrow');
+  expect(html.match(/class="katex"/g)).toHaveLength(4);
+});
