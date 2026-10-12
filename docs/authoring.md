@@ -7,6 +7,7 @@ BookMD turns Markdown files into a static book collection on the web. This guide
 - Including a book from another repository: [Books from other GitHub repositories](remote-books.md)
 - On your own server: [Self-hosting: build and upload](self-hosted.md)
 - Commands and settings: [The `bookmd` command line and configuration](cli.md)
+- Writing with an AI assistant: give it [[!llm.md|llm.md]], a compact reference of these rules
 
 ## Contents
 
