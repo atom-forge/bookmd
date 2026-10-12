@@ -264,6 +264,23 @@ A fenced code block shows the text of a source file when its first line names it
 - Anything written inside the block is replaced by the file. On GitHub the block appears empty.
 - The text is shown as code and is also searched. A file over 200 KB, or a missing file, is a build error (a diagnostic in the local preview).
 
+If you write in Obsidian with a code-embedding plugin, the syntax of two popular ones works as well, so the same source shows the code in both places:
+
+````md
+```embed-ts
+PATH: "examples/server.ts"
+LINES: "10-20"
+TITLE: "Server"
+```
+
+```codefile examples/server.ts:10-20
+```
+````
+
+- `embed-<language>` is the syntax of [Embed Code File](https://github.com/almariah/embed-code-file): `PATH:` is required, `LINES:` is optional (`10-20`, `5` or `5-`), and `TITLE:` is accepted and ignored. A `vault://` path starts at the root of the book (the Obsidian vault of the book), not at the page. A remote address is not supported.
+- `codefile <path>[:lines]` is the syntax of [Code File Embed](https://www.obsidianstats.com/plugins/codefile); the language comes from the file extension.
+- All three spellings have the same rules: the file stays inside the book, the size limit is 200 KB, and a block that does not name a file is left as it is.
+
 ### Embedding video and interactive math
 
 External content is embedded in the page (as an iframe) when you put its address in **double square brackets**. Write it in a paragraph of its own:

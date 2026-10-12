@@ -173,40 +173,62 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     });
   }
   const maxImportedCode = 200_000;
-  /** A fenced block with `file=path` (and optionally `lines=10-20`) shows that file's text instead of its own. */
+  /**
+   * A fenced block shows the text of a source file instead of its own. Three spellings reach the same import:
+   * `file=path lines=10-20` (BookMD), and the syntax of the Obsidian plugins "Embed Code File"
+   * (an `embed-ts` block with PATH:, LINES: and TITLE: lines) and "Code File Embed" (`codefile path:10-25`).
+   */
   async function importCode(tree: MarkdownRoot, file: string) {
-    const blocks: Code[] = [];
-    // Without a language, the first word of the info string is the `file=` option itself.
+    type Import = { block: Code; path: string; lines?: string; lang: string | null; meta: string | null; vault?: boolean };
+    const imports: Import[] = [];
     visit(tree, 'code', node => {
+      // Without a language, the first word of the info string is the `file=` option itself.
       if (node.lang?.startsWith('file=')) { node.meta = [node.lang, node.meta].filter(Boolean).join(' '); node.lang = null; }
-      if (node.meta && /(?:^|\s)file=/.test(node.meta)) blocks.push(node);
+      if (node.meta && /(?:^|\s)file=/.test(node.meta)) {
+        const given: Record<string, string> = {};
+        const rest = node.meta.replace(/(\w+)=("[^"]*"|\S+)/g, (all, key: string, value: string) => {
+          if (key !== 'file' && key !== 'lines') return all;
+          given[key] = value.replace(/^"|"$/g, '');
+          return '';
+        }).trim();
+        imports.push({ block: node, path: given.file, lines: given.lines, lang: node.lang ?? null, meta: rest || null });
+      } else if (node.lang?.toLowerCase().startsWith('embed-') && node.lang.length > 6) {
+        const given: Record<string, string> = {};
+        for (const line of node.value.split('\n')) {
+          const field = line.match(/^\s*(PATH|LINES|TITLE)\s*:\s*(.*?)\s*$/i);
+          if (field) given[field[1].toLowerCase()] = field[2].replace(/^["']|["']$/g, '');
+        }
+        if (given.path) {
+          const vault = /^vault:\/\//i.test(given.path);
+          imports.push({ block: node, path: vault ? given.path.slice(8) : given.path, lines: given.lines, lang: node.lang.slice(6), meta: null, vault });
+        }
+      } else if (node.lang?.toLowerCase() === 'codefile' && node.meta) {
+        const spec = node.meta.trim().match(/^(.*?)(?::(\d+(?:-\d*)?))?$/)!;
+        imports.push({ block: node, path: spec[1].replace(/^["']|["']$/g, ''), lines: spec[2], lang: null, meta: null });
+      }
     });
-    for (const block of blocks) {
-      const options_: Record<string, string> = {};
-      const rest = block.meta!.replace(/(\w+)=("[^"]*"|\S+)/g, (_all, key: string, value: string) => {
-        if (key !== 'file' && key !== 'lines') return _all;
-        options_[key] = value.replace(/^"|"$/g, '');
-        return '';
-      }).trim();
+    for (const { block, path, lines, lang, meta, vault } of imports) {
       try {
-        const found = await target(file, options_.file);
+        // vault:// paths start at the root of the book (the Obsidian vault) the page belongs to.
+        const book = vault ? courseRoots.filter(course => inside(course.directory, file)).sort((x, y) => y.directory.length - x.directory.length)[0] : undefined;
+        const found = await target(file, vault ? '/' + relative(root, resolve(book?.directory ?? root, path)).split(sep).join('/') : path);
         let text = (await source.readText(found)).replace(/\r\n?/g, '\n');
-        if (text.length > maxImportedCode) throw new Error(`File is too large to show as code (more than ${maxImportedCode / 1000} KB): ${options_.file}`);
-        if (options_.lines !== undefined) {
-          const range = options_.lines.match(/^(\d+)(?:(-)(\d*))?$/);
+        if (text.length > maxImportedCode) throw new Error(`File is too large to show as code (more than ${maxImportedCode / 1000} KB): ${path}`);
+        if (lines !== undefined) {
+          const range = lines.match(/^(\d+)(?:(-)(\d*))?$/);
           const all = text.replace(/\n$/, '').split('\n');
           const from = range ? Number(range[1]) : 0;
           const to = range ? (range[2] ? (range[3] ? Number(range[3]) : all.length) : from) : 0;
-          if (!range || from < 1 || to < from || from > all.length) throw new Error(`Invalid lines="${options_.lines}" for ${options_.file} (${all.length} lines)`);
+          if (!range || from < 1 || to < from || from > all.length) throw new Error(`Invalid lines="${lines}" for ${path} (${all.length} lines)`);
           text = all.slice(from - 1, to).join('\n');
         }
         block.value = text.replace(/\n$/, '');
-        block.lang ||= extname(found).slice(1).toLowerCase() || null;
-        block.meta = rest || null;
+        block.lang = lang || extname(found).slice(1).toLowerCase() || null;
+        block.meta = meta;
       } catch (error) {
         // Tolerant callers collect broken references; builds keep failing.
         if (!options.diagnostics) throw error;
-        options.diagnostics.push({ file, target: options_.file ?? '', message: error instanceof Error ? error.message : String(error) });
+        options.diagnostics.push({ file, target: path ?? '', message: error instanceof Error ? error.message : String(error) });
       }
     }
   }

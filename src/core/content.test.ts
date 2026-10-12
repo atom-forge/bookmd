@@ -150,3 +150,22 @@ test('a fenced block with file= shows that file, optionally only some lines', as
 test('an imported file cannot leave the sealed book', async () => {
   await expect(processContent(memory({ ...files, '/other/secret.ts': 'x', '/demo/lesson.md': '# L\n\n```ts file=../other/secret.ts\n```' }), 'courses.md', { sealed: ['/demo'] })).rejects.toThrow('leaves the course root');
 });
+
+test('the Obsidian plugin spellings import files too', async () => {
+  const code = 'const a = 1;\nconst b = 2;\nconst c = 3;\n';
+  const page = async (body: string) => (await processContent(memory({ ...files, '/demo/lesson.md': `# L\n\n${body}`, '/demo/src/app.ts': code, '/demo/sub/note.md': '# N\n\n```embed-ts\nPATH: "vault://src/app.ts"\nLINES: "3"\n```' }), 'courses.md')).pages.find(item => item.slug === 'demo/lesson')!;
+  const embed = (await page('```embed-ts\nPATH: "src/app.ts"\nLINES: "2-3"\nTITLE: "App"\n```')).html;
+  expect(embed).toContain('language-ts');
+  expect(embed).not.toContain('a = 1');
+  expect(embed).toContain('b');
+  expect(embed).not.toContain('PATH');
+  const codefile = (await page('```codefile src/app.ts:1-1\n```')).html;
+  expect(codefile).toContain('language-ts');
+  expect(codefile).toContain('a');
+  expect(codefile).not.toContain('b = 2');
+  expect((await page('```codefile src/app.ts\n```')).html).toContain('c');
+  // vault:// starts at the root of the book, whatever folder the page is in.
+  expect((await processContent(memory({ ...files, '/demo/src/app.ts': code, '/demo/lesson.md': '# L\n\n```embed-ts\nPATH: vault://src/app.ts\nLINES: 1\n```' }), 'courses.md')).pages.find(item => item.slug === 'demo/lesson')!.html).toContain('a');
+  // A block that merely looks similar stays as it is.
+  expect((await page('```embed-ts\nno path here\n```')).html).toContain('no path here');
+});
