@@ -9,7 +9,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
-import type { Root as MarkdownRoot, Link, Image } from 'mdast';
+import type { Root as MarkdownRoot, Link, Image, Heading, Paragraph, Parent } from 'mdast';
 import type { Root as HtmlRoot, Element } from 'hast';
 
 import { parse as parseYaml } from 'yaml';
@@ -169,6 +169,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
   }
   const wikiLinks = new WeakSet<Link>();
   const attachmentLinks = new WeakSet<Link>();
+  const embeds = new WeakMap<Paragraph, string>();
   function referencePaths(value: unknown, key: string, file: string): string[] {
     if (value === undefined || value === null) return [];
     if (!Array.isArray(value)) throw new Error(`Invalid ${key} in ${file}`);
@@ -223,6 +224,12 @@ export async function processContent(source: ContentSource, entrypoint: string, 
         if (!after.value) paragraph.children.splice(i + 1, 1);
       }
     });
+    // A paragraph made of one ![[note]] or ![[note#Heading]] embeds that document at this place.
+    visit(tree, 'paragraph', paragraph => {
+      const only = paragraph.children.length === 1 && paragraph.children[0].type === 'text' ? paragraph.children[0].value.trim().match(/^!\[\[([^\[\]\n|]+)\]\]$/) : null;
+      const path = only?.[1].trim();
+      if (path && !external.test(path) && ['', '.md'].includes(extname(path.split('#')[0]).toLowerCase())) embeds.set(paragraph, path);
+    });
     const references = new Map<string, string>();
     visit(tree, 'definition', node => { references.set(node.identifier, node.url); });
     visit(tree, (node, index, parent) => {
@@ -231,6 +238,26 @@ export async function processContent(source: ContentSource, entrypoint: string, 
         if (!url) throw new Error(`Missing reference ${node.identifier} in ${file}`);
         parent.children[index] = node.type === 'linkReference' ? { type: 'link', url, children: node.children } : { type: 'image', url, alt: node.alt };
       }
+    });
+    // ![[picture.png]] and ![[picture.png|alt text]] / ![[picture.png|300]] (width) are images. Documents embed only as a paragraph of their own.
+    visit(tree, 'text', (node, index, parent) => {
+      if (!parent || index === undefined || parent.type === 'link' || parent.type === 'linkReference') return;
+      const parts: (typeof node | Image)[] = [];
+      let cursor = 0;
+      for (const match of node.value.matchAll(/!\[\[([^\[\]\n|]+)(?:\|([^\[\]\n]+))?\]\]/g)) {
+        const url = match[1].trim();
+        if (!url || external.test(url) || ['', '.md'].includes(extname(url.split('#')[0]).toLowerCase())) continue;
+        if (match.index! > cursor) parts.push({ type: 'text', value: node.value.slice(cursor, match.index) });
+        const size = match[2]?.trim().match(/^(\d+)(?:x(\d+))?$/);
+        const image: Image = { type: 'image', url, alt: size ? '' : match[2]?.trim() ?? '' };
+        if (size) image.data = { hProperties: { width: size[1], ...(size[2] ? { height: size[2] } : {}) } };
+        parts.push(image);
+        cursor = match.index! + match[0].length;
+      }
+      if (!cursor) return;
+      if (cursor < node.value.length) parts.push({ type: 'text', value: node.value.slice(cursor) });
+      parent.children.splice(index, 1, ...parts);
+      return index + parts.length;
     });
     visit(tree, 'text', (node, index, parent) => {
       if (!parent || index === undefined || parent.type === 'link' || parent.type === 'linkReference') return;
@@ -388,6 +415,102 @@ export async function processContent(source: ContentSource, entrypoint: string, 
   const href = (slug: string, query: string, fragment: string) => options.link
     ? options.link(slug, query, fragment)
     : `${base}/${slug ? slug.split('/').map(encodeURIComponent).join('/') + '/' : ''}${query}${fragment}`;
+  // Links and images that already point at their final address (those of an embedded document, written relative to it).
+  const rewritten = new WeakSet<object>();
+  /** Resolves the links and images of a parsed document, which are written relative to `file`. */
+  async function rewriteLinks(tree: MarkdownRoot, file: string) {
+    // Content is untrusted: only inert link schemes may reach generated markup.
+    visit(tree, 'link', (node, index, parent) => {
+      const scheme = node.url.match(/^([a-z][a-z\d+.-]*):/i)?.[1].toLowerCase();
+      if (!scheme || safeSchemes.has(scheme) || !parent || index === undefined) return;
+      options.diagnostics?.push({ file, target: node.url, message: `Unsupported link scheme "${scheme}:"; rendered as text` });
+      parent.children.splice(index, 1, ...node.children);
+      return index;
+    });
+    const links: (Link | Image)[] = [];
+    visit(tree, node => { if ((node.type === 'link' || node.type === 'image') && !rewritten.has(node)) links.push(node); });
+    for (const node of links) {
+      rewritten.add(node);
+      if (external.test(node.url)) continue;
+      const match = node.url.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/)!;
+      if (!match[1]) continue;
+      let fileTarget: string;
+      let assetUrl: string | undefined;
+      const attachment = node.type === 'link' && attachmentLinks.has(node);
+      try {
+        fileTarget = node.type === 'link' && wikiLinks.has(node) && !attachment
+          ? await markdownTarget(file, node.url) : await target(file, node.url);
+        if (attachment || !(node.type === 'link' && extname(fileTarget).toLowerCase() === '.md')) assetUrl = await asset(fileTarget, attachment ? 'attachment' : node.type === 'image' ? 'embed' : 'link');
+      } catch (error) {
+        // Tolerant callers collect broken references; builds keep failing.
+        if (!options.diagnostics) throw error;
+        options.diagnostics.push({ file, target: node.url, message: error instanceof Error ? error.message : String(error) });
+        if (node.type === 'link') node.url = '#';
+        continue;
+      }
+      if (node.type === 'link' && !attachment && extname(fileTarget).toLowerCase() === '.md') {
+        const targetSlug = register(fileTarget);
+        if (!toString(node).trim()) {
+          let label = titles.get(targetSlug) || '';
+          async function findTitle(sourceFile: string, seen: Set<string>): Promise<void> {
+            if (label || seen.has(sourceFile)) return;
+            seen.add(sourceFile);
+            const source = await document(sourceFile);
+            if (seen.size === 1 && typeof source.metadata.title === 'string') label = source.metadata.title.trim();
+            label ||= headingTitle(source.tree);
+            for (const path of source.sources) await findTitle(await markdownTarget(sourceFile, path), seen);
+          }
+          await findTitle(fileTarget, new Set());
+          node.children = [{ type: 'text', value: label || targetSlug.split('/').at(-1) || titleFallback }];
+        }
+        node.url = href(targetSlug, match[2] || '', match[3] || '');
+      }
+      else {
+        node.url = `${assetUrl}${match[2] || ''}${match[3] || ''}`;
+      }
+    }
+  }
+  /** The part of a parsed document an embed `![[document#Heading]]` asks for: everything, or one section. */
+  function section(tree: MarkdownRoot, heading: string | undefined, from: string): MarkdownRoot['children'] {
+    if (!heading) return tree.children;
+    if (heading.startsWith('^')) throw new Error(`Block embeds are not supported in ${from}: #${heading}`);
+    const wanted = heading.trim().toLowerCase();
+    const first = tree.children.findIndex(node => node.type === 'heading' && toString(node).trim().toLowerCase() === wanted);
+    if (first === -1) throw new Error(`Missing heading "${heading}" in the embedded document of ${from}`);
+    const depth = (tree.children[first] as Heading).depth;
+    let last = first + 1;
+    while (last < tree.children.length && !(tree.children[last].type === 'heading' && (tree.children[last] as Heading).depth <= depth)) last++;
+    return tree.children.slice(first, last);
+  }
+  /** The content of an embedded document: its body, with its own embeds and sources, links resolved relative to it. */
+  async function embeddedContent(file: string, chain: string[], heading?: string): Promise<MarkdownRoot['children']> {
+    if (chain.includes(file)) throw new Error(`Circular embed: ${[...chain, file].join(' -> ')}`);
+    const { tree, sources } = await document(file);
+    const inner = [...chain, file];
+    await expandEmbeds(tree, file, inner);
+    await rewriteLinks(tree, file);
+    const nodes = [...section(tree, heading, file)];
+    if (!heading) for (const path of sources) nodes.push(...await embeddedContent(await markdownTarget(file, path), inner));
+    return nodes;
+  }
+  /** Replaces every paragraph made of one `![[document]]` with the embedded document's content. */
+  async function expandEmbeds(tree: MarkdownRoot, file: string, chain: string[]) {
+    const found: { parent: Parent; index: number; path: string }[] = [];
+    visit(tree, 'paragraph', (node, index, parent) => {
+      const embed = embeds.get(node);
+      if (embed && parent && index !== undefined) found.push({ parent, index, path: embed });
+    });
+    for (const { parent, index, path } of found.reverse()) {
+      const [documentPath, heading] = path.split('#', 2).length === 2 ? [path.slice(0, path.indexOf('#')), path.slice(path.indexOf('#') + 1)] : [path, undefined];
+      try {
+        parent.children.splice(index, 1, ...await embeddedContent(await markdownTarget(file, documentPath), chain, heading?.trim() || undefined));
+      } catch (error) {
+        if (!options.diagnostics) throw error;
+        options.diagnostics.push({ file, target: path, message: error instanceof Error ? error.message : String(error) });
+        parent.children.splice(index, 1, { type: 'paragraph', children: [{ type: 'text', value: `![[${path}]]` }] });
+      }
+    }
+  }
     for (let cursor = 0; cursor < queue.length; cursor++) {
       const slug = queue[cursor];
       let title = titles.get(slug) || '';
@@ -434,56 +557,9 @@ export async function processContent(source: ContentSource, entrypoint: string, 
         }
         await registerChildren(file, declaredChildren || file === start ? children : await folderChildren(file));
         title ||= headingTitle(tree);
+        await expandEmbeds(tree, file, [...ancestors, file]);
         texts.push(toString(tree));
-        // Content is untrusted: only inert link schemes may reach generated markup.
-        visit(tree, 'link', (node, index, parent) => {
-          const scheme = node.url.match(/^([a-z][a-z\d+.-]*):/i)?.[1].toLowerCase();
-          if (!scheme || safeSchemes.has(scheme) || !parent || index === undefined) return;
-          options.diagnostics?.push({ file, target: node.url, message: `Unsupported link scheme "${scheme}:"; rendered as text` });
-          parent.children.splice(index, 1, ...node.children);
-          return index;
-        });
-        const links: (Link | Image)[] = [];
-        visit(tree, node => { if (node.type === 'link' || node.type === 'image') links.push(node); });
-        for (const node of links) {
-          if (external.test(node.url)) continue;
-          const match = node.url.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/)!;
-          if (!match[1]) continue;
-          let fileTarget: string;
-          let assetUrl: string | undefined;
-          const attachment = node.type === 'link' && attachmentLinks.has(node);
-          try {
-            fileTarget = node.type === 'link' && wikiLinks.has(node) && !attachment
-              ? await markdownTarget(file, node.url) : await target(file, node.url);
-            if (attachment || !(node.type === 'link' && extname(fileTarget).toLowerCase() === '.md')) assetUrl = await asset(fileTarget, attachment ? 'attachment' : node.type === 'image' ? 'embed' : 'link');
-          } catch (error) {
-            // Tolerant callers collect broken references; builds keep failing.
-            if (!options.diagnostics) throw error;
-            options.diagnostics.push({ file, target: node.url, message: error instanceof Error ? error.message : String(error) });
-            if (node.type === 'link') node.url = '#';
-            continue;
-          }
-          if (node.type === 'link' && !attachment && extname(fileTarget).toLowerCase() === '.md') {
-            const targetSlug = register(fileTarget);
-            if (!toString(node).trim()) {
-              let label = titles.get(targetSlug) || '';
-              async function findTitle(sourceFile: string, seen: Set<string>): Promise<void> {
-                if (label || seen.has(sourceFile)) return;
-                seen.add(sourceFile);
-                const source = await document(sourceFile);
-                if (seen.size === 1 && typeof source.metadata.title === 'string') label = source.metadata.title.trim();
-                label ||= headingTitle(source.tree);
-                for (const path of source.sources) await findTitle(await markdownTarget(sourceFile, path), seen);
-              }
-              await findTitle(fileTarget, new Set());
-              node.children = [{ type: 'text', value: label || targetSlug.split('/').at(-1) || titleFallback }];
-            }
-            node.url = href(targetSlug, match[2] || '', match[3] || '');
-          }
-          else {
-            node.url = `${assetUrl}${match[2] || ''}${match[3] || ''}`;
-          }
-        }
+        await rewriteLinks(tree, file);
         const rendered = await renderSource(tree, usedIds);
         html += rendered.html + '\n'; headings.push(...rendered.headings);
         for (const source of sources) await append(await markdownTarget(file, source), [...ancestors, file]);

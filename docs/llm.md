@@ -73,7 +73,8 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 - Links to other pages: `[[page]]`, `[[page#heading|Custom text]]` or `[text](page.md)`. Links in the body do not change the navigation tree.
 - Images: `![alt](img/diagram.png)`. Other files: `[slides](slides.pdf)`. They are copied into the site and keep their file name.
 - **Attachments:** `[[!docs/llm.md]]` or `[[!docs/llm.md|notes]]` offers the file for download **as it is**, even if it is a `.md` file. A plain link to a `.md` file is always a page.
-- Embeds: a paragraph containing only `[[https://youtu.be/<11-char-id>]]`, a Desmos (`https://www.desmos.com/calculator/<id>`, `…/3d/<id>`) or GeoGebra (`https://www.geogebra.org/m/<id>`) address. Other addresses are plain links. The Obsidian `![[file]]` embed is not supported.
+- Embeds: a paragraph containing only `[[https://youtu.be/<11-char-id>]]`, a Desmos (`https://www.desmos.com/calculator/<id>`, `…/3d/<id>`) or GeoGebra (`https://www.geogebra.org/m/<id>`) address. Other addresses are plain links.
+- **Embeds of other files:** a paragraph containing only `![[path/to/note]]` inserts that Markdown file's body at that place; `![[note#Heading]]` inserts only that section. `![[img.png]]`, `![[img.png|300]]` (width) and `![[img.png|alt text]]` are images. Paths are relative to the current file; links inside the embedded file are relative to it. Do not confuse `![[file]]` (embed) with `[[!file]]` (download link).
 
 ## Included books (another GitHub repository)
 

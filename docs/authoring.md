@@ -289,7 +289,26 @@ A custom title, no title, a title only, and nested callouts are supported. Inner
 
 ### Wikilinks
 
-In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#heading|Custom title]]` are followed and rendered. Without a title, the title of the document is used (see page titles). Wikilinks in code blocks and inline code stay as text. Links in the body do not change the navigation tree. The Obsidian `![[...]]` embed syntax is not supported. `[[!file]]` is something else: an [attachment](#images-files-and-attachments).
+In the body, the wikilinks `[[document.md]]`, `[[document]]` and `[[document#heading|Custom title]]` are followed and rendered. Without a title, the title of the document is used (see page titles). Wikilinks in code blocks and inline code stay as text. Links in the body do not change the navigation tree. `![[...]]` embeds content, see [Embedding pages and images](#embedding-pages-and-images); `[[!file]]` is something else: an [attachment](#images-files-and-attachments).
+
+### Embedding pages and images
+
+`![[...]]` (Obsidian's embed syntax) puts the content of another file **where you write it**, which makes it a more flexible alternative to `sources`:
+
+```md
+![[shared/prerequisites]]
+
+![[shared/glossary#Latency]]
+
+![[diagram.png]]  ![[diagram.png|300]]  ![[diagram.png|The architecture]]
+```
+
+- **A Markdown file**, alone in its paragraph: its body replaces the line. `![[note#Heading]]` embeds only that section: the heading and everything up to the next heading of the same or a higher level. Block references (`#^id`) are not supported.
+- The embedded file's frontmatter is ignored (it does not set the title, type or children), but its own `sources` are appended after it and it can embed further files. A circular embed is a build error.
+- Links, images and embeds in an embedded file are relative to **that file**, as with `sources`. The files stay inside the book's folder.
+- The text of an embedded file is part of the page for searching, and its headings appear in "On this page"; repeated heading ids get a unique suffix.
+- **A picture**, anywhere in a paragraph: `![[img.png]]` is an image; after the bar come a width in pixels (`|300`, or `|300x200`) or an alt text (`|The architecture`).
+- An embedded file does not become a page of its own, unless it is also listed in `children` or linked.
 
 ### Images, files and attachments
 

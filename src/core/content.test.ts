@@ -85,3 +85,46 @@ test('the books list is `books`; the older `courses` still works, both together 
   for (const key of ['books', 'courses']) expect((await processContent(withKey(key), 'courses.md')).courses.map(course => course.slug)).toEqual(['demo']);
   await expect(processContent(memory({ ...files, '/courses.md': '---\nbooks: ["[[demo/course.md]]"]\ncourses: ["[[demo/course.md]]"]\n---\n# C' }), 'courses.md')).rejects.toThrow('not both');
 });
+
+test('![[note]] embeds a document where it is written; ![[note#Heading]] only that section', async () => {
+  const embedFiles = { ...files,
+    '/demo/lesson.md': '---\ntype: content\n---\n# Lesson\n\nBefore.\n\n![[shared/part.md]]\n\nBetween.\n\n![[shared/other#Second]]\n\n> ![[shared/tail]]\n\nAfter.',
+    '/demo/shared/part.md': '---\ntitle: Ignored\n---\n## First\n\nOne [help](../help.md) ![i](pic.svg).',
+    '/demo/shared/other.md': '## Intro\n\nNo\n\n## Second\n\nTwo\n\n### Deep\n\nDeeper\n\n## Third\n\nThree',
+    '/demo/shared/tail.md': 'Tail text',
+    '/demo/shared/pic.svg': '<svg/>'
+  };
+  const graph = await processContent(memory(embedFiles), 'courses.md', { base: '/b' });
+  const lesson = graph.pages.find(page => page.slug === 'demo/lesson')!;
+  expect(lesson.html.indexOf('Before.')).toBeLessThan(lesson.html.indexOf('One'));
+  expect(lesson.html.indexOf('One')).toBeLessThan(lesson.html.indexOf('Between.'));
+  expect(lesson.html.indexOf('Between.')).toBeLessThan(lesson.html.indexOf('Deeper'));
+  expect(lesson.html.indexOf('Deeper')).toBeLessThan(lesson.html.indexOf('After.'));
+  expect(lesson.html).not.toContain('Three');
+  expect(lesson.html).not.toContain('No<');
+  expect(lesson.html).toContain('href="/b/demo/help/"');
+  expect(lesson.html).toContain('src="/b/assets/demo/shared/pic.svg"');
+  expect(lesson.html).toContain('Tail text');
+  expect(lesson.headings.map(item => item.title)).toEqual(['Lesson', 'First', 'Second', 'Deep']);
+  expect(lesson.text).toContain('Tail text');
+  expect(graph.pages.map(page => page.slug)).not.toContain('demo/shared/part');
+});
+
+test('![[picture]] is an image; width or alt text follow the bar', async () => {
+  const graph = await processContent(memory({ ...files, '/demo/lesson.md': '# L\n\nA ![[image.svg]] B ![[image.svg|300]] C ![[image.svg|The logo]]' }), 'courses.md', { base: '/b' });
+  const html = graph.pages.find(page => page.slug === 'demo/lesson')!.html;
+  expect(html).toContain('<img src="/b/assets/demo/image.svg" alt="">');
+  expect(html).toContain('width="300"');
+  expect(html).toContain('alt="The logo"');
+});
+
+test('embeds report circles, missing documents and headings', async () => {
+  const build = (extra: Record<string, string>) => processContent(memory({ ...files, ...extra }), 'courses.md');
+  await expect(build({ '/demo/lesson.md': '# L\n\n![[a.md]]', '/demo/a.md': '![[lesson.md]]' })).rejects.toThrow('Circular embed');
+  await expect(build({ '/demo/lesson.md': '# L\n\n![[nowhere]]' })).rejects.toThrow('Missing');
+  await expect(build({ '/demo/lesson.md': '# L\n\n![[part#Nope]]' })).rejects.toThrow('Missing heading');
+  const diagnostics: { target: string }[] = [];
+  const graph = await processContent(memory({ ...files, '/demo/lesson.md': '# L\n\n![[nowhere]]' }), 'courses.md', { diagnostics });
+  expect(diagnostics.map(item => item.target)).toEqual(['nowhere']);
+  expect(graph.pages.find(page => page.slug === 'demo/lesson')!.html).toContain('![[nowhere]]');
+});
