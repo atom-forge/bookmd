@@ -40,7 +40,8 @@ Every list below holds **quoted** wikilinks or Markdown links, because unquoted 
 | `branding` | collection entry file | Text in the site header. |
 | `name` | book front page | Book name; else `title`, else the first heading. |
 | `language` | book front page | **Required.** e.g. `en`, `hu`. |
-| `author`, `tags`, `intro`, `image` | book front page | Optional. `author` and `tags` also work on any page. |
+| `author`, `tags`, `image` | book front page | Optional. `author` and `tags` also work on any page. |
+| `intro` | book front page | Short text for the catalogue card: plain text, or one quoted wikilink to a Markdown file whose text is used (`"[[about.md]]"`). |
 | `id` | book front page | **Required only for a book included from another repository.** Lower-case letters, digits, single hyphens; at most 64 characters. |
 | `publish: true` | book front page | **Required for a book in a private repository** that is included elsewhere; without it the book is left out. |
 | `title` | page | Page title (see the order below). |

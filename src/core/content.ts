@@ -363,6 +363,14 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       return confined(file, await contained(resolve(root, path.slice(index + marker.length))));
     }
   }
+  /** The intro is plain text, or a single wikilink to a Markdown file whose text (without headings, formatting and frontmatter) is the intro. */
+  async function introText(file: string, value: string) {
+    const wiki = value.match(/^\[\[([^\[\]\n|]+)\]\]$/);
+    if (!wiki) return value;
+    const body = (await source.readText(await markdownTarget(file, wiki[1].trim()))).replace(/^\uFEFF?---\r?\n(?:[^\n]*\n)*?---(?:\r?\n|$)/, '');
+    const text = (parser.parse(body) as MarkdownRoot).children.filter(node => node.type !== 'heading').map(node => toString(node).replace(/\s+/g, ' ').trim()).filter(Boolean).join(' ');
+    return text.length > 600 ? text.slice(0, 600).replace(/\s+\S*$/, '') + '…' : text;
+  }
   async function markdownTarget(file: string, path: string) {
     const pathPart = path.split(/[?#]/)[0];
     const result = await target(file, extname(pathPart) ? path : pathPart + '.md' + path.slice(pathPart.length));
@@ -430,7 +438,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     if ('instructor' in metadata || 'year' in metadata) throw new Error(`Obsolete course metadata in ${file}: use author instead of instructor and remove year`);
     const image = text('image');
     const imageUrl = image ? await asset(await target(file, image), 'embed') : null;
-    graph.courses.push({ slug, name, author: text('author') || null, language: text('language', true), tags: [...new Set(tags.map(tag => tag.trim()))], contentTags: [], intro: text('intro'), image: imageUrl });
+    graph.courses.push({ slug, name, author: text('author') || null, language: text('language', true), tags: [...new Set(tags.map(tag => tag.trim()))], contentTags: [], intro: await introText(file, text('intro')), image: imageUrl });
     titles.set(slug, name);
   }
   /** Pages in the folder named like the document (without `.md`) are its children, in natural file-name order. */

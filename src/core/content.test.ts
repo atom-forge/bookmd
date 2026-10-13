@@ -177,3 +177,14 @@ test('chemical formulas with \\ce render through KaTeX', async () => {
   expect(html).toContain('x-arrow');
   expect(html.match(/class="katex"/g)).toHaveLength(4);
 });
+
+test('a book intro can be a wikilink to a Markdown file whose text is used', async () => {
+  const graph = await processContent(memory({
+    '/courses.md': '---\nbooks: ["[[b/book.md]]", "[[c/book.md]]"]\n---\n# Catalog',
+    '/b/book.md': '---\nlanguage: en\nintro: "[[about.md]]"\n---\n# B',
+    '/b/about.md': '---\ntitle: x\n---\n# Heading\n\nSome **bold** text.\n\nSecond [link](x.md).',
+    '/c/book.md': '---\nlanguage: en\nintro: Plain text\n---\n# C'
+  }), 'courses.md', {});
+  expect(graph.courses.find(course => course.slug === 'b')!.intro).toBe('Some bold text. Second link.');
+  expect(graph.courses.find(course => course.slug === 'c')!.intro).toBe('Plain text');
+});
