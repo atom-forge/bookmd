@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { ProseMarkdown } from '@atom-forge/ui';
-  import { makeSortable } from './sortable-table';
   let { html, dark = false }: { html: string; dark?: boolean } = $props();
   let container: HTMLDivElement;
   let mounted = $state(false);
@@ -51,7 +50,6 @@
         // Highlight.js paints the code element, leaving the pre padding transparent.
         pre.style.backgroundColor = getComputedStyle(code).backgroundColor;
       }
-      for (const table of container.querySelectorAll('table')) makeSortable(table);
       const nodes = [...container.querySelectorAll<HTMLElement>('.mermaid-source')];
       if (!nodes.length) return;
       const { default: mermaid } = await import('mermaid');

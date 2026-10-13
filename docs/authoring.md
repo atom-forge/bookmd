@@ -249,10 +249,6 @@ graph TD; A-->B
 ```
 ````
 
-### Tables
-
-Tables are written in the usual GitHub syntax. A reader can sort a table by clicking a column header: first ascending, then descending, then back to the order of the document. Numbers are compared by value, other text in natural order (`file2` before `file10`). It works in the browser only, so the table stays plain in the source.
-
 ### Code from a file
 
 A fenced code block shows the text of a source file when its first line names it with `file=`. The code lives in a real file, where it can be run and tested, and the book never drifts away from it:
