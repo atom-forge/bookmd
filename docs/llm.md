@@ -64,7 +64,7 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 
 ## Body syntax
 
-- Standard Markdown with GitHub extensions (tables, task lists, strikethrough).
+- Standard Markdown with GitHub extensions (tables, task lists, strikethrough). Readers can sort tables by clicking a column header; nothing is needed in the source.
 - Formulas: `$x^2$` inline, `$$E=mc^2$$` display (LaTeX). Chemistry: `$\ce{2H2 + O2 -> 2H2O}$`, `$\pu{12.5 kJ mol-1}$` (mhchem).
 - Diagrams: a fenced code block with the language `mermaid`.
 - File structures: a fenced block with the language `tree` (nesting by indentation, trailing `/` for folders, `# comment`, `**highlight**`, `...` for more); pasted `tree` command output works.

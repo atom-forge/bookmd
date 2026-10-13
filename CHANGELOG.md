@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Tables can be sorted by clicking a column header (ascending, descending, document order); numbers are compared by value.
+
 ### Changed
 
 - Mermaid diagrams carry the `not-prose` class, so the typography styles of the page no longer affect them.
