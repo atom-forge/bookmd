@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Mermaid diagrams carry the `not-prose` class, so the typography styles of the page no longer affect them.
+
 ## [0.1.9] - 2026-10-12
 
 ### Changed

@@ -126,7 +126,7 @@ async function renderSource(tree: MarkdownRoot, usedIds: Set<string>) {
           if (node.tagName === 'pre') {
             const code = node.children[0];
             if (code?.type === 'element' && (code.properties.className as string[] | undefined)?.includes('language-mermaid')) {
-              node.properties = { className: ['mermaid-source'] };
+              node.properties = { className: ['mermaid-source', 'not-prose'] };
               node.children = code.children;
             }
           }
