@@ -212,7 +212,7 @@
   </div>
 {:else if phase === 'choosing' && index}
   <Diagnostics items={[]} {error}/>
-  <EntryChooser folder={index.name} {candidates} bind:value={chosen} truncated={index.truncated} onconfirm={() => chosen && render(chosen)} oncancel={loaded ? cancelChoice : undefined}/>
+  <EntryChooser folder={index.name} {candidates} bind:value={chosen} truncated={index.truncated} onconfirm={() => chosen && render(chosen)} oncancel={loaded ? cancelChoice : undefined} onfolder={pickFolder}/>
 {:else}
   <Diagnostics items={[]} {error}/>
   <StartScreen {supported} restore={restorable ? { folder: restorable.handle.name, entry: restorable.entry } : null} oncontinue={continueRestored} busy={busy || phase === 'scanning' || phase === 'processing'} onpick={pickFolder}/>

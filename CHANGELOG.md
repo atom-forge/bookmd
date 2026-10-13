@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The local preview (`/@dev`) offers "Choose another folder" on the entry file screen too, so a folder with an error or without a book can be replaced.
 - Column alignment in tables (`:---`, `:---:`, `---:`) is shown; the page styles used to override it.
 
 ### Changed

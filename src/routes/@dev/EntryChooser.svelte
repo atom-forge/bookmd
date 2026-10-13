@@ -1,10 +1,10 @@
 <script lang="ts">
   import { Button, Input } from '@atom-forge/ui';
-  import { Search } from 'lucide-svelte';
+  import { FolderOpen, Search } from 'lucide-svelte';
   import type { EntryCandidate } from './entry-candidates';
-  let { folder, candidates, value = $bindable(), truncated, onconfirm, oncancel }: {
+  let { folder, candidates, value = $bindable(), truncated, onconfirm, oncancel, onfolder }: {
     folder: string; candidates: EntryCandidate[]; value: string | null; truncated: boolean;
-    onconfirm: () => void; oncancel?: () => void;
+    onconfirm: () => void; oncancel?: () => void; onfolder: () => void;
   } = $props();
   let query = $state('');
   const shown = $derived(candidates.filter(candidate => candidate.path.toLowerCase().includes(query.trim().toLowerCase())));
@@ -35,6 +35,7 @@
   {/if}
   <div class="mx-5 mt-5 flex flex-wrap gap-3">
     <Button accent label="Render preview" disabled={value === null} onclick={onconfirm}/>
+    <Button outline icon={FolderOpen} label="Choose another folder" onclick={onfolder}/>
     {#if oncancel}<Button outline label="Cancel" onclick={oncancel}/>{/if}
   </div>
 </section>
