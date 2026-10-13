@@ -58,7 +58,7 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 - The `.md` extension may be omitted in wikilinks. A Markdown link needs it.
 - A page can have **one** parent. A page listed in two `children` lists, a cycle, or the old `series`/`tree` fields are errors. `chapter` in frontmatter is ignored: numbering comes from `type` and the `children` order.
 - Instead of `children`, put the subpages in a folder named like the page without `.md` (`algebra.md` + `algebra/01-sets.md`, `algebra/02-functions.md`); they are ordered by file name with numbers compared as numbers. A `children` field, even an empty one, turns this off.
-- A book's files may only reference files **inside the book's own folder**. A path leaving it (`../../other`) is an error; an included book cannot link to another book.
+- A book's files may only reference files **inside the book's own folder** (a book from another GitHub repository: inside its own repository, so `../../_common/x.md` works there). A path leaving that is an error; an included book cannot link to another book.
 - Pages under a folder named `resources` cannot have `tags`, `requires` or `teaches`.
 - Raw HTML in Markdown does not reach the output. Do not rely on it.
 - `author`, `tags`, `requires`, `teaches` are not inherited from the book or parent.

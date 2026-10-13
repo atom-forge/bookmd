@@ -1,5 +1,5 @@
 import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { basename, resolve } from 'node:path';
+import { basename, relative, resolve, sep } from 'node:path';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { bookListKey } from '../src/core/book-list';
 import { isSourceRef } from '../src/core/source-ref';
@@ -17,6 +17,8 @@ export type Assembly = {
   entrypoint: string;
   /** Virtual directories that are sealed per external course. */
   sealed: string[];
+  /** Route prefixes: the book's folder inside its repository is served at the book's id. */
+  mounts: { directory: string; route: string }[];
   sources: AssembledSource[];
   /** Books left out of the site: not approved for publication (yet), or broken with no earlier good version. */
   skipped: { source: string; reason: string }[];
@@ -48,6 +50,9 @@ export function isApproved(checked: Pick<CheckedOut, 'access'>, metadata: Record
   return checked.access !== 'private' || metadata.publish === true;
 }
 
+/** The folders from the repository root to the book's own folder. */
+export const bookPath = (checked: Pick<CheckedOut, 'directory' | 'contentRoot'>): string[] => relative(checked.directory, checked.contentRoot).split(sep).filter(Boolean);
+
 // Synced sources are reused while a dev server regenerates after local edits; a new process syncs again.
 const synced = new Map<string, CheckedOut[]>();
 
@@ -57,7 +62,7 @@ const synced = new Map<string, CheckedOut[]>();
  * entries are processed in place. The versioned local content is never written.
  */
 export async function assemble(config: { contentRoot: string; entrypoint: string }, work: string, entries: string[], options: { transport?: GitTransport; refresh?: boolean; pins?: Pins; fallbacks?: Pins; validate?: BookValidator } = {}): Promise<Assembly> {
-  if (!entries.length) return { contentRoot: config.contentRoot, entrypoint: config.entrypoint, sealed: [], sources: [], skipped: [], fallbacks: [] };
+  if (!entries.length) return { contentRoot: config.contentRoot, entrypoint: config.entrypoint, sealed: [], mounts: [], sources: [], skipped: [], fallbacks: [] };
   let checkouts = options.refresh === false ? synced.get(work) : undefined;
   if (!checkouts) { checkouts = await syncSources(entries, work, options.transport, options.pins); synced.set(work, checkouts); }
   const ids = new Map<string, string>();
@@ -110,7 +115,9 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   const visible = (path: string) => !basename(path).startsWith('.');
   await cp(config.contentRoot, output, { recursive: true, dereference: true, filter: visible });
   const ready = included.filter((checked): checked is CheckedOut => checked !== null);
-  for (const [index, checked] of ready.entries()) await cp(checked.contentRoot, resolve(output, sources[index].id), { recursive: true, filter: visible });
+  // The whole repository of a book is its territory, so a book can use shared files next to its own folder.
+  for (const [index, checked] of ready.entries()) await cp(checked.directory, resolve(output, sources[index].id), { recursive: true, filter: visible });
+  const entryPath = (checked: CheckedOut) => bookPath(checked).concat(checked.entrypoint).join('/');
 
   const registry = resolve(output, config.entrypoint);
   const text = await readFile(registry, 'utf8');
@@ -121,9 +128,9 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   metadata[key] = metadata[key].flatMap(entry => {
     if (!isSourceRef(entry)) return [entry];
     const checked = included[next++];
-    return checked ? [`${sources[nextReady++].id}/${checked.entrypoint}`] : [];
+    return checked ? [`${sources[nextReady++].id}/${entryPath(checked)}`] : [];
   });
   await writeFile(registry, `---\n${stringifyYaml(metadata)}---\n${text.slice(match[0].length)}`);
   await writeFile(resolve(work, 'course-sources.json'), JSON.stringify({ schemaVersion: 1, sources }, null, 2) + '\n');
-  return { contentRoot: output, entrypoint: config.entrypoint, sealed: sources.map(source => '/' + source.id), sources, skipped, fallbacks };
+  return { contentRoot: output, entrypoint: config.entrypoint, sealed: sources.map(source => '/' + source.id), mounts: ready.map((checked, index) => ({ directory: ['/' + sources[index].id, ...bookPath(checked)].join('/'), route: sources[index].id })), sources, skipped, fallbacks };
 }

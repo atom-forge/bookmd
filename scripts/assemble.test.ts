@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { assemble, isApproved, validateCourseId, type BookValidator } from './assemble';
-import { buildGraph } from './content';
+import { buildGraph, bookValidator } from './content';
 import { gitEntries } from './registry';
 import type { GitTransport } from './git-source';
 
@@ -55,9 +55,9 @@ describe('assembly of local and Git courses', () => {
     const before = await readFile(join(dir, 'courses.md'), 'utf8');
     const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w1'), await gitEntries(dir, 'courses.md'), { transport });
     expect(assembly.sources).toEqual([{ id: 'web-programming-1', source: 'main@github.com/o/ext/site/course.md', commit: expect.stringMatching(/^[0-9a-f]{40}$/) }]);
-    expect(assembly.sealed).toEqual(['/web-programming-1']);
+    expect(assembly.sealed, assembly.mounts).toEqual(['/web-programming-1']);
     expect(await readFile(join(dir, 'courses.md'), 'utf8')).toBe(before); // versioned content is untouched
-    const graph = await buildGraph(assembly.contentRoot, assembly.entrypoint, '', join(work, 'assets1'), 'T', assembly.sealed);
+    const graph = await buildGraph(assembly.contentRoot, assembly.entrypoint, '', join(work, 'assets1'), 'T', assembly.sealed, assembly.mounts);
     expect(graph.courses.map(c => c.slug)).toEqual(['mine', 'web-programming-1']);
     expect(graph.pages.map(p => p.slug)).toContain('web-programming-1/lesson');
     expect(graph.pages.find(p => p.slug === 'web-programming-1/lesson')!.html).toMatch(/src="\/content-assets\//);
@@ -80,7 +80,7 @@ describe('assembly of local and Git courses', () => {
   test('an external course cannot read outside its own root', async () => {
     const dir = await local('esc', registry('main@github.com/o/escape/course.md'), { 'mine/course.md': '---\nlanguage: en\n---\n# m' });
     const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'wesc'), await gitEntries(dir, 'courses.md'), { transport });
-    await expect(buildGraph(assembly.contentRoot, assembly.entrypoint, '', join(work, 'assets2'), 'T', assembly.sealed)).rejects.toThrow('leaves the course root');
+    await expect(buildGraph(assembly.contentRoot, assembly.entrypoint, '', join(work, 'assets2'), 'T', assembly.sealed, assembly.mounts)).rejects.toThrow('leaves the course root');
   });
 });
 
@@ -161,6 +161,37 @@ describe('the books key of the registry', () => {
     expect(assembly.sources.map(s => s.id)).toEqual(['web-programming-1']);
     const text = await readFile(join(assembly.contentRoot, 'courses.md'), 'utf8');
     expect(text).toContain('books:');
-    expect(text).toContain('web-programming-1/course.md');
+    expect(text).toContain('web-programming-1/site/course.md');
+  });
+});
+
+describe('files of the same repository', () => {
+  test('a book can use shared files next to its folder and is still served at its id', async () => {
+    await remote('shared', {
+      'bk/book.md': '---\nid: shared-book\nlanguage: en\nchildren: ["[[resources/assessment.md]]"]\n---\n# Shared',
+      'bk/resources/assessment.md': '---\nsources: ["../../_common/assessment.md"]\n---\n# Assessment',
+      '_common/assessment.md': 'Common text.'
+    });
+    const dir = await local('shared-site', registry('main@github.com/o/shared/bk/book.md'));
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w-shared'), await gitEntries(dir, 'courses.md'), { transport });
+    expect(assembly.skipped).toEqual([]);
+    const graph = await buildGraph(assembly.contentRoot, assembly.entrypoint, '', join(work, 'assets-shared'), 'T', assembly.sealed, assembly.mounts);
+    expect(graph.courses.map(c => c.slug)).toEqual(['shared-book']);
+    expect(graph.pages.find(p => p.slug === 'shared-book/resources/assessment')!.html).toContain('Common text.');
+  });
+  test('a path that leaves the repository is still an error', async () => {
+    await remote('leaky', {
+      'bk/book.md': '---\nid: leaky-book\nlanguage: en\nchildren: ["[[a.md]]"]\n---\n# Leaky',
+      'bk/a.md': '---\nsources: ["../../other/x.md"]\n---\n# A'
+    });
+    const dir = await local('leaky-site', registry('main@github.com/o/leaky/bk/book.md'), { 'other/x.md': 'secret' });
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w-leaky'), await gitEntries(dir, 'courses.md'), { transport });
+    await expect(buildGraph(assembly.contentRoot, assembly.entrypoint, '', join(work, 'assets-leaky'), 'T', assembly.sealed, assembly.mounts)).rejects.toThrow('leaves the course root');
+  });
+  test('the per-book validation understands the repository layout', async () => {
+    const dir = await local('validated-site', registry('main@github.com/o/shared/bk/book.md', 'main@github.com/o/leaky/bk/book.md'));
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w-validated'), await gitEntries(dir, 'courses.md'), { transport, validate: bookValidator({ title: 'T' }, join(work, 'w-validated'), '') });
+    expect(assembly.sources.map(source => source.id)).toEqual(['shared-book']);
+    expect(assembly.skipped).toHaveLength(1);
   });
 });

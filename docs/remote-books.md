@@ -23,7 +23,7 @@ children:
 - `_app`, `404`, `@dev`, `content-assets`, `assets`, `static` and `favicon.ico` are reserved.
 - The `id` must not collide with the `id` of another included book, nor with the name of a file or folder in your `content/` folder.
 - The other metadata (`name`, `language`, `author`, `tags`, `children`) is the same as for local books, see the [authoring guide](authoring.md).
-- The files of the book can only refer to **their own folder**. A link to another book, to your `content/` folder or to the rest of the repository does not work.
+- The files of the book can refer to anything in **their own repository**, for example to a shared `_common/` folder next to the book's folder (`sources: ["../../_common/part.md"]`). A link to another repository, to another book of your collection or to your `content/` folder does not work. The book is still served at its `id`, whatever folder it is in.
 
 ## 2. Your part: one line in `books.md`
 
@@ -85,4 +85,4 @@ The build can read from a private repository only if the operator has created a 
 - **Missing or invalid `id`**: the frontmatter of the entry file has no `id`, or it does not follow the rules above. The book is left out (or replaced by its last good version) with a warning, see [a book that does not build](cli.md#a-book-that-does-not-build).
 - **Unknown ref**: a mistyped branch or tag name; check that it exists in the repository.
 - **The repository is not readable**: a mistyped owner or repository name, or the repository is private and the App is not installed.
-- **A link in the book does not work**: the linked file is outside the folder of the book; an included book is sealed and can only refer to its own folder.
+- **A link in the book does not work**: the linked file is outside the repository of the book; an included book is sealed and can only refer to files of its own repository.

@@ -150,7 +150,7 @@ async function renderSource(tree: MarkdownRoot, usedIds: Set<string>) {
   return { html, headings };
 }
 
-export async function processContent(source: ContentSource, entrypoint: string, options: { base?: string; title?: string; rootName?: string; sealed?: string[]; diagnostics?: ContentDiagnostic[]; link?: (slug: string, query: string, fragment: string) => string } = {}): Promise<ContentGraph> {
+export async function processContent(source: ContentSource, entrypoint: string, options: { base?: string; title?: string; rootName?: string; sealed?: string[]; mounts?: { directory: string; route: string }[]; diagnostics?: ContentDiagnostic[]; link?: (slug: string, query: string, fragment: string) => string } = {}): Promise<ContentGraph> {
   const root = '/';
   const base = options.base ?? '';
   const titleFallback = options.title ?? 'BookMD';
@@ -388,8 +388,15 @@ export async function processContent(source: ContentSource, entrypoint: string, 
   const siblings = new Map<string, { previous: string | null; next: string | null }>();
   const queue = [''];
   const discovered = new Set(queue);
+  // A mount gives the files of a directory another route prefix: a book kept deep in its repository is still served at its id.
+  const mounts = (options.mounts ?? []).map(mount => ({ ...mount, directory: mount.directory.replace(/^\/+|\/+$/g, '') }));
+  function routeOf(file: string) {
+    const rel = relative(root, file).split(sep).join('/');
+    const mount = mounts.find(candidate => rel === candidate.directory || rel.startsWith(candidate.directory + '/'));
+    return mount ? mount.route + rel.slice(mount.directory.length) : rel;
+  }
   function slugFor(file: string) {
-    return aliases.get(file) ?? relative(root, file).split(sep).join('/').replace(/\.md$/i, '');
+    return aliases.get(file) ?? routeOf(file).replace(/\.md$/i, '');
   }
   function register(file: string) {
     const slug = slugFor(file);
@@ -412,7 +419,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
   for (const path of coursePaths) {
     const file = await markdownTarget(start, path);
     if (aliases.has(file)) throw new Error(`Repeated course: ${path}`);
-    const route = relative(root, file).split(sep).join('/').replace(/(?:^|\/)(?:course|book)\.md$/i, '').replace(/\.md$/i, '');
+    const route = routeOf(file).replace(/(?:^|\/)(?:course|book)\.md$/i, '').replace(/\.md$/i, '');
     if (!route) throw new Error('Course entry must have its own route');
     aliases.set(file, route);
     const slug = register(file);

@@ -2,12 +2,12 @@ import { readFile, readdir, writeFile, mkdir, copyFile, realpath, rm, cp, mkdtem
 import { resolve, relative, extname, sep, isAbsolute, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 import { processContent, type ContentGraph } from '../src/core/content';
-import { assemble, type Assembly, type BookValidator } from './assemble';
+import { assemble, bookPath, type Assembly, type BookValidator } from './assemble';
 import type { Pins } from './git-source';
 import { gitEntries } from './registry';
 export * from '../src/core/content';
 
-export async function buildGraph(contentRoot: string, entrypoint: string, base = '', assetDir = resolve('static/content-assets'), titleFallback = 'BookMD', sealed: string[] = []): Promise<ContentGraph> {
+export async function buildGraph(contentRoot: string, entrypoint: string, base = '', assetDir = resolve('static/content-assets'), titleFallback = 'BookMD', sealed: string[] = [], mounts: { directory: string; route: string }[] = []): Promise<ContentGraph> {
   const root = await realpath(contentRoot);
   async function physical(path: string) {
     const lexical = resolve(root, '.' + path);
@@ -36,17 +36,18 @@ export async function buildGraph(contentRoot: string, entrypoint: string, base =
       await copyFile(file, resolve(assetDir, folder, name));
       return `${base}/content-assets/${folder}/${encodeURIComponent(name)}`;
     }
-  }, entrypoint, { base, title: titleFallback, rootName: basename(root), sealed });
+  }, entrypoint, { base, title: titleFallback, rootName: basename(root), sealed, mounts });
 }
 
 /** Builds one book on its own, in a throw-away catalog; a problem inside the book is thrown. */
-function bookValidator(config: { title?: string }, workRoot: string, base: string): BookValidator {
+export function bookValidator(config: { title?: string }, workRoot: string, base: string): BookValidator {
   return async (checked, id) => {
     const directory = await mkdtemp(resolve(workRoot, 'validate-'));
     try {
-      await cp(checked.contentRoot, resolve(directory, 'book', id), { recursive: true, filter: path => !basename(path).startsWith('.') });
-      await writeFile(resolve(directory, 'book', 'courses.md'), `---\nbooks:\n  - "[[${id}/${checked.entrypoint}]]"\n---\n# Catalog\n`);
-      await buildGraph(resolve(directory, 'book'), 'courses.md', base, resolve(directory, 'assets'), config.title, ['/' + id]);
+      const folders = bookPath(checked);
+      await cp(checked.directory, resolve(directory, 'book', id), { recursive: true, filter: path => !basename(path).startsWith('.') });
+      await writeFile(resolve(directory, 'book', 'courses.md'), `---\nbooks:\n  - "[[${[id, ...folders, checked.entrypoint].join('/')}]]"\n---\n# Catalog\n`);
+      await buildGraph(resolve(directory, 'book'), 'courses.md', base, resolve(directory, 'assets'), config.title, ['/' + id], [{ directory: ['/' + id, ...folders].join('/'), route: id }]);
     } finally { await rm(directory, { recursive: true, force: true }); }
   };
 }
@@ -83,7 +84,7 @@ export async function generate(config: { contentRoot: string; entrypoint: string
   // Git course sources are downloaded and combined with the local content first. A book that does not build is
   // replaced by its last good version, or left out, so it cannot hold back the others.
   const assembly = await assemble(config, workRoot, await gitEntries(config.contentRoot, config.entrypoint), { ...options, validate: bookValidator(config, workRoot, base) });
-  const graph = await buildGraph(resolve(assembly.contentRoot), assembly.entrypoint, base, output('static/content-assets'), config.title, assembly.sealed);
+  const graph = await buildGraph(resolve(assembly.contentRoot), assembly.entrypoint, base, output('static/content-assets'), config.title, assembly.sealed, assembly.mounts);
   await reportAssembly(assembly, await largeAssetWarnings(output('static/content-assets')));
   await mkdir(output('src/lib/generated'), { recursive: true });
   await writeFile(output('src/lib/generated/content.json'), JSON.stringify(graph));

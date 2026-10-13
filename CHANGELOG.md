@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A book included from a GitHub repository can refer to any file of its own repository (for example a shared `_common/` folder beside the book's folder), not only to its own folder. It is still served at its `id`; a reference that leaves the repository remains an error.
 - Tables are shown in a raised card with a header row, cell padding and a row highlight; a wide table scrolls inside its card.
 - Mermaid diagrams carry the `not-prose` class, so the typography styles of the page no longer affect them.
 
