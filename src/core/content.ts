@@ -711,8 +711,9 @@ export async function processContent(source: ContentSource, entrypoint: string, 
         counters.set(key, index);
         const number = [...prefix, index];
         page.chapter = number.join('.');
-        if (page.type === 'chapter') nextPrefix = number;
-        else {
+        // The pages below a chapter or a content page are numbered below it (1.2, 1.2.1, 1.2.2).
+        nextPrefix = number;
+        if (page.type === 'content') {
           const source = relative(root, files.get(slug)!).split(sep).join('/');
           const name = basename(source, '.md').replace(/^(?:\d+-)+/, '');
           graph.exportManifest!.push({ course: course.slug, source, number,

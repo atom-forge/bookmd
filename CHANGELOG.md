@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The pages below a `content` page are numbered below it (`1.2.1`, `1.2.2`) instead of continuing the numbers of its siblings.
+
 ### Added
 
 - Code blocks in `svelte` (or `sveltehtml`) are highlighted: the markup, the `<script>` and `<style>` parts, the `{expressions}` and the `{#if}` / `{:else}` / `{@render}` block tags.

@@ -201,6 +201,24 @@ test('Svelte code blocks are highlighted, with their script, style and block tag
   expect(html).toContain('<span class="hljs-keyword">@render</span>');
 });
 
+test('the pages below a content page are numbered below it', async () => {
+  const graph = await processContent(memory({
+    '/courses.md': '---\nbooks: ["[[b/book.md]]"]\n---\n# Catalog',
+    '/b/book.md': '---\nlanguage: en\nchildren: ["[[one.md]]"]\n---\n# B',
+    '/b/one.md': '---\ntype: chapter\nchildren: ["[[a.md]]", "[[w.md]]", "[[z.md]]"]\n---\n# One',
+    '/b/a.md': '---\ntype: content\nchildren: ["[[a1.md]]", "[[a2.md]]"]\n---\n# A',
+    '/b/a1.md': '---\ntype: content\nchildren: ["[[a11.md]]"]\n---\n# A1',
+    '/b/a11.md': '---\ntype: content\n---\n# A11',
+    '/b/a2.md': '---\ntype: content\n---\n# A2',
+    '/b/w.md': '---\nchildren: ["[[w1.md]]"]\n---\n# Wrapper',
+    '/b/w1.md': '---\ntype: content\n---\n# W1',
+    '/b/z.md': '---\ntype: content\n---\n# Z'
+  }), 'courses.md', {});
+  const numbers = Object.fromEntries(graph.navigation.map(item => [item.title, item.chapter ?? null]));
+  expect(numbers).toMatchObject({ One: '1', A: '1.1', A1: '1.1.1', A11: '1.1.1.1', A2: '1.1.2', W1: '1.2', Z: '1.3' });
+  expect(numbers.Wrapper).toBeNull();
+});
+
 test('the title of a book wins over the older name key', async () => {
   const graph = await processContent(memory({
     '/courses.md': '---\nbooks: ["[[a/book.md]]", "[[b/book.md]]"]\n---\n# Catalog',

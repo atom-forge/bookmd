@@ -138,6 +138,7 @@ The `type` field determines how a page is numbered:
 
 - `type: chapter`: a numbered chapter; its descendants inherit the number prefix.
 - `type: content`: a numbered content page within the nearest chapter.
+- The pages below a numbered page (a chapter or a content page) are numbered below it: under `1.2` come `1.2.1`, `1.2.2`, and so on, down to any depth.
 - Any other or missing `type`: unnumbered auxiliary material that consumes no number.
 
 The declared `children` order determines traversal and numbering. Each book starts its own numbering; nested chapters extend the prefix. File names have no numbering requirement, and a `chapter` frontmatter field is ignored.
