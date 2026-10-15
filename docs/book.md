@@ -1,6 +1,7 @@
 ---
 id: bookmd
 name: BookMD
+subtitle: "@atom-forge/bookmd"
 language: en
 author: AtomForge
 tags: [bookmd, documentation]
