@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The catalogue has no search field any more: a filter panel beside the list shows the languages, authors, tags and topics as buttons to switch on and off. Language and author match any of the selected options, tags and topics need all of them, and the groups combine with and. Every button shows how many books it leaves, and the selection is kept in the address.
 - The name of a book is its `title`; the older `name` key is still accepted and is used only when there is no `title`. The documentation uses `title` and `subtitle`.
 
 ## [0.1.11] - 2026-10-15

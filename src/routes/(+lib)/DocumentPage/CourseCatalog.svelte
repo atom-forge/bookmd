@@ -1,53 +1,70 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { replaceState } from '$app/navigation';
   import { usePageHref } from '../page-href';
-  import { Button, Card, Input } from '@atom-forge/ui';
-    import { Search } from 'lucide-svelte';
-    import { filterCourses } from './course-search';
+  import { Button, Card } from '@atom-forge/ui';
+  import { SlidersHorizontal } from 'lucide-svelte';
+  import { emptySelection, filterCourses, isEmpty, options, selectionFromQuery, selectionSize, selectionToQuery, toggle, type Group, type Selection } from './course-filter';
+  import CourseFilters from './CourseFilters.svelte';
   import CourseMetadata from '../CourseMetadata.svelte';
   import type { Course } from '../../../core/content';
   let { courses }: { courses: Course[] } = $props();
   const href = usePageHref();
-    let query = $state('');
-    let searchInput: Input | undefined = $state();
-    const results = $derived(filterCourses(courses, query));
-    const searchId = $props.id();
+  const panelId = $props.id();
+  let selection = $state<Selection>(emptySelection());
+  let ready = $state(false);
+  let open = $state(false);
+  const results = $derived(filterCourses(courses, selection));
+  const available = $derived(options(courses, selection));
+  const size = $derived(selectionSize(selection));
 
-    function clearSearch() {
-      query = '';
-      searchInput?.focus();
-    }
+  // The selection lives in the address (?lang=hu&tag=web), so a filtered list can be shared.
+  onMount(() => {
+    selection = selectionFromQuery(new URLSearchParams(location.search), courses);
+    open = !isEmpty(selection);
+    ready = true;
+  });
+  $effect(() => {
+    const query = selectionToQuery(selection, new URLSearchParams(ready ? location.search : '')).toString();
+    if (!ready || query === location.search.slice(1)) return;
+    try { replaceState(`${location.pathname}${query ? `?${query}` : ''}${location.hash}`, {}); } catch { /* the filter still works without the address */ }
+  });
+  const change = (group: Group, key: string) => { selection = toggle(selection, group, key); };
+  const clear = () => { selection = emptySelection(); };
 </script>
-<section class="mt-6 flex flex-col" aria-label="Courses">
-  <div class="mb-4 flex flex-col gap-2">
-    <label for={searchId} class="text-sm font-medium">Search courses</label>
-    <div class="flex flex-wrap items-center gap-2">
-      <Input id={searchId} bind:this={searchInput} bind:value={query} icon={Search} placeholder="Name, author, description or tags" aria-describedby={`${searchId}-count`} class="min-w-0 flex-1"/>
-      <Button label="Clear search" ghost disabled={!query.length} onclick={clearSearch}/>
-    </div>
-    <p id={`${searchId}-count`} role="status" aria-atomic="true" class="text-sm text-muted-contrast">
-      {results.length} of {courses.length} courses
-      {#if courses.length && !results.length} — No courses match your search. Try different words or clear the search.{/if}
-      {#if !courses.length} — No courses available yet.{/if}
+
+<section class="mt-6 flex flex-col gap-6 min-[900px]:flex-row" aria-label="Books">
+  {#if courses.length}
+    <aside class="min-w-0 min-[900px]:w-60 min-[900px]:shrink-0" aria-label="Filter the books">
+      <Button class="min-[900px]:hidden" outline compact icon={SlidersHorizontal} label={size ? `Filters (${size})` : 'Filters'} aria-expanded={open} aria-controls={panelId} onclick={() => (open = !open)}/>
+      <div id={panelId} class="{open ? 'mt-4 block' : 'hidden'} min-[900px]:block">
+        <CourseFilters {available} {size} ontoggle={change} onclear={clear}/>
+      </div>
+    </aside>
+  {/if}
+  <div class="min-w-0 flex-1">
+    <p role="status" aria-atomic="true" class="mb-4 text-sm text-muted-contrast">
+      {results.length} of {courses.length} books
+      {#if courses.length && !results.length} — No book matches these filters. <button type="button" class="text-accent hover:underline" onclick={clear}>Clear the filters</button>{/if}
+      {#if !courses.length} — No books available yet.{/if}
     </p>
-  </div>
-  <div class="grid grid-cols-1 gap-4 min-[761px]:grid-cols-2 min-[1201px]:grid-cols-4">
-    {#each results as course (course.slug)}
-      <Card elevate={1} class="flex h-full flex-col overflow-hidden">
-        {#if course.image}<img class="aspect-video w-full object-cover" src={course.image} alt="" loading="lazy"/>{/if}
-        <div class="flex flex-1 flex-col">
-          <div class="mx-4 my-4 flex flex-1 flex-col min-[761px]:mx-5 min-[761px]:my-5">
-
-            <h2 class={`${course.subtitle ? 'mb-1' : 'mb-3'} text-xl leading-tight font-semibold tracking-tight min-[761px]:text-2xl`}><a class="hover:text-accent" href={href(course.slug)}>{course.name}</a></h2>
-            {#if course.subtitle}<p class="mb-3 text-sm text-muted-contrast min-[761px]:text-base">{course.subtitle}</p>{/if}
-            {#if course.intro}<p class="mb-4 text-sm leading-relaxed text-muted-contrast">{course.intro}</p>{/if}
-            <div class="mt-auto"><CourseMetadata {course}/></div>
+    <div class="grid grid-cols-1 gap-4 min-[761px]:grid-cols-2 min-[1500px]:grid-cols-3">
+      {#each results as course (course.slug)}
+        <Card elevate={1} class="flex h-full flex-col overflow-hidden">
+          {#if course.image}<img class="aspect-video w-full object-cover" src={course.image} alt="" loading="lazy"/>{/if}
+          <div class="flex flex-1 flex-col">
+            <div class="mx-4 my-4 flex flex-1 flex-col min-[761px]:mx-5 min-[761px]:my-5">
+              <h2 class={`${course.subtitle ? 'mb-1' : 'mb-3'} text-xl leading-tight font-semibold tracking-tight min-[761px]:text-2xl`}><a class="hover:text-accent" href={href(course.slug)}>{course.name}</a></h2>
+              {#if course.subtitle}<p class="mb-3 text-sm text-muted-contrast min-[761px]:text-base">{course.subtitle}</p>{/if}
+              {#if course.intro}<p class="mb-4 text-sm leading-relaxed text-muted-contrast">{course.intro}</p>{/if}
+              <div class="mt-auto"><CourseMetadata {course}/></div>
+            </div>
           </div>
-        </div>
-        <div class="border-t border-frame">
-          <a class="flex w-full items-center justify-center px-4 py-2 text-center text-xs font-medium text-accent hover:bg-surface hover:underline" href={href(course.slug)}>Open</a>
-        </div>
-      </Card>
-    {/each}
+          <div class="border-t border-frame">
+            <a class="flex w-full items-center justify-center px-4 py-2 text-center text-xs font-medium text-accent hover:bg-surface hover:underline" href={href(course.slug)}>Open</a>
+          </div>
+        </Card>
+      {/each}
+    </div>
   </div>
-
 </section>
