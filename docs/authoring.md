@@ -234,7 +234,7 @@ The values are lists of non-empty strings; the build trims whitespace and drops 
 
 ## Supported content
 
-Supported: mathematical formulas, Mermaid diagrams, highlighted code blocks, embedded videos and interactive math figures, and Obsidian callouts. Raw HTML does not reach the output.
+Supported: mathematical formulas, Mermaid diagrams, highlighted code blocks (including Svelte, as `svelte`), embedded videos and interactive math figures, and Obsidian callouts. Raw HTML does not reach the output.
 
 ### Formulas and diagrams
 

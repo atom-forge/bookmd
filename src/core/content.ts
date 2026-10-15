@@ -7,6 +7,8 @@ import rehypeKatex from 'rehype-katex';
 // Registers \ce{...} and \pu{...} (chemical formulas and units) in KaTeX.
 import 'katex/contrib/mhchem';
 import rehypeHighlight from 'rehype-highlight';
+import { common } from 'lowlight';
+import { svelte } from './svelte-language';
 import rehypeSlug from 'rehype-slug';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
@@ -133,7 +135,7 @@ async function renderSource(tree: MarkdownRoot, usedIds: Set<string>) {
         if (Array.isArray(ids)) node.properties[property] = ids.map(id => remap.get(String(id)) || id);
       }
     });
-  }).use(rehypeKatex).use(rehypeHighlight, { detect: false, ignoreMissing: true }).use(() => (htmlTree: HtmlRoot) => {
+  }).use(rehypeKatex).use(rehypeHighlight, { detect: false, ignoreMissing: true, languages: { ...common, svelte }, aliases: { svelte: ['sveltehtml'] } }).use(() => (htmlTree: HtmlRoot) => {
         visit(htmlTree, 'element', (node, index, parentNode) => {
           if (/^h[1-6]$/.test(node.tagName)) {
             const content = (element: Element): string => element.children.map(child => child.type === 'text' ? child.value : child.type === 'element' ? content(child) : '').join('');

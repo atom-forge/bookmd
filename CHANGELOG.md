@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Code blocks in `svelte` (or `sveltehtml`) are highlighted: the markup, the `<script>` and `<style>` parts, the `{expressions}` and the `{#if}` / `{:else}` / `{@render}` block tags.
+
 ## [0.1.12] - 2026-10-15
 
 ### Added

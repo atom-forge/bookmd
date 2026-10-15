@@ -190,6 +190,17 @@ test('a book has several authors, a release date, a copyright and a license', as
   for (const bad of ['released: 2026-13', 'released: 2026-02-30', 'released: yesterday', 'author: [a, 1]']) await expect(build(bad)).rejects.toThrow('Invalid');
 });
 
+test('Svelte code blocks are highlighted, with their script, style and block tags', async () => {
+  const graph = await processContent(memory({
+    '/courses.md': '---\nbooks: ["[[b/book.md]]"]\n---\n# Catalog',
+    '/b/book.md': '---\nlanguage: en\n---\n# B\n\n```svelte\n<script>\n  let n = $state(0);\n</script>\n{#if n}<p>{n}</p>{/if}\n<style>\n  p { color: red; }\n</style>\n```\n\n```sveltehtml\n{@render children()}\n```'
+  }), 'courses.md', {});
+  const html = graph.pages.find(page => page.slug === 'b')!.html;
+  expect(html).toContain('<span class="hljs-keyword">#if</span>');
+  expect(html).toContain('<span class="hljs-attribute">color</span>');
+  expect(html).toContain('<span class="hljs-keyword">@render</span>');
+});
+
 test('the title of a book wins over the older name key', async () => {
   const graph = await processContent(memory({
     '/courses.md': '---\nbooks: ["[[a/book.md]]", "[[b/book.md]]"]\n---\n# Catalog',
