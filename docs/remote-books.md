@@ -71,18 +71,100 @@ You can also start it by hand with **Actions → Deploy book → Run workflow**.
 
 ## Private repositories
 
-The build can read from a private repository only if the operator has created a read-only GitHub App and the author has installed it on their repository. Access is per repository and read-only.
+A public book needs none of this. A **private** repository can be included too, but the build has to prove that it may read it. The built-in token of a GitHub Actions run (`GITHUB_TOKEN`) only works for the repository the workflow runs in, even inside the same organisation, so the collection uses a **read-only GitHub App**. Two people are involved:
 
-- **Author:** installs the App on their account (or organisation) and selects the book's repository ("Only select repositories", Contents: read). No token, secret or workflow is needed on their side. Removing the installation stops further reads; it does not take back what has already been published.
-- **Approval:** a private repository **does not make the finished site private**. So the entry file must state the approval: `publish: true`. Without it the book is not ready to be published: the build skips it, removes it from the catalog and prints a warning. The rest of the collection builds as usual, so you can list a book that is still being written.
-- **Operator:** creates the App (Contents: read-only, Metadata: read-only) and provides `BOOKMD_APP_ID` and `BOOKMD_APP_PRIVATE_KEY` (PEM) in the environment of the collection (or as Actions secrets). The list of installations (`GET /app/installations`) is the access register. The App can have several keys, so a key can be rotated without downtime.
-- **Behaviour:** the engine first tries to download every source anonymously, so a public source never needs a key. Only if that fails does it sign a short-lived App token, look up the installation of the repository and ask for a one-repository, read-only token. The token reaches Git through the environment, not through arguments or the URL, and is not written anywhere. The error message says whether the App is not installed (or the repository does not exist), the credentials were rejected, or no credentials are configured.
-- **CI:** give the secret only to the `plan` and `sources` steps; `check` and `build` run without it from the downloaded, pinned commits. In a public repository, remember that logs and artifacts can reveal the names of private repositories.
+- **The operator (host)** runs the collection. They create the App once, store its credentials as secrets in the collection, and list the book in `books.md`.
+- **The author** owns the private repository. They only install the operator's App on that repository and approve the publication. No token, secret or workflow is needed on their side. If you are both, you do both parts.
+
+A private repository **does not make the finished site private**. That is why the author must approve the publication in the entry file (`publish: true`, step A2 below).
+
+### The operator: set up once
+
+**1. Create the App.** For an organisation, open `https://github.com/organizations/<organisation>/settings/apps/new` (for a personal account: *Settings → Developer settings → GitHub Apps → New GitHub App*) and fill in:
+
+- **GitHub App name**: for example `<organisation>-bookmd`. **Homepage URL**: your site address.
+- **Webhook**: untick *Active*. The App needs no webhook.
+- **Repository permissions → Contents: Read-only.** (*Metadata: Read-only* is added automatically.) Give it nothing else.
+- **Where can this app be installed?** Choose *Only on this account* when every book is in your own account or organisation. Choose *Any account* when authors from other accounts have to install it.
+
+Click **Create GitHub App**. Use one App for one operator: its private key can read every repository the App is installed on, so do not share a key between unrelated sites.
+
+**2. Note the App ID and create a key.** On the App's page copy the **App ID** (a number). In *Private keys* click **Generate a private key**: a `.pem` file is downloaded once. GitHub does not keep it, so you cannot download it again, only generate another one. An App can have several keys, so a key can be replaced without downtime.
+
+**3. Store the credentials as secrets** in the repository of the collection. In the browser: *Settings → Secrets and variables → Actions → New repository secret*, twice:
+
+| Secret | Value |
+|---|---|
+| `BOOKMD_APP_ID` | the App ID |
+| `BOOKMD_APP_PRIVATE_KEY` | the whole content of the `.pem` file, from `-----BEGIN` to `-----END` |
+
+With the GitHub CLI, and without leaving the key on your disk:
+
+```text
+gh secret set BOOKMD_APP_ID --repo <owner>/<collection> --body 123456
+gh secret set BOOKMD_APP_PRIVATE_KEY --repo <owner>/<collection> < key.pem
+rm key.pem
+```
+
+If you run several collections, create the two secrets once as *organization secrets* (*Organization settings → Secrets and variables → Actions*) and select the repositories that may use them.
+
+**4. Give the secrets to the build.** A secret reaches a step only when the workflow passes it. In the workflow of the template (`.github/workflows/*.yml`), add the two `env` lines to the steps that download books, `check` and `build`:
+
+```yaml
+      - run: bun run check
+        env:
+          BOOKMD_APP_ID: ${{ secrets.BOOKMD_APP_ID }}
+          BOOKMD_APP_PRIVATE_KEY: ${{ secrets.BOOKMD_APP_PRIVATE_KEY }}
+      - run: bun run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}
+          BOOKMD_APP_ID: ${{ secrets.BOOKMD_APP_ID }}
+          BOOKMD_APP_PRIVATE_KEY: ${{ secrets.BOOKMD_APP_PRIVATE_KEY }}
+```
+
+If you use the plan workflow with separate steps (see [the CLI](cli.md)), give the secrets only to `bookmd plan` and `bookmd sources`; `check` and `build` work from the downloaded commits without them.
+
+**5. Send the author the install address** of your App: `https://github.com/apps/<app-name>/installations/new` (the name is in the address of the App's page).
+
+### The author: for each private book
+
+**A1. Install the App** on the repository of the book: open the address from the operator, choose your account or organisation, select **Only select repositories**, pick the repository of the book and click **Install**. (You need to be an owner of the account, or an admin of the repository.) This gives read access to that repository only.
+
+**A2. Approve the publication** in the entry file of the book, and give it an `id`:
+
+```md
+---
+id: web-programming
+title: Web programming
+language: en
+publish: true
+children:
+  - "[[01-intro.md]]"
+---
+```
+
+Without `publish: true` the build skips the book, removes it from the catalog and prints a warning; the rest of the collection builds as usual, so a book that is still being written can already be listed.
+
+**A3. Tell the operator the address** of the entry file: `main@github.com/<owner>/<repository>/<path>/book.md`.
+
+To withdraw the access: *Settings → Applications → Installed GitHub Apps → Configure* and remove the repository. This stops further reads; it does not take back what has already been published.
+
+### The operator: add the book and check
+
+Add the line from A3 to `content/books.md` (see above), commit and push. The run log ends the check with `Generated N pages in M courses (K from Git)`; the number K counts the included books. If a book is missing or the run fails, see the list below.
+
+### How it works
+
+The engine first tries to download every source anonymously, so a public source never needs a key. Only if that fails does it sign a short-lived App token, look up the installation of the repository and ask for a one-repository, read-only token. The token reaches Git through the environment, not through arguments or the URL, and is not written anywhere. The list of installations of the App is the access register.
+
+In a public repository the logs and artifacts are public: they can reveal the **names** of private repositories.
 
 ## Common errors
 
 - **"course id … is already used" / collision with local content**: the `id` is repeated, or a folder under `content/` has the same name. Rename one of them.
 - **Missing or invalid `id`**: the frontmatter of the entry file has no `id`, or it does not follow the rules above. The book is left out (or replaced by its last good version) with a warning, see [a book that does not build](cli.md#a-book-that-does-not-build).
 - **Unknown ref**: a mistyped branch or tag name; check that it exists in the repository.
-- **The repository is not readable**: a mistyped owner or repository name, or the repository is private and the App is not installed.
+- **The repository is not readable** (`cannot read repository …`): a mistyped owner or repository name, or the repository is private and the App is not installed on it (operator step 5 / author step A1).
+- **`configure the BookMD GitHub App`**: the repository is private and the build has no credentials. The two secrets are missing, or the workflow does not pass them to the step (operator steps 3 and 4).
+- **A private book does not appear and the log warns about `publish: true`**: the entry file lacks `publish: true` (author step A2).
 - **A link in the book does not work**: the linked file is outside the repository of the book; an included book is sealed and can only refer to files of its own repository.
