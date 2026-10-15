@@ -175,7 +175,7 @@ The frontmatter of the front page of a book (`book.md`) holds the data of the bo
 
 ```md
 ---
-name: Web Programming 1
+title: Web Programming 1
 author: Elvis
 language: en
 tags: [web, programming]
@@ -191,7 +191,7 @@ children:
 Book introduction.
 ```
 
-The catalogue and the front page of the book use the same data. `language` is required; it is not a separate language entry point. `name` can also follow from the first H1. The subtitle (`subtitle`, a second line under the name in the catalogue and the header), the author (`author`), tags, short introduction (`intro`) and image are optional. The `intro` is plain text, or a single quoted wikilink to a Markdown file (`intro: "[[about.md]]"`): then the text of that file is used, without headings, formatting and frontmatter, shortened to 600 characters. The catalogue can be filtered by language and by several tags; all selected tags must be present on the book.
+The catalogue and the front page of the book use the same data. `language` is required; it is not a separate language entry point. The name of the book is its `title`; without one the first H1 is used. (`name` is the older key for the same thing: it is used only when there is no `title`.) The subtitle (`subtitle`, a second line under the name in the catalogue and the header), the author (`author`), tags, short introduction (`intro`) and image are optional. The `intro` is plain text, or a single quoted wikilink to a Markdown file (`intro: "[[about.md]]"`): then the text of that file is used, without headings, formatting and frontmatter, shortened to 600 characters. The catalogue can be filtered by language and by several tags; all selected tags must be present on the book.
 
 The old `instructor` field and the book `year` field are build errors. Besides its own tags, the catalogue shows and searches the tags of every page belonging to the book, de-duplicated regardless of case, accents and whitespace.
 

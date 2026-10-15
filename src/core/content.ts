@@ -437,8 +437,9 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       if (required && !trimmed) throw new Error(`Missing ${key} in ${file}`);
       return trimmed;
     }
-    let name = text('name');
-    name ||= (typeof metadata.title === 'string' ? metadata.title.trim() : '') || headingTitle(tree);
+    // `title` names the book; `name` is the older key and only used when there is no title.
+    let name = (typeof metadata.title === 'string' ? metadata.title.trim() : '') || text('name');
+    name ||= headingTitle(tree);
     name ||= slug.split('/').at(-1)!;
     const tags = metadata.tags ?? [];
     if (!Array.isArray(tags) || tags.some(tag => typeof tag !== 'string' || !tag.trim())) throw new Error(`Invalid tags in ${file}`);

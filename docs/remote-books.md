@@ -11,7 +11,7 @@ The front page of an included book is a Markdown file in the repository (for exa
 ```md
 ---
 id: web-programming
-name: Web programming
+title: Web programming
 language: en
 children:
   - "[[01-intro.md]]"

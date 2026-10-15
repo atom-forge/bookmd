@@ -38,14 +38,14 @@ Every list below holds **quoted** wikilinks or Markdown links, because unquoted 
 |---|---|---|
 | `books` | collection entry file | Ordered list of books: `"[[dir/book.md]]"` or a Git source. (`courses` is the older name; never use both.) |
 | `branding` | collection entry file | Text in the site header. |
-| `name` | book front page | Book name; else `title`, else the first heading. |
+| `title` | book front page | Book name; else the older `name` key, else the first heading. |
 | `subtitle` | book front page | Optional second line under the name (catalogue card and header). |
 | `language` | book front page | **Required.** e.g. `en`, `hu`. |
 | `author`, `tags`, `image` | book front page | Optional. `author` and `tags` also work on any page. |
 | `intro` | book front page | Short text for the catalogue card: plain text, or one quoted wikilink to a Markdown file whose text is used (`"[[about.md]]"`). |
 | `id` | book front page | **Required only for a book included from another repository.** Lower-case letters, digits, single hyphens; at most 64 characters. |
 | `publish: true` | book front page | **Required for a book in a private repository** that is included elsewhere; without it the book is left out. |
-| `title` | page | Page title (see the order below). |
+| `title` | page | Page title (see the order below). On a book front page it is the book's name. |
 | `type` | page | `chapter` (numbered, children inherit the prefix), `content` (numbered inside the nearest chapter); anything else or missing is unnumbered. |
 | `children` | page | Ordered direct subpages: `"[[page.md]]"` or `"[Custom title](page.md)"`. |
 | `sources` | page | Files whose content is appended to this page, in order: `"[[part.md]]"`. |
@@ -90,7 +90,7 @@ A book front page:
 
 ```md
 ---
-name: Web Programming
+title: Web Programming
 language: en
 author: Jane Doe
 tags: [web]

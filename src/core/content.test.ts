@@ -178,6 +178,15 @@ test('chemical formulas with \\ce render through KaTeX', async () => {
   expect(html.match(/class="katex"/g)).toHaveLength(4);
 });
 
+test('the title of a book wins over the older name key', async () => {
+  const graph = await processContent(memory({
+    '/courses.md': '---\nbooks: ["[[a/book.md]]", "[[b/book.md]]"]\n---\n# Catalog',
+    '/a/book.md': '---\nlanguage: en\ntitle: New title\nname: Old name\n---\n# A',
+    '/b/book.md': '---\nlanguage: en\nname: Old name\n---\n# B'
+  }), 'courses.md', {});
+  expect(graph.courses.map(course => course.name)).toEqual(['New title', 'Old name']);
+});
+
 test('a book can have a subtitle', async () => {
   const graph = await processContent(memory({
     '/courses.md': '---\nbooks: ["[[b/book.md]]"]\n---\n# Catalog',

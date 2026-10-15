@@ -89,7 +89,7 @@ The front page of a book (`content/my-first-book/book.md`) gives its own data an
 
 ```md
 ---
-name: My first book
+title: My first book
 language: en
 children:
   - "[[01-intro.md]]"
@@ -110,7 +110,7 @@ On the repository page: **Settings → Pages → Build and deployment → Source
 Create the file `.github/workflows/pages.yml`:
 
 ```yaml
-name: Deploy book
+title: Deploy book
 
 on:
   push:

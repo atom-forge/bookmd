@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The name of a book is its `title`; the older `name` key is still accepted and is used only when there is no `title`. The documentation uses `title` and `subtitle`.
+
 ## [0.1.11] - 2026-10-15
 
 ### Added

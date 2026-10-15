@@ -1,6 +1,6 @@
 ---
 id: bookmd
-name: BookMD
+title: BookMD
 subtitle: "@atom-forge/bookmd"
 language: en
 author: AtomForge
