@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.14] - 2026-10-15
+
 ### Added
 
 - The address of a book from a Git source can be chosen in the collection: an item of the `books` list can be an object `{ source, slug }`. The `slug` wins over the `id` in the book.
