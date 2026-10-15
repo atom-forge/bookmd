@@ -12,6 +12,7 @@ children:
   - "[[remote-books.md]]"
   - "[[self-hosted.md]]"
   - "[[cli.md]]"
+  - "[AI Notes](ai-notes.md)"
 ---
 # BookMD
 
