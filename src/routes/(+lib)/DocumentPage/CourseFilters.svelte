@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button } from '@atom-forge/ui';
   import { X } from 'lucide-svelte';
-  import { groups, modes, titles, type Group, type Option } from './course-filter';
+  import { groups, titles, type Group, type Option } from './course-filter';
   let { available, size, ontoggle, onclear }: {
     available: Record<Group, Option[]>; size: number;
     ontoggle: (group: Group, key: string) => void; onclear: () => void;
@@ -23,11 +23,11 @@
     {@const list = available[group]}
     <section class="mb-5" aria-labelledby="filter-{group}">
       <h3 id="filter-{group}" class="mb-2 text-xs font-semibold tracking-wide text-muted-contrast uppercase">
-        {titles[group]} <span class="font-normal normal-case">({modes[group] === 'any' ? 'any of' : 'all of'})</span>
+        {titles[group]}
       </h3>
       <div class="flex flex-wrap gap-1">
         {#each visible(group, list) as option (option.key)}
-          <Button micro pill outline={!option.selected} {...variants[group]} class="uppercase" disabled={!option.selected && option.count === 0}
+          <Button micro pill outline={!option.selected} {...variants[group]} class="uppercase {group === 'author' && !option.selected ? 'border-primary/40' : ''}" disabled={!option.selected && option.count === 0}
             aria-pressed={option.selected} title="{option.count} {option.count === 1 ? 'book' : 'books'}"
             onclick={() => ontoggle(group, option.key)}>
             {option.label}<span class="opacity-60">{option.count}</span>

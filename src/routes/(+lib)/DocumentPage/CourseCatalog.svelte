@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, type Snippet } from 'svelte';
   import { replaceState } from '$app/navigation';
   import { usePageHref } from '../page-href';
   import { Button, Card } from '@atom-forge/ui';
@@ -8,7 +8,7 @@
   import CourseFilters from './CourseFilters.svelte';
   import CourseMetadata from '../CourseMetadata.svelte';
   import type { Course } from '../../../core/content';
-  let { courses }: { courses: Course[] } = $props();
+  let { courses, intro }: { courses: Course[]; intro?: Snippet } = $props();
   const href = usePageHref();
   const panelId = $props.id();
   let selection = $state<Selection>(emptySelection());
@@ -33,9 +33,9 @@
   const clear = () => { selection = emptySelection(); };
 </script>
 
-<section class="mt-6 flex flex-col gap-6 min-[900px]:flex-row" aria-label="Books">
+<section class="flex flex-col gap-6 min-[900px]:flex-row" aria-label="Books">
   {#if courses.length}
-    <aside class="min-w-0 min-[900px]:w-60 min-[900px]:shrink-0" aria-label="Filter the books">
+    <aside class="min-w-0 min-[900px]:w-72 min-[900px]:shrink-0" aria-label="Filter the books">
       <Button class="min-[900px]:hidden" outline compact icon={SlidersHorizontal} label={size ? `Filters (${size})` : 'Filters'} aria-expanded={open} aria-controls={panelId} onclick={() => (open = !open)}/>
       <div id={panelId} class="{open ? 'mt-4 block' : 'hidden'} min-[900px]:block">
         <CourseFilters {available} {size} ontoggle={change} onclear={clear}/>
@@ -43,6 +43,7 @@
     </aside>
   {/if}
   <div class="min-w-0 flex-1">
+    {@render intro?.()}
     <p role="status" aria-atomic="true" class="mb-4 text-sm text-muted-contrast">
       {results.length} of {courses.length} books
       {#if courses.length && !results.length} — No book matches these filters. <button type="button" class="text-accent hover:underline" onclick={clear}>Clear the filters</button>{/if}

@@ -56,14 +56,18 @@
       </div>
     {/if}
     <div class="mx-5 mt-6 mb-16 min-w-0 min-[900px]:mx-[clamp(24px,3vw,48px)] min-[900px]:mt-[34px]">
-      <DocumentMetadata page={data.page} course={data.course}/>
-      <article class="w-full min-w-0 [&_.prose]:max-w-none" lang={data.course?.language}>
-        <Article html={data.articleHtml} dark={theme.dark}/>
-      </article>
-      {#if data.page.slug !== ''}<PageConcepts requires={data.page.requires} teaches={data.page.teaches} class="mt-10 min-[1280px]:hidden"/>{/if}
+      {#snippet content()}
+        <DocumentMetadata page={data.page} course={data.course}/>
+        <article class="w-full min-w-0 [&_.prose]:max-w-none" lang={data.course?.language}>
+          <Article html={data.articleHtml} dark={theme.dark}/>
+        </article>
+      {/snippet}
       {#if data.page.slug === ''}
-        <CourseCatalog courses={data.courses}/>
-
+        <!-- On the front page the filters sit beside the introduction and the books. -->
+        <CourseCatalog courses={data.courses} intro={content}/>
+      {:else}
+        {@render content()}
+        <PageConcepts requires={data.page.requires} teaches={data.page.teaches} class="mt-10 min-[1280px]:hidden"/>
       {/if}
     </div>
   </main>
