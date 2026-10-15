@@ -129,7 +129,7 @@ rm key.pem
 
 If you run several collections, create the two secrets once as *organization secrets* (*Organization settings → Secrets and variables → Actions*) and select the repositories that may use them.
 
-**4. Give the secrets to the build.** A secret reaches a step only when the workflow passes it. In the workflow of the template (`.github/workflows/*.yml`), add the two `env` lines to the steps that download books, `check` and `build`:
+**4. Give the secrets to the build.** A secret reaches a step only when the workflow passes it. The workflow of the template repository and the one in [the publishing guide](deploy-a-book.md) already do; if your workflow does not, add the two `env` lines to the steps that download books, `check` and `build`:
 
 ```yaml
       - run: bun run check

@@ -139,9 +139,16 @@ jobs:
           bun-version: '1.4.0'
       - run: bun install
       - run: bun run check
+        env:
+          # Only needed for books from private repositories (docs: Books from other GitHub repositories).
+          BOOKMD_APP_ID: ${{ secrets.BOOKMD_APP_ID }}
+          BOOKMD_APP_PRIVATE_KEY: ${{ secrets.BOOKMD_APP_PRIVATE_KEY }}
       - run: bun run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}
+          # Only needed for books from private repositories (docs: Books from other GitHub repositories).
+          BOOKMD_APP_ID: ${{ secrets.BOOKMD_APP_ID }}
+          BOOKMD_APP_PRIVATE_KEY: ${{ secrets.BOOKMD_APP_PRIVATE_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build
@@ -156,6 +163,8 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 ```
+
+The `BOOKMD_APP_*` lines are used only for books from private repositories ([how to set them up](remote-books.md#private-repositories)); without the secrets they are empty and ignored.
 
 `BASE_PATH` is needed because "project" sites live at `https://<user>.github.io/<repository>/`, that is, in a subdirectory. Remove the `env` block in two cases:
 
