@@ -87,7 +87,7 @@ for (const prefix of ['---\n---\n', '---\n\n---\n', '---\n \t\n\t \n---\n', '\uF
       expect(page.html).toBe(body ? '<h1 id="body">Body</h1>\n<p>Visible text</p>\n<h2 id="details">Details</h2>\n' : '\n');
       expect(page.text).toBe(body ? 'BodyVisible textDetails' : '');
       expect(page.headings).toEqual(body ? [{ id: 'body', title: 'Body', depth: 1 }, { id: 'details', title: 'Details', depth: 2 }] : []);
-      expect(page.author).toBeNull();
+      expect(page.authors).toEqual([]);
       expect(page.tags).toEqual([]);
     });
   });
@@ -96,7 +96,7 @@ for (const prefix of ['---\n---\n', '---\n\n---\n', '---\n \t\n\t \n---\n', '\uF
 test('preserves nonempty frontmatter with BOM and CRLF', async () => {
   await fixture({ 'courses.md': '\uFEFF' + md({ author: 'Writer', tags: ['tag'] }, '# Body\n\nText').replace(/\n/g, '\r\n') }, async root => {
     const page = (await build(root)).pages[0];
-    expect(page.author).toBe('Writer');
+    expect(page.authors).toEqual(['Writer']);
     expect(page.tags).toEqual(['tag']);
     expect(page.html).toBe('<h1 id="body">Body</h1>\n<p>Text</p>\n');
     expect(page.text).toBe('BodyText');
@@ -282,10 +282,10 @@ test('page author and free-form tags belong to the document without inheritance'
   }, async root => {
     const graph = await build(root);
     const chapter = graph.pages.find(page => page.slug === 'web/chapter')!;
-    expect(chapter.author).toBe('Chapter author');
+    expect(chapter.authors).toEqual(['Chapter author']);
     expect(chapter.tags).toEqual(['custom label', 'saját címke']);
     const plain = graph.pages.find(page => page.slug === 'web/plain')!;
-    expect(plain.author).toBeNull();
+    expect(plain.authors).toEqual([]);
     expect(plain.tags).toEqual([]);
     for (const metadata of [{ author: 123 }, { tags: 'tag' }, { tags: [''] }]) {
       await writeFile(join(root, 'web/plain.md'), md(metadata, '# Plain'));
@@ -338,7 +338,7 @@ test('aggregates all owned pages, including non-tree links, with normalized dedu
   }, async root => {
     const graph = await build(root);
     const course = graph.courses[0];
-    expect(course.author).toBe('Author');
+    expect(course.authors).toEqual(['Author']);
     expect(course.tags).toEqual(['Saját címke']);
     expect(course.contentTags.map(tag => tag.toLowerCase())).toContain('only loose');
     expect(course.contentTags).toHaveLength(3);
@@ -352,7 +352,7 @@ test('aggregates all owned pages, including non-tree links, with normalized dedu
 
 test('course metadata rejects obsolete fields and invalid author, omits missing author', async () => {
   await fixture({ 'courses.md': catalog, 'web/course.md': md({ language: 'en' }, '# Web') }, async root => {
-    expect((await build(root)).courses[0].author).toBeNull();
+    expect((await build(root)).courses[0].authors).toEqual([]);
     expect((await build(root)).courses[0].contentTags).toEqual([]);
     for (const metadata of [{ instructor: 'Old' }, { year: 2026 }, { year: null }, { author: 123 }]) {
       await writeFile(join(root, 'web/course.md'), md({ language: 'en', ...metadata }, '# Web'));

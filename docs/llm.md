@@ -41,7 +41,9 @@ Every list below holds **quoted** wikilinks or Markdown links, because unquoted 
 | `title` | book front page | Book name; else the older `name` key, else the first heading. |
 | `subtitle` | book front page | Optional second line under the name (catalogue card and header). |
 | `language` | book front page | **Required.** e.g. `en`, `hu`. |
-| `author`, `tags`, `image` | book front page | Optional. `author` and `tags` also work on any page. |
+| `author`, `tags`, `image` | book front page | Optional. `author` is one name or a list of names; `author` and `tags` also work on any page. |
+| `released` | book front page | Optional release date: `2026`, `2026-10` or `2026-10-15`. |
+| `copyright`, `license` | book front page | Optional free text, for example `© 2026 AtomForge` and `CC BY-SA 4.0`; shown on the front page of the book. |
 | `intro` | book front page | Short text for the catalogue card: plain text, or one quoted wikilink to a Markdown file whose text is used (`"[[about.md]]"`). |
 | `id` | book front page | **Required only for a book included from another repository.** Lower-case letters, digits, single hyphens; at most 64 characters. |
 | `publish: true` | book front page | **Required for a book in a private repository** that is included elsewhere; without it the book is left out. |

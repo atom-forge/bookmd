@@ -176,7 +176,10 @@ The frontmatter of the front page of a book (`book.md`) holds the data of the bo
 ```md
 ---
 title: Web Programming 1
-author: Elvis
+author: [Elvis, Jane Doe]
+released: 2026-10
+copyright: © 2026 Elvis
+license: CC BY-SA 4.0
 language: en
 tags: [web, programming]
 intro: How the web works.
@@ -191,7 +194,7 @@ children:
 Book introduction.
 ```
 
-The catalogue and the front page of the book use the same data. `language` is required; it is not a separate language entry point. The name of the book is its `title`; without one the first H1 is used. (`name` is the older key for the same thing: it is used only when there is no `title`.) The subtitle (`subtitle`, a second line under the name in the catalogue and the header), the author (`author`), tags, short introduction (`intro`) and image are optional. The `intro` is plain text, or a single quoted wikilink to a Markdown file (`intro: "[[about.md]]"`): then the text of that file is used, without headings, formatting and frontmatter, shortened to 600 characters. The catalogue can be filtered by language and by several tags; all selected tags must be present on the book.
+The catalogue and the front page of the book use the same data. `language` is required; it is not a separate language entry point. The name of the book is its `title`; without one the first H1 is used. (`name` is the older key for the same thing: it is used only when there is no `title`.) The subtitle (`subtitle`, a second line under the name in the catalogue and the header), the author (`author`: one name or a list of names), the release date (`released`: a year, a month or a day, as `2026`, `2026-10` or `2026-10-15`), the copyright (`copyright`, free text such as `© 2026 AtomForge`), the license (`license`, for example `CC BY-SA 4.0`), tags, short introduction (`intro`) and image are optional. The `intro` is plain text, or a single quoted wikilink to a Markdown file (`intro: "[[about.md]]"`): then the text of that file is used, without headings, formatting and frontmatter, shortened to 600 characters. The catalogue can be filtered by language and by several tags; all selected tags must be present on the book.
 
 The old `instructor` field and the book `year` field are build errors. Besides its own tags, the catalogue shows and searches the tags of every page belonging to the book, de-duplicated regardless of case, accents and whitespace.
 

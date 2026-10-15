@@ -178,6 +178,18 @@ test('chemical formulas with \\ce render through KaTeX', async () => {
   expect(html.match(/class="katex"/g)).toHaveLength(4);
 });
 
+test('a book has several authors, a release date, a copyright and a license', async () => {
+  const build = (front: string) => processContent(memory({
+    '/courses.md': '---\nbooks: ["[[b/book.md]]"]\n---\n# Catalog',
+    '/b/book.md': `---\nlanguage: en\n${front}\n---\n# B`,
+  }), 'courses.md', {});
+  const graph = await build('author: [Jane Doe, " John Roe ", Jane Doe]\nreleased: 2026-10\ncopyright: © 2026 AtomForge\nlicense: CC BY-SA 4.0');
+  expect(graph.courses[0]).toMatchObject({ authors: ['Jane Doe', 'John Roe'], released: '2026-10', copyright: '© 2026 AtomForge', license: 'CC BY-SA 4.0' });
+  expect((await build('author: Solo\nreleased: 2026')).courses[0]).toMatchObject({ authors: ['Solo'], released: '2026', copyright: '', license: '' });
+  expect((await build('released: 2026-10-15')).courses[0].released).toBe('2026-10-15');
+  for (const bad of ['released: 2026-13', 'released: 2026-02-30', 'released: yesterday', 'author: [a, 1]']) await expect(build(bad)).rejects.toThrow('Invalid');
+});
+
 test('the title of a book wins over the older name key', async () => {
   const graph = await processContent(memory({
     '/courses.md': '---\nbooks: ["[[a/book.md]]", "[[b/book.md]]"]\n---\n# Catalog',

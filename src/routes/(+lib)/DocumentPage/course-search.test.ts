@@ -3,11 +3,11 @@ import type { Course } from '../../../core/content';
 import { filterCourses } from './course-search';
 
 const course: Course = {
-  slug: 'web', name: 'Árvíztűrő WEB', subtitle: 'Alcím', author: 'Őri Éva',
+  slug: 'web', name: 'Árvíztűrő WEB', subtitle: 'Alcím', authors: ['Őri Éva'], released: null, copyright: '', license: '',
   intro: 'Bevezetés a hálózatok világába', tags: ['kezdő', 'Saját címke'],
   contentTags: ['Összesített téma'], language: 'hu', image: '/image.png'
 };
-const other: Course = { ...course, slug: 'other', name: 'Other', author: null, intro: '', tags: [], contentTags: [] };
+const other: Course = { ...course, slug: 'other', name: 'Other', authors: [], intro: '', tags: [], contentTags: [] };
 const courses = [course, other];
 
 test('empty and whitespace queries preserve all courses and their order', () => {

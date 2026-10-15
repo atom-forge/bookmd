@@ -8,7 +8,7 @@ export function filterCourses(courses: Course[], query: string): Course[] {
   const words = normalize(query).trim().split(/\s+/u).filter(Boolean);
   if (!words.length) return courses;
   return courses.filter(course => {
-    const text = normalize([course.name, course.subtitle, course.author ?? '', course.intro, ...course.tags, ...course.contentTags].join(' '));
+    const text = normalize([course.name, course.subtitle, ...course.authors, course.intro, ...course.tags, ...course.contentTags].join(' '));
     return words.every(word => text.includes(word));
   });
 }

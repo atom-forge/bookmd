@@ -26,10 +26,10 @@
           <a class="truncate hover:text-accent" href={href(course.slug)} title={course.name}>{course.name}</a>
           {#if course.subtitle}<span class="hidden min-w-0 truncate text-sm font-normal text-muted-contrast min-[900px]:inline" title={course.subtitle}>{course.subtitle}</span>{/if}
         </div>
-        {#if course.language || course.author}
+        {#if course.language || course.authors.length}
           <div class="flex min-w-0 items-center gap-1.5" aria-label="Course language and author">
             {#if course.language}<Chip class="shrink-0 text-[10px] uppercase bg-accent text-accent-contrast"><span class="sr-only">Language: </span>{course.language}</Chip>{/if}
-            {#if course.author}<span class="truncate text-xs text-muted-contrast" title={course.author}><span class="sr-only">Author: </span>{course.author}</span>{/if}
+            {#if course.authors.length}<span class="truncate text-xs text-muted-contrast" title={course.authors.join(', ')}><span class="sr-only">Author: </span>{course.authors.join(', ')}</span>{/if}
           </div>
         {/if}
       </div>

@@ -37,14 +37,30 @@ export type NavItem = { slug: string; title: string; parent: string | null; chap
 export type ContentPage = NavItem & {
   type?: string; course: string | null; html: string; text: string; inTree: boolean;
   previous: string | null; next: string | null;
-  author: string | null; tags: string[];
+  authors: string[]; tags: string[];
   requires: string[]; teaches: string[];
   headings: { id: string; title: string; depth: number }[];
 };
 export type Course = {
-  slug: string; name: string; subtitle: string; author: string | null;
+  slug: string; name: string; subtitle: string; authors: string[]; released: string | null; copyright: string; license: string;
   language: string; tags: string[]; contentTags: string[]; intro: string; image: string | null;
 };
+/** `author` is one name or a list of names. */
+export function authorList(value: unknown, file: string): string[] {
+  if (value === undefined || value === null || value === '') return [];
+  const names = typeof value === 'string' ? [value] : value;
+  if (!Array.isArray(names) || names.some(name => typeof name !== 'string')) throw new Error(`Invalid author in ${file}`);
+  return [...new Set((names as string[]).map(name => name.trim()).filter(Boolean))];
+}
+/** The release date as written: a year, a month or a day. */
+export function releaseDate(value: unknown, file: string): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  const text = typeof value === 'number' ? String(value) : value instanceof Date ? value.toISOString().slice(0, 10) : typeof value === 'string' ? value.trim() : '';
+  const match = text.match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/);
+  const valid = match && (!match[2] || (+match[2] >= 1 && +match[2] <= 12)) && (!match[3] || (+match[3] >= 1 && +match[3] <= new Date(Date.UTC(+match[1], +match[2], 0)).getUTCDate()));
+  if (!valid) throw new Error(`Invalid released in ${file}: use a year, a month or a day (2026, 2026-10, 2026-10-15)`);
+  return text;
+}
 export function normalizeTag(tag: string): string {
   return tag.trim().toLocaleLowerCase('hu').normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/gu, ' ');
 }
@@ -446,7 +462,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
     if ('instructor' in metadata || 'year' in metadata) throw new Error(`Obsolete course metadata in ${file}: use author instead of instructor and remove year`);
     const image = text('image');
     const imageUrl = image ? await asset(await target(file, image), 'embed') : null;
-    graph.courses.push({ slug, name, subtitle: text('subtitle'), author: text('author') || null, language: text('language', true), tags: [...new Set(tags.map(tag => tag.trim()))], contentTags: [], intro: await introText(file, text('intro')), image: imageUrl });
+    graph.courses.push({ slug, name, subtitle: text('subtitle'), authors: authorList(metadata.author, file), released: releaseDate(metadata.released, file), copyright: text('copyright'), license: text('license'), language: text('language', true), tags: [...new Set(tags.map(tag => tag.trim()))], contentTags: [], intro: await introText(file, text('intro')), image: imageUrl });
     titles.set(slug, name);
   }
   /** Pages in the folder named like the document (without `.md`) are its children, in natural file-name order. */
@@ -589,7 +605,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       const headings: ContentPage['headings'] = [];
       const usedIds = new Set<string>();
       let html = '';
-      let author: string | null = null;
+      let authors: string[] = [];
       let type: string | undefined;
       let tags: string[] = [];
       let requires: string[] = [];
@@ -602,8 +618,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
           if (metadata.type !== undefined && typeof metadata.type !== 'string') throw new Error(`Invalid type in ${file}`);
           type = typeof metadata.type === 'string' ? metadata.type : undefined;
           if (relative(root, file).split(sep).includes('resources') && 'tags' in metadata) throw new Error(`Resources cannot have tags: ${file}`);
-          if (metadata.author !== undefined && typeof metadata.author !== 'string') throw new Error(`Invalid author in ${file}`);
-          author = typeof metadata.author === 'string' ? metadata.author.trim() || null : null;
+          authors = authorList(metadata.author, file);
           const pageTags = metadata.tags ?? [];
           if (!Array.isArray(pageTags) || pageTags.some(tag => typeof tag !== 'string' || !tag.trim())) throw new Error(`Invalid tags in ${file}`);
           tags = [...new Set(pageTags.map(tag => tag.trim()))];
@@ -628,7 +643,7 @@ export async function processContent(source: ContentSource, entrypoint: string, 
       title ||= slug.split('/').at(-1) || titleFallback;
       const parent = parents.get(slug) ?? null;
       const inTree = parents.has(slug);
-      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, author, tags, requires, teaches, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
+      graph.pages.push({ course: owner(files.get(slug)!), slug, title, parent, ...(type !== undefined ? { type } : {}), inTree, authors, tags, requires, teaches, html, text: texts.join('\n'), headings, previous: siblings.get(slug)?.previous ?? null, next: siblings.get(slug)?.next ?? null });
       if (inTree) graph.navigation.push({ slug, title, parent });
     }
 
