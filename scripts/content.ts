@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { processContent, type ContentGraph } from '../src/core/content';
 import { assemble, bookPath, type Assembly, type BookValidator } from './assemble';
 import type { Pins } from './git-source';
-import { gitEntries } from './registry';
+import { gitEntries, gitSlugs } from './registry';
 export * from '../src/core/content';
 
 export async function buildGraph(contentRoot: string, entrypoint: string, base = '', assetDir = resolve('static/content-assets'), titleFallback = 'BookMD', sealed: string[] = [], mounts: { directory: string; route: string }[] = []): Promise<ContentGraph> {
@@ -83,7 +83,7 @@ export async function generate(config: { contentRoot: string; entrypoint: string
   await rm(output('static/content-assets'), { recursive: true, force: true });
   // Git course sources are downloaded and combined with the local content first. A book that does not build is
   // replaced by its last good version, or left out, so it cannot hold back the others.
-  const assembly = await assemble(config, workRoot, await gitEntries(config.contentRoot, config.entrypoint), { ...options, validate: bookValidator(config, workRoot, base) });
+  const assembly = await assemble(config, workRoot, await gitEntries(config.contentRoot, config.entrypoint), { ...options, slugs: await gitSlugs(config.contentRoot, config.entrypoint), validate: bookValidator(config, workRoot, base) });
   const graph = await buildGraph(resolve(assembly.contentRoot), assembly.entrypoint, base, output('static/content-assets'), config.title, assembly.sealed, assembly.mounts);
   await reportAssembly(assembly, await largeAssetWarnings(output('static/content-assets')));
   await mkdir(output('src/lib/generated'), { recursive: true });

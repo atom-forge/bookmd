@@ -67,7 +67,7 @@ bookmd build --sources plan.json
 
 ## A book that does not build
 
-An included book that fails (a broken link, a missing file, a missing or invalid `id`) does not stop the build of the others. Each included book is built on its own first, and then:
+An included book that fails (a broken link, a missing file, an invalid `id` or `slug`) does not stop the build of the others. Each included book is built on its own first, and then:
 
 - With `--baseline plan.json` (the plan of the last successful publication), the engine uses the book's **last good commit** instead. `sources --sources plan.json --baseline baseline/plan.json` downloads it in advance, because the later steps have no credentials.
 - Without a good earlier version (a new book, or no baseline) the book is left out of the site.

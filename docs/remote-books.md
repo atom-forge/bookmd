@@ -6,7 +6,7 @@ This guide assumes that you already have a working collection (see [publishing a
 
 ## 1. The author's part: the entry file
 
-The front page of an included book is a Markdown file in the repository (for example `book.md`), and **its folder is the content root of the book**. The file must have an `id`, which becomes the address of the book in your collection:
+The front page of an included book is a Markdown file in the repository (for example `book.md`), and **its folder is the content root of the book**. The file may have an `id`: a suggestion for the address of the book in a collection. **The collection decides the address**, see [section 2](#2-your-part-one-line-in-booksmd); without an `id` the address comes from the folder of the file.
 
 ```md
 ---
@@ -19,9 +19,9 @@ children:
 # Web programming
 ```
 
-- The `id` may contain only lower-case letters, digits and single hyphens (it cannot start or end with a hyphen, and cannot contain two hyphens in a row), at most 64 characters.
+- The address (an `id` or a slug) may contain only lower-case letters, digits and single hyphens (it cannot start or end with a hyphen, and cannot contain two hyphens in a row), at most 64 characters.
 - `_app`, `404`, `@dev`, `content-assets`, `assets`, `static` and `favicon.ico` are reserved.
-- The `id` must not collide with the `id` of another included book, nor with the name of a file or folder in your `content/` folder.
+- The address must not collide with that of another included book, nor with the name of a file or folder in your `content/` folder.
 - The other metadata (`name`, `language`, `author`, `tags`, `children`) is the same as for local books, see the [authoring guide](authoring.md).
 - The files of the book can refer to anything in **their own repository**, for example to a shared `_common/` folder next to the book's folder (`sources: ["../../_common/part.md"]`). A link to another repository, to another book of your collection or to your `content/` folder does not work. The book is still served at its `id`, whatever folder it is in.
 
@@ -47,7 +47,28 @@ books:
 - The path of the entry file is relative to the repository root and must end in `.md`.
 - The quotes are required.
 
-Commit and push. On the next run the workflow downloads the book, and it appears in your collection under its `id` (for example `/web-programming/`).
+Commit and push. On the next run the workflow downloads the book, and it appears in your collection (for example at `/web-programming/`).
+
+### The address of the book
+
+The address belongs to your collection, not to the author, so you can choose it. Write the item as an object with a `source` and a `slug`:
+
+```md
+---
+books:
+  - "main@github.com/colleague/web-notes/book.md"
+  - source: "v2.1@github.com/other-colleague/algorithms/materials/book.md"
+    slug: algorithms
+---
+```
+
+The address of a book is, in this order:
+
+1. the `slug` in your `books` list,
+2. the `id` in the entry file of the book, if it has one,
+3. the name of the folder of the entry file (`programming-5-hu/book.md` gives `programming-5-hu`), or the name of the repository when the file is in the root.
+
+A name is made of lower-case letters, digits and single hyphens (accents are removed, other characters become hyphens). If two books want the same address, or the address collides with a folder of your `content/`, the build tells you to set a `slug`. Changing the `slug` changes the address of the book, so choose it once: the author cannot change it by editing the book.
 
 ## How does an included book update?
 
@@ -161,8 +182,8 @@ In a public repository the logs and artifacts are public: they can reveal the **
 
 ## Common errors
 
-- **"course id … is already used" / collision with local content**: the `id` is repeated, or a folder under `content/` has the same name. Rename one of them.
-- **Missing or invalid `id`**: the frontmatter of the entry file has no `id`, or it does not follow the rules above. The book is left out (or replaced by its last good version) with a warning, see [a book that does not build](cli.md#a-book-that-does-not-build).
+- **"course id … is already used" / collision with local content**: two books have the same address, or a folder under `content/` has the same name. Give one of them a different `slug`.
+- **Invalid `id` or `slug`**: the value does not follow the rules above (or a name cannot be derived from the folder, for example `404`; set a `slug`). The book is left out (or replaced by its last good version) with a warning, see [a book that does not build](cli.md#a-book-that-does-not-build).
 - **Unknown ref**: a mistyped branch or tag name; check that it exists in the repository.
 - **The repository is not readable** (`cannot read repository …`): a mistyped owner or repository name, or the repository is private and the App is not installed on it (operator step 5 / author step A1).
 - **`configure the BookMD GitHub App`**: the repository is private and the build has no credentials. The two secrets are missing, or the workflow does not pass them to the step (operator steps 3 and 4).

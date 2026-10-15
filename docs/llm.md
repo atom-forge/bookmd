@@ -45,7 +45,7 @@ Every list below holds **quoted** wikilinks or Markdown links, because unquoted 
 | `released` | book front page | Optional release date: `2026`, `2026-10` or `2026-10-15`. |
 | `copyright`, `license` | book front page | Optional free text, for example `© 2026 AtomForge` and `CC BY-SA 4.0`; shown on the front page of the book. |
 | `intro` | book front page | Short text for the catalogue card: plain text, or one quoted wikilink to a Markdown file whose text is used (`"[[about.md]]"`). |
-| `id` | book front page | **Required only for a book included from another repository.** Lower-case letters, digits, single hyphens; at most 64 characters. |
+| `id` | book front page | Optional. A suggestion for the address of a book included from another repository; the collection can override it with `slug`. Lower-case letters, digits, single hyphens; at most 64 characters. |
 | `publish: true` | book front page | **Required for a book in a private repository** that is included elsewhere; without it the book is left out. |
 | `title` | page | Page title (see the order below). On a book front page it is the book's name. |
 | `type` | page | `chapter` (numbered, children inherit the prefix), `content` (numbered inside the nearest chapter); anything else or missing is unnumbered. |
@@ -82,7 +82,7 @@ Title order: the title in the parent's `children` link, then `title`, then the f
 
 ## Included books (another GitHub repository)
 
-A line in `books`: `<ref>@github.com/<owner>/<repo>/<path-to-entry.md>`, where `<ref>` is a branch, a tag or a full commit SHA. The entry file's folder is the book's root and the file needs an `id`. A private repository additionally needs `publish: true` in the entry file's frontmatter.
+A line in `books`: `<ref>@github.com/<owner>/<repo>/<path-to-entry.md>`, where `<ref>` is a branch, a tag or a full commit SHA. The entry file's folder is the book's root. The address of the book is the `slug` of the line (written as an object `- source: "…"` and `slug: name`), else the `id` of the entry file, else the name of its folder. A private repository additionally needs `publish: true` in the entry file's frontmatter.
 
 If an included book does not build, the site still builds: the book's last published version is used, or the book is left out, with a warning.
 

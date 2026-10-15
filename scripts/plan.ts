@@ -1,13 +1,11 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { parse as parseYaml } from 'yaml';
-import { bookListKey } from '../src/core/book-list';
+import { gitEntries, registryEntries } from './registry';
 import { isSourceRef, parseSourceRef } from '../src/core/source-ref';
 import { resolveRef, type GitTransport } from './git-source';
 
 export const planSchemaVersion = 1;
-const frontmatter = /^﻿?---\r?\n((?:[^\n]*\n)*?)---(?:\r?\n|$)/;
 
 export type PlanInputs = {
   /** Instance commit: covers local content, config and build integration. */
@@ -38,16 +36,10 @@ export function makePlan(inputs: PlanInputs, sources: PlanSource[]): Plan {
   return { schemaVersion: planSchemaVersion, fingerprint: fingerprintOf(inputs, sources), inputs, sources: [...sources].sort((a, b) => a.source.localeCompare(b.source)) };
 }
 
-/** Registry `books` (or older `courses`) in order, with Git entries in their normalized form. */
+/** Registry `books` (or older `courses`) in order, with Git entries in their normalized form and `as <slug>` when a slug is given. */
 export async function registryCourses(contentRoot: string, entrypoint: string): Promise<string[]> {
-  const text = await readFile(resolve(contentRoot, entrypoint), 'utf8');
-  const match = text.match(frontmatter);
-  const metadata = match ? parseYaml(match[1]) : null;
-  const key = bookListKey(metadata, entrypoint);
-  const courses = metadata?.[key];
-  if (courses === undefined || courses === null) return [];
-  if (!Array.isArray(courses) || courses.some(item => typeof item !== 'string')) throw new Error(`Invalid ${key} in ${entrypoint}`);
-  return courses.map(entry => isSourceRef(entry) ? parseSourceRef(entry).normalized : entry.trim());
+  return (await registryEntries(contentRoot, entrypoint)).map(entry => isSourceRef(entry.value)
+    ? parseSourceRef(entry.value).normalized + (entry.slug ? ` as ${entry.slug}` : '') : entry.value.trim());
 }
 
 export type PlanOptions = { instanceCommit: string; engineCommit: string; engineVersion: string; lockfile?: string };
@@ -55,7 +47,7 @@ export type PlanOptions = { instanceCommit: string; engineCommit: string; engine
 /** Resolves every Git ref to a commit (no download) and fingerprints the publication inputs. */
 export async function createPlan(config: { contentRoot: string; entrypoint: string }, options: PlanOptions, transport?: GitTransport): Promise<Plan> {
   const courses = await registryCourses(config.contentRoot, config.entrypoint);
-  const git = courses.filter(isSourceRef);
+  const git = (await gitEntries(config.contentRoot, config.entrypoint)).map(entry => parseSourceRef(entry).normalized);
   const sources = git.length === new Set(git.map(entry => entry.toLowerCase())).size ? await Promise.all(git.map(async entry => {
     const resolved = await resolveRef(parseSourceRef(entry), transport);
     return { source: resolved.normalized, commit: resolved.commit };

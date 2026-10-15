@@ -28,6 +28,14 @@ export type Assembly = {
 /** Checks that one book builds on its own; throws a description of the first problem. */
 export type BookValidator = (checked: CheckedOut, id: string) => Promise<void>;
 
+/** The address of a book that nobody named: the folder of its entry file, or the repository when the file is at the root. */
+export function defaultSlug(checked: Pick<CheckedOut, 'path' | 'repo' | 'normalized'>): string {
+  const folders = checked.path.split('/').slice(0, -1);
+  const name = (folders.at(-1) ?? checked.repo).normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64).replace(/-+$/, '');
+  if (!courseIdPattern.test(name) || reserved.has(name)) throw new Error(`${checked.normalized}: cannot derive an address for the book; give it with "slug" in the books list of the collection`);
+  return name;
+}
+
 export function validateCourseId(id: unknown, source: string): string {
   if (typeof id !== 'string' || !id) throw new Error(`${source}: the entry file must declare a stable course "id" in its frontmatter`);
   if (id.length > 64 || !courseIdPattern.test(id)) throw new Error(`${source}: invalid course id "${id}"; use lower-case letters, digits and single hyphens (at most 64 characters)`);
@@ -61,7 +69,7 @@ const synced = new Map<string, CheckedOut[]>();
  * `<work>/content`, with each external course under its own id. Registries without Git
  * entries are processed in place. The versioned local content is never written.
  */
-export async function assemble(config: { contentRoot: string; entrypoint: string }, work: string, entries: string[], options: { transport?: GitTransport; refresh?: boolean; pins?: Pins; fallbacks?: Pins; validate?: BookValidator } = {}): Promise<Assembly> {
+export async function assemble(config: { contentRoot: string; entrypoint: string }, work: string, entries: string[], options: { transport?: GitTransport; refresh?: boolean; pins?: Pins; fallbacks?: Pins; validate?: BookValidator; slugs?: Map<string, string> } = {}): Promise<Assembly> {
   if (!entries.length) return { contentRoot: config.contentRoot, entrypoint: config.entrypoint, sealed: [], mounts: [], sources: [], skipped: [], fallbacks: [] };
   let checkouts = options.refresh === false ? synced.get(work) : undefined;
   if (!checkouts) { checkouts = await syncSources(entries, work, options.transport, options.pins); synced.set(work, checkouts); }
@@ -76,7 +84,10 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   async function prepare(checked: CheckedOut): Promise<string | null> {
     const metadata = await entryMetadata(checked);
     if (!isApproved(checked, metadata)) return null;
-    const id = validateCourseId(metadata.id, checked.normalized);
+    // The collection names the book; otherwise the author's id, otherwise the folder or the repository.
+    const given = options.slugs?.get(checked.normalized.toLowerCase());
+    const id = given !== undefined ? validateCourseId(given, `${checked.normalized} (slug in the books list)`)
+      : metadata.id !== undefined ? validateCourseId(metadata.id, checked.normalized) : defaultSlug(checked);
     await options.validate?.(checked, id);
     return id;
   }
@@ -103,8 +114,8 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
       included.push(null);
       continue;
     }
-    if (ids.has(id)) throw new Error(`${planned.normalized}: course id "${id}" is already used by ${ids.get(id)}`);
-    if (local.has(id)) throw new Error(`${planned.normalized}: course id "${id}" collides with local content "${id}"`);
+    if (ids.has(id)) throw new Error(`${planned.normalized}: course id "${id}" is already used by ${ids.get(id)}; give one of them another address with "slug" in the books list`);
+    if (local.has(id)) throw new Error(`${planned.normalized}: course id "${id}" collides with local content "${id}"; give the book another address with "slug" in the books list`);
     ids.set(id, planned.normalized);
     included.push(chosen);
     sources.push({ id, source: planned.normalized, commit: chosen.commit });
@@ -122,10 +133,11 @@ export async function assemble(config: { contentRoot: string; entrypoint: string
   const registry = resolve(output, config.entrypoint);
   const text = await readFile(registry, 'utf8');
   const match = text.match(frontmatter)!;
-  const metadata = parseYaml(match[1]) as Record<string, string[]>;
+  const metadata = parseYaml(match[1]) as Record<string, unknown>;
   const key = bookListKey(metadata, config.entrypoint);
   let next = 0, nextReady = 0;
-  metadata[key] = metadata[key].flatMap(entry => {
+  metadata[key] = (metadata[key] as (string | { source: string })[]).flatMap(item => {
+    const entry = typeof item === 'string' ? item : item.source;
     if (!isSourceRef(entry)) return [entry];
     const checked = included[next++];
     return checked ? [`${sources[nextReady++].id}/${entryPath(checked)}`] : [];

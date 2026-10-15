@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The address of a book from a Git source can be chosen in the collection: an item of the `books` list can be an object `{ source, slug }`. The `slug` wins over the `id` in the book.
+
+### Changed
+
+- The `id` in the entry file of a Git book is no longer required. Without a `slug` or an `id` the book is served at the name of the folder of its entry file (or of the repository). A collision now names the `slug` as the remedy.
+
 ## [0.1.13] - 2026-10-15
 
 ### Fixed

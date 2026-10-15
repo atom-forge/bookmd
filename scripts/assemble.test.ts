@@ -3,9 +3,10 @@ import { execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { assemble, isApproved, validateCourseId, type BookValidator } from './assemble';
+import { assemble, defaultSlug, isApproved, validateCourseId, type BookValidator } from './assemble';
 import { buildGraph, bookValidator } from './content';
-import { gitEntries } from './registry';
+import { gitEntries, gitSlugs, registryEntries } from './registry';
+import { registryCourses } from './plan';
 import type { GitTransport } from './git-source';
 
 let work: string;
@@ -63,7 +64,7 @@ describe('assembly of local and Git courses', () => {
     expect(graph.pages.find(p => p.slug === 'web-programming-1/lesson')!.html).toMatch(/src="\/content-assets\//);
     expect(JSON.parse(await readFile(join(work, 'w1', 'course-sources.json'), 'utf8')).sources[0].id).toBe('web-programming-1');
   });
-  test.each([['noid', 'must declare a stable course'], ['bad', 'invalid course id']])('%s is left out with the reason', async (repo, message) => {
+  test.each([['bad', 'invalid course id']])('%s is left out with the reason', async (repo, message) => {
     const dir = await local(`reg-${repo}`, registry(`main@github.com/o/${repo}/course.md`), { 'mine/course.md': '# x' });
     const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, `w-${repo}`), await gitEntries(dir, 'courses.md'), { transport });
     expect(assembly.sources).toEqual([]);
@@ -193,5 +194,45 @@ describe('files of the same repository', () => {
     const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w-validated'), await gitEntries(dir, 'courses.md'), { transport, validate: bookValidator({ title: 'T' }, join(work, 'w-validated'), '') });
     expect(assembly.sources.map(source => source.id)).toEqual(['shared-book']);
     expect(assembly.skipped).toHaveLength(1);
+  });
+});
+
+describe('the address of an included book belongs to the collection', () => {
+  const asObject = (source: string, slug?: string) => `---\nbooks:\n  - source: "${source}"${slug ? `\n    slug: ${slug}` : ''}\n---\n# Catalog\n`;
+  test('without an id the folder of the entry file or the repository names the book', () => {
+    expect(defaultSlug({ path: 'Programming 5 HU/book.md', repo: 'books', normalized: 'x' })).toBe('programming-5-hu');
+    expect(defaultSlug({ path: 'book.md', repo: 'My_Notes', normalized: 'x' })).toBe('my-notes');
+    expect(() => defaultSlug({ path: '404/book.md', repo: 'books', normalized: 'x' })).toThrow('slug');
+  });
+  test('a book without an id is included under the name derived from its place', async () => {
+    const dir = await local('derived-site', registry('main@github.com/o/noid/course.md'), { 'mine/course.md': '# x' });
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w-derived'), await gitEntries(dir, 'courses.md'), { transport });
+    expect(assembly.sources.map(source => source.id)).toEqual(['noid']);
+  });
+  test('the slug of the books list wins over the id of the book', async () => {
+    const dir = await local('slug-site', asObject('main@github.com/o/ext/site/course.md', 'my-address'), { 'mine/course.md': '# x' });
+    const slugs = await gitSlugs(dir, 'courses.md');
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w-slug'), await gitEntries(dir, 'courses.md'), { transport, slugs });
+    expect(assembly.sources.map(source => source.id)).toEqual(['my-address']);
+    expect(assembly.mounts).toEqual([{ directory: '/my-address/site', route: 'my-address' }]);
+    const graph = await buildGraph(assembly.contentRoot, assembly.entrypoint, '', join(work, 'assets-slug'), 'T', assembly.sealed, assembly.mounts);
+    expect(graph.courses.map(course => course.slug)).toEqual(['my-address']);
+    expect(graph.pages.map(page => page.slug)).toContain('my-address/lesson');
+  });
+  test('an invalid slug leaves the book out with the reason', async () => {
+    const dir = await local('badslug-site', asObject('main@github.com/o/ext/site/course.md', 'Bad_Slug'), { 'mine/course.md': '# x' });
+    const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w-badslug'), await gitEntries(dir, 'courses.md'), { transport, slugs: await gitSlugs(dir, 'courses.md') });
+    expect(assembly.skipped[0].reason).toContain('invalid course id');
+  });
+  test('the list accepts strings and objects, rejects a slug on a local book and unknown keys', async () => {
+    const mixed = await local('mixed-site', '---\nbooks:\n  - "[[mine/course.md]]"\n  - "main@github.com/o/ext/site/course.md"\n  - source: "main@github.com/o/noid/course.md"\n    slug: other\n---\n# C\n');
+    expect((await registryEntries(mixed, 'courses.md')).map(entry => [entry.value, entry.slug])).toEqual([['[[mine/course.md]]', undefined], ['main@github.com/o/ext/site/course.md', undefined], ['main@github.com/o/noid/course.md', 'other']]);
+    expect(await registryCourses(mixed, 'courses.md')).toEqual(['[[mine/course.md]]', 'main@github.com/o/ext/site/course.md', 'main@github.com/o/noid/course.md as other']);
+    await expect(registryEntries(await local('local-slug', asObject('[[mine/course.md]]', 'x')), 'courses.md')).rejects.toThrow('only be given to a book from Git');
+    await expect(registryEntries(await local('unknown-key', '---\nbooks:\n  - source: "main@github.com/o/a/b.md"\n    id: x\n---\n'), 'courses.md')).rejects.toThrow('Invalid books');
+  });
+  test('the collision message points to the slug', async () => {
+    const dir = await local('dup2', registry('main@github.com/o/ext/site/course.md', 'main@github.com/p/ext/site/course.md'));
+    await expect(assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'wdup2'), await gitEntries(dir, 'courses.md'), { transport })).rejects.toThrow('"slug"');
   });
 });
