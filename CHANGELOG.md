@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-10-15
+
 ### Added
 
 - A book can have a `subtitle` in the frontmatter of its front page: a second line under the name in the catalogue, in the header of the book, and in the catalogue search.
