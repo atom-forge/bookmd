@@ -178,6 +178,14 @@ test('chemical formulas with \\ce render through KaTeX', async () => {
   expect(html.match(/class="katex"/g)).toHaveLength(4);
 });
 
+test('a book can have a subtitle', async () => {
+  const graph = await processContent(memory({
+    '/courses.md': '---\nbooks: ["[[b/book.md]]"]\n---\n# Catalog',
+    '/b/book.md': '---\nlanguage: en\nname: Main title\nsubtitle: The second line\n---\n# B'
+  }), 'courses.md', {});
+  expect(graph.courses[0]).toMatchObject({ name: 'Main title', subtitle: 'The second line' });
+});
+
 test('a book intro can be a wikilink to a Markdown file whose text is used', async () => {
   const graph = await processContent(memory({
     '/courses.md': '---\nbooks: ["[[b/book.md]]", "[[c/book.md]]"]\n---\n# Catalog',

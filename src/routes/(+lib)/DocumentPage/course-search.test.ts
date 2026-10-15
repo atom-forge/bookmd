@@ -3,7 +3,7 @@ import type { Course } from '../../../core/content';
 import { filterCourses } from './course-search';
 
 const course: Course = {
-  slug: 'web', name: 'Árvíztűrő WEB', author: 'Őri Éva',
+  slug: 'web', name: 'Árvíztűrő WEB', subtitle: 'Alcím', author: 'Őri Éva',
   intro: 'Bevezetés a hálózatok világába', tags: ['kezdő', 'Saját címke'],
   contentTags: ['Összesített téma'], language: 'hu', image: '/image.png'
 };

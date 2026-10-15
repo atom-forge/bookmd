@@ -39,6 +39,7 @@ Every list below holds **quoted** wikilinks or Markdown links, because unquoted 
 | `books` | collection entry file | Ordered list of books: `"[[dir/book.md]]"` or a Git source. (`courses` is the older name; never use both.) |
 | `branding` | collection entry file | Text in the site header. |
 | `name` | book front page | Book name; else `title`, else the first heading. |
+| `subtitle` | book front page | Optional second line under the name (catalogue card and header). |
 | `language` | book front page | **Required.** e.g. `en`, `hu`. |
 | `author`, `tags`, `image` | book front page | Optional. `author` and `tags` also work on any page. |
 | `intro` | book front page | Short text for the catalogue card: plain text, or one quoted wikilink to a Markdown file whose text is used (`"[[about.md]]"`). |

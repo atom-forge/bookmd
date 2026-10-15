@@ -37,7 +37,8 @@
         <div class="flex flex-1 flex-col">
           <div class="mx-4 my-4 flex flex-1 flex-col min-[761px]:mx-5 min-[761px]:my-5">
 
-            <h2 class="mb-3 text-xl leading-tight font-semibold tracking-tight min-[761px]:text-2xl"><a class="hover:text-accent" href={href(course.slug)}>{course.name}</a></h2>
+            <h2 class={`${course.subtitle ? 'mb-1' : 'mb-3'} text-xl leading-tight font-semibold tracking-tight min-[761px]:text-2xl`}><a class="hover:text-accent" href={href(course.slug)}>{course.name}</a></h2>
+            {#if course.subtitle}<p class="mb-3 text-sm text-muted-contrast min-[761px]:text-base">{course.subtitle}</p>{/if}
             {#if course.intro}<p class="mb-4 text-sm leading-relaxed text-muted-contrast">{course.intro}</p>{/if}
             <div class="mt-auto"><CourseMetadata {course}/></div>
           </div>

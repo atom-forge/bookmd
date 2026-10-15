@@ -55,7 +55,7 @@ describe('assembly of local and Git courses', () => {
     const before = await readFile(join(dir, 'courses.md'), 'utf8');
     const assembly = await assemble({ contentRoot: dir, entrypoint: 'courses.md' }, join(work, 'w1'), await gitEntries(dir, 'courses.md'), { transport });
     expect(assembly.sources).toEqual([{ id: 'web-programming-1', source: 'main@github.com/o/ext/site/course.md', commit: expect.stringMatching(/^[0-9a-f]{40}$/) }]);
-    expect(assembly.sealed, assembly.mounts).toEqual(['/web-programming-1']);
+    expect(assembly.sealed).toEqual(['/web-programming-1']);
     expect(await readFile(join(dir, 'courses.md'), 'utf8')).toBe(before); // versioned content is untouched
     const graph = await buildGraph(assembly.contentRoot, assembly.entrypoint, '', join(work, 'assets1'), 'T', assembly.sealed, assembly.mounts);
     expect(graph.courses.map(c => c.slug)).toEqual(['mine', 'web-programming-1']);

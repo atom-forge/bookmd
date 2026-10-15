@@ -24,6 +24,7 @@
         <div class="flex min-w-0 items-center gap-2 text-sm font-semibold text-canvas-contrast min-[900px]:text-lg">
           <span class="shrink-0 text-muted-contrast" aria-hidden="true"><Icon icon={Box} size="5"/></span>
           <a class="truncate hover:text-accent" href={href(course.slug)} title={course.name}>{course.name}</a>
+          {#if course.subtitle}<span class="hidden min-w-0 truncate text-sm font-normal text-muted-contrast min-[900px]:inline" title={course.subtitle}>{course.subtitle}</span>{/if}
         </div>
         {#if course.language || course.author}
           <div class="flex min-w-0 items-center gap-1.5" aria-label="Course language and author">
