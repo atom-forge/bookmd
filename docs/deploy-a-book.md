@@ -162,6 +162,8 @@ jobs:
 - the repository is named `<user>.github.io` (a "user site" lives at the root), or
 - you attach a custom domain to it.
 
+Both are described in [your own address](#your-own-address-a-user-site-and-a-custom-domain).
+
 If `bun run check` reports an error, the workflow stops and nothing reaches the site.
 
 ### 4. Upload
@@ -176,12 +178,49 @@ git push -u origin main
 
 You can follow the run on the repository's **Actions** tab. When it succeeds, the `deploy` step prints the address of the site; the same address is under **Settings → Pages**. The first deployment can take a few minutes.
 
+## Your own address: a user site and a custom domain
+
+By default the collection lives at `https://<user>.github.io/<repository>/`, in a subdirectory. There are two ways to give it a shorter address; in both the site is at the **root** of its address, so the build does not need `BASE_PATH`.
+
+### A user or organisation site: `<name>.github.io`
+
+Every user and every organisation can have one special site at `https://<name>.github.io/`.
+
+1. Name the repository exactly `<name>.github.io`, where `<name>` is your user name or the name of the organisation (for an organisation, create the repository inside it).
+2. Turn on Pages as in step 2: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. In the workflow `.github/workflows/pages.yml`, **remove the `env` block** of the `bun run build` step (the one that sets `BASE_PATH`), so that the step is only `- run: bun run build`.
+4. Push. The site is at `https://<name>.github.io/`.
+
+Good to know:
+
+- You can have only one such site per user or organisation. Your other repositories with Pages remain project sites, at `https://<name>.github.io/<repository>/`.
+- Creating Pages for an organisation needs the owner or admin role of the organisation.
+- Public repositories can use Pages on every plan; a private repository needs a paid plan.
+
+### A custom domain
+
+You can serve the site from your own domain, for example `books.example.com` or `example.com`. It works with a project site and with a user site alike.
+
+1. Decide the address. A subdomain (`books.example.com`) is the simpler choice; an apex domain (`example.com`) needs more records.
+2. In the DNS settings of your domain provider add the records:
+   - **Subdomain**: one `CNAME` record from `books` (the name you chose) to `<name>.github.io` (your user or organisation name, **without** the repository name).
+   - **Apex domain**: `A` records for `@` to the four addresses GitHub lists for Pages: `185.199.108.153`, `185.199.109.153`, `185.199.110.153` and `185.199.111.153` (and, if you like, the matching `AAAA` records for IPv6). Check the current addresses in the GitHub documentation "Managing a custom domain for your GitHub Pages site" before you enter them.
+3. In the repository: **Settings → Pages → Custom domain**, enter the domain and save. GitHub checks the DNS records; this can take from a few minutes to a day.
+4. When the check passes, tick **Enforce HTTPS**. The certificate is issued automatically and can take up to an hour.
+5. **Remove the `env` block with `BASE_PATH`** from the workflow (the site is now at the root of the domain), and push.
+
+Good to know:
+
+- With a deployment from GitHub Actions you do not add a `CNAME` file to the repository: the **Custom domain** setting is enough, and a `CNAME` file is ignored.
+- To stop someone else from taking over your domain, an owner of the account can *verify* the domain in the Pages settings of the user or organisation.
+- If the site shows up without CSS after the change, `BASE_PATH` is still set; see [Troubleshooting](#troubleshooting).
+
 ## Updating
 
 Edit the Markdown files, commit and push to `main`. The workflow rebuilds and replaces the site. You can also start it by hand with **Actions → Deploy book → Run workflow**.
 
 ## Troubleshooting
 
-- **The site appears without CSS and with broken links**: `BASE_PATH` is missing or wrong. Project sites need `/<repository-name>` with no trailing slash.
+- **The site appears without CSS and with broken links**: `BASE_PATH` is missing or wrong. Project sites need `/<repository-name>` with no trailing slash; a user site (`<name>.github.io`) or a site with a custom domain must not set it at all.
 - **`check` reports an error on a link**: the error names the file and the link; fix or remove it and push again.
 - **404 at the address**: the source of Pages is not "GitHub Actions", or the first deployment has not finished yet.

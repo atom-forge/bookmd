@@ -19,7 +19,7 @@ children:
 BookMD turns Markdown files into a static book collection on the web. This book describes how to use it:
 
 - [Writing books](authoring.md): structure, metadata, supported content.
-- [Publishing a collection on GitHub](deploy-a-book.md): GitHub Pages, with the template repository.
+- [Publishing a collection on GitHub](deploy-a-book.md): GitHub Pages, the template repository, a user site and a custom domain.
 - [Books from other GitHub repositories](remote-books.md): external and private sources.
 - [Self-hosting](self-hosted.md): the build and the upload.
 - [Commands and configuration](cli.md): the `bookmd` command line, `portal.config.ts`, the local preview.
