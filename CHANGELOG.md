@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.15] - 2026-10-16
+
 ### Changed
 
 - The header shows the BookMD logo (light and dark variant, following the theme) instead of the text name.
