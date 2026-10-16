@@ -16,8 +16,8 @@
       <a class="flex min-w-0 items-center gap-3 hover:opacity-90" href={href('')} title="All Books">
         <span class="grid size-10 shrink-0 place-items-center rounded-[var(--radius-control)] bg-accent text-accent-contrast"><Icon icon={Boxes} size="6"/></span>
         <span class="flex min-w-0 flex-col">
-          <img src={logoLight} alt="BookMD" class="h-7 w-auto self-start dark:hidden min-[900px]:h-8"/>
-          <img src={logoDark} alt="BookMD" class="hidden h-7 w-auto self-start dark:block min-[900px]:h-8"/>
+          <img src={logoLight} alt="BookMD" class="mb-1 h-6 w-auto self-start dark:hidden"/>
+          <img src={logoDark} alt="BookMD" class="mb-1 hidden h-6 w-auto self-start dark:block"/>
           {#if branding}<span class="truncate text-[10px] font-normal leading-tight tracking-normal text-muted-contrast" title={branding}>{branding}</span>{/if}
         </span>
       </a>
