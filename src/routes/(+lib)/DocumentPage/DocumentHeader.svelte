@@ -1,7 +1,7 @@
 <script lang="ts">
   import { usePageHref } from '../page-href';
   import { Chip, Icon, Switch, getThemeManager } from '@atom-forge/ui';
-  import { Sun, Moon, Box } from 'lucide-svelte';
+  import { Sun, Moon, Boxes, Box } from 'lucide-svelte';
   import logoLight from '$lib/logo/bookmd-lightbg.svg';
   import logoDark from '$lib/logo/bookmd-darkbg.svg';
   import type { PortalPageData } from '$lib/portal-page';
@@ -14,6 +14,7 @@
   <div class={`mx-auto grid grid-rows-[64px] items-center min-[900px]:grid-rows-1 min-[900px]:h-[76px] ${course ? `max-w-[2040px] grid-rows-[64px_56px] grid-cols-[56px_minmax(0,1fr)_auto] ${columns}` : 'max-w-[2040px] grid-cols-[minmax(0,1fr)_auto]'}`}>
     <div class={`${course ? 'col-start-1 row-start-1 col-span-2 ml-16 mr-3 min-[900px]:col-span-1 min-[900px]:mx-5' : 'col-start-1 row-start-1 mx-5'} flex min-w-0 items-center gap-3 text-lg font-semibold tracking-tight text-canvas-contrast min-[900px]:text-[21px]`}>
       <a class="flex min-w-0 items-center gap-3 hover:opacity-90" href={href('')} title="All Books">
+        <span class="grid size-10 shrink-0 place-items-center rounded-[var(--radius-control)] bg-accent text-accent-contrast"><Icon icon={Boxes} size="6"/></span>
         <span class="flex min-w-0 flex-col">
           <img src={logoLight} alt="BookMD" class="h-7 w-auto self-start dark:hidden min-[900px]:h-8"/>
           <img src={logoDark} alt="BookMD" class="hidden h-7 w-auto self-start dark:block min-[900px]:h-8"/>
